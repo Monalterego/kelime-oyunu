@@ -1,6 +1,3 @@
-Dosyanın tamamını revize ettim. github.dev'de `src/screens/GameScreen.tsx` dosyasının tüm içeriğini silip şunu yapıştır:
-
-```typescript
 import React, { useReducer, useEffect, useRef, useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Animated } from "react-native";
 import { Question } from "../types";
@@ -289,6 +286,3 @@ const styles = StyleSheet.create({
   homeButton: { backgroundColor: COLORS.bgDark, paddingVertical: 16, borderRadius: 14, alignItems: "center", borderWidth: 1, borderColor: COLORS.primaryDark },
   homeButtonText: { fontSize: 16, fontWeight: "600", color: COLORS.textSecondary },
 });
-```
-
-Commit & push: `"fetch real questions from TDK API"`. Sonra lokal `git pull` ve test et.
