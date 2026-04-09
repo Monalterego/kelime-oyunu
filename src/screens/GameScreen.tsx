@@ -1,5 +1,5 @@
 import React, { useReducer, useEffect, useRef, useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Animated } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Animated, Alert, ActivityIndicator } from "react-native";
 import { Question } from "../types";
 import { gameReducer, initialGameState, FLASH_DURATION, calculateQuestionPoints } from "../utils/gameReducer";
 import { COLORS } from "../theme/colors";
@@ -14,8 +14,11 @@ export default function GameScreen({ navigation }: any) {
   const answerTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const allWordsRef = useRef<string[]>([]);
 
+  // Kelime listesini başlangıçta bir kez çek
   useEffect(() => {
-    fetch("https://sozluk.gov.tr/autocomplete.json", { headers: { "User-Agent": "KelimeOyunu/1.0" } })
+    fetch("https://sozluk.gov.tr/autocomplete.json", { 
+      headers: { "User-Agent": "KelimeOyunu/1.0" } 
+    })
       .then((r) => r.json())
       .then((data) => {
         const words = data
@@ -23,19 +26,38 @@ export default function GameScreen({ navigation }: any) {
           .filter((w: string) => typeof w === "string" && /^[a-zA-ZçÇğĞıİöÖşŞüÜ]+$/.test(w));
         allWordsRef.current = words;
       })
-      .catch(() => {});
+      .catch((err) => {
+        console.error("Kelime listesi yüklenemedi:", err);
+        Alert.alert("Hata", "Kelime listesi yüklenemedi. Lütfen internetinizi kontrol edin.");
+      });
   }, []);
 
+  // Oyunu başlatan asenkron fonksiyon
   const startGame = async () => {
-    if (allWordsRef.current.length === 0) return;
+    if (allWordsRef.current.length === 0) {
+      Alert.alert("Bekleyin", "Kelimeler henüz yüklenmedi.");
+      return;
+    }
+
     setLoading(true);
-    const questions = await generateGameQuestions(allWordsRef.current);
-    setLoading(false);
-    if (questions.length > 0) {
-      dispatch({ type: "START_GAME", questions });
+    try {
+      // Parallel fetch ve optimize edilmiş filtreleme ile soruları üret
+      const questions = await generateGameQuestions(allWordsRef.current);
+      
+      if (questions && questions.length > 0) {
+        dispatch({ type: "START_GAME", questions });
+      } else {
+        Alert.alert("Hata", "Sorular hazırlanırken bir sorun oluştu. Lütfen tekrar deneyin.");
+      }
+    } catch (error) {
+      console.error("Başlatma hatası:", error);
+      Alert.alert("Hata", "Bağlantı sorunu oluştu.");
+    } finally {
+      setLoading(false);
     }
   };
 
+  // Flash (İpucu) Animasyonu
   useEffect(() => {
     if (state.status === "flash") {
       flashOpacity.setValue(0);
@@ -43,10 +65,13 @@ export default function GameScreen({ navigation }: any) {
         Animated.timing(flashOpacity, { toValue: 1, duration: 300, useNativeDriver: true }),
         Animated.delay(FLASH_DURATION - 600),
         Animated.timing(flashOpacity, { toValue: 0, duration: 300, useNativeDriver: true }),
-      ]).start(() => { dispatch({ type: "FLASH_DONE" }); });
+      ]).start(() => { 
+        dispatch({ type: "FLASH_DONE" }); 
+      });
     }
   }, [state.status, state.currentQuestionIndex]);
 
+  // Toplam Süre Sayacı
   useEffect(() => {
     if (state.status === "playing") {
       totalTimerRef.current = setInterval(() => { dispatch({ type: "TICK_TOTAL" }); }, 1000);
@@ -56,6 +81,7 @@ export default function GameScreen({ navigation }: any) {
     return () => { if (totalTimerRef.current) clearInterval(totalTimerRef.current); };
   }, [state.status]);
 
+  // Cevap Verme Süresi Sayacı
   useEffect(() => {
     if (state.status === "answering") {
       answerTimerRef.current = setInterval(() => { dispatch({ type: "TICK_ANSWER" }); }, 1000);
@@ -88,8 +114,10 @@ export default function GameScreen({ navigation }: any) {
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
-    return m + ":" + s.toString().padStart(2, "0");
+    return `${m}:${s.toString().padStart(2, "0")}`;
   };
+
+  // --- EKRAN DURUMLARI ---
 
   if (state.status === "idle") {
     const isReady = allWordsRef.current.length > 0;
@@ -97,8 +125,12 @@ export default function GameScreen({ navigation }: any) {
       <View style={styles.container}>
         <Text style={styles.gameOverTitle}>Kelime Oyunu</Text>
         <Text style={styles.statsText}>{isReady ? "Hazır!" : "Kelimeler yükleniyor..."}</Text>
+        
         {loading ? (
-          <Text style={styles.statsText}>Sorular hazırlanıyor...</Text>
+          <View style={{ alignItems: 'center' }}>
+            <ActivityIndicator size="large" color={COLORS.primary} />
+            <Text style={[styles.statsText, { marginTop: 10 }]}>Sorular TDK'dan çekiliyor...</Text>
+          </View>
         ) : (
           <TouchableOpacity
             style={[styles.replayButton, !isReady && { opacity: 0.5 }]}
@@ -213,17 +245,27 @@ export default function GameScreen({ navigation }: any) {
             placeholderTextColor={COLORS.textMuted}
             onSubmitEditing={() => { dispatch({ type: "SUBMIT_ANSWER", answer }); setAnswer(""); }}
           />
-          <TouchableOpacity style={styles.submitButton} onPress={() => { dispatch({ type: "SUBMIT_ANSWER", answer }); setAnswer(""); }}>
+          <TouchableOpacity 
+            style={styles.submitButton} 
+            onPress={() => { dispatch({ type: "SUBMIT_ANSWER", answer }); setAnswer(""); }}
+          >
             <Text style={styles.submitButtonText}>CEVAPLA</Text>
           </TouchableOpacity>
         </View>
       ) : (
         <View style={styles.actionRow}>
-          <TouchableOpacity style={styles.hintButton} onPress={() => dispatch({ type: "REQUEST_LETTER" })}>
+          <TouchableOpacity 
+            style={styles.hintButton} 
+            onPress={() => dispatch({ type: "REQUEST_LETTER" })}
+            disabled={currentQuestion.revealedLetters.length >= currentQuestion.wordData.length - 1}
+          >
             <Text style={styles.hintButtonText}>HARF AL</Text>
             <Text style={styles.hintCost}>-100P</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.answerButton} onPress={() => { setAnswer(""); dispatch({ type: "PRESS_BUTTON" }); }}>
+          <TouchableOpacity 
+            style={styles.answerButton} 
+            onPress={() => { setAnswer(""); dispatch({ type: "PRESS_BUTTON" }); }}
+          >
             <Text style={styles.answerButtonText}>CEVAPLA</Text>
           </TouchableOpacity>
         </View>

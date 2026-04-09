@@ -5,7 +5,6 @@ const TDK_API = "https://sozluk.gov.tr/gts?ara=";
 
 /**
  * Oyun yapısı: TV formatındaki 4h'den 10h'ye gidişi koruyoruz (toplam 14 soru).
- * 13 değil 14 soru olması (her harften 2şer) dengeyi sağlar.
  */
 export const GAME_STRUCTURE = [
   { length: 4, count: 2 },
@@ -19,7 +18,7 @@ export const GAME_STRUCTURE = [
 
 /**
  * Kelime listesinden harf sayısına göre filtreleme yapar.
- * Sadece Türkçe karakterleri kabul eder ve boşluklu (birleşik) kelimeleri eler.
+ * Sadece Türkçe karakterleri kabul eder ve boşluklu kelimeleri eler.
  */
 export function filterWordsByLength(words: string[], length: number): string[] {
   return words.filter(
@@ -36,12 +35,12 @@ export function pickRandom<T>(arr: T[], count: number): T[] {
 }
 
 /**
- * Tanım içindeki kelimeyi temizler veya sansürler (Hukuki ve oyun kalitesi için).
- * "Araba: Dört tekerlekli araba" -> "Dört tekerlekli ......."
+ * Tanım içindeki kelimeyi temizler veya sansürler.
  */
 function sanitizeDefinition(definition: string, word: string): string {
+  if (!definition) return "";
   const regex = new RegExp(word, "gi");
-  // Eğer tanım kelimenin kendisiyle başlıyorsa (örn: "Araba: ...") o kısmı temizle
+  // Baştaki "Kelime:" veya "İsim:" gibi ibareleri temizle
   let cleaned = definition.replace(/^.*?:/g, "").trim();
   // Tanım içinde kelime geçiyorsa sansürle
   cleaned = cleaned.replace(regex, ".......");
@@ -68,7 +67,7 @@ export async function fetchWordDetails(word: string): Promise<WordData | null> {
 
     const rawDefinition = firstMeaning.anlam;
     
-    // Çok kısa veya sadece "bakınız" içeren tanımları atla
+    // Geçersiz tanımları ele (çok kısa veya yönlendirme içerenler)
     if (rawDefinition.length < 5 || rawDefinition.toLowerCase().includes("bakınız")) {
       return null;
     }
@@ -81,7 +80,7 @@ export async function fetchWordDetails(word: string): Promise<WordData | null> {
     const flashHint = generateFlashHint(origin, category, word.length);
 
     return {
-      word: word.toLocaleUpperCase('tr-TR'), // Türkçe karakter uyumlu büyük harf
+      word: word.toLocaleUpperCase('tr-TR'),
       length: word.length,
       definition,
       origin,
@@ -97,28 +96,37 @@ export async function fetchWordDetails(word: string): Promise<WordData | null> {
 
 /**
  * Dinamik oyun sorularını üretir.
+ * Paralel fetch (Promise.all) kullanarak hızı artırılmıştır.
  */
 export async function generateGameQuestions(
   allWords: string[]
 ): Promise<Question[]> {
   const questions: Question[] = [];
 
+  // Önce tüm kelimeleri harf uzunluklarına göre bir Map'e koyalım (Performans)
+  const wordMap = new Map<number, string[]>();
+  GAME_STRUCTURE.forEach(({ length }) => {
+    wordMap.set(length, filterWordsByLength(allWords, length));
+  });
+
+  // Her harf grubu için işlemleri yürüt
   for (const { length, count } of GAME_STRUCTURE) {
-    const candidates = filterWordsByLength(allWords, length);
+    const candidates = wordMap.get(length) || [];
     if (candidates.length === 0) continue;
 
-    // API hatalarına karşı 5 katı fazla aday seçiyoruz
-    const selected = pickRandom(candidates, count * 5);
+    // API hataları veya geçersiz tanımlar için yedekli (count * 4) seçim yap
+    const selectedBatch = pickRandom(candidates, count * 4);
+    
+    // Paralel istekleri başlat
+    const batchPromises = selectedBatch.map(word => fetchWordDetails(word));
+    const batchResults = await Promise.all(batchPromises);
 
-    let added = 0;
-    for (const word of selected) {
-      if (added >= count) break;
+    // null olmayan ve geçerli olan sonuçları ayıkla
+    const validBatch = batchResults
+      .filter((r): r is WordData => r !== null && r.definition.length > 3)
+      .slice(0, count);
 
-      const wordData = await fetchWordDetails(word);
-      
-      // wordData'nın geldiğinden ve tanımın geçerli olduğundan emin ol
-      if (!wordData || wordData.definition.length < 3) continue;
-
+    validBatch.forEach((wordData) => {
       questions.push({
         wordData,
         points: length * 100,
@@ -127,15 +135,14 @@ export async function generateGameQuestions(
         correct: false,
         earnedPoints: 0,
       });
-      added++;
-    }
+    });
   }
 
   return questions;
 }
 
 /**
- * Offline kullanım veya manuel ekleme için soru objesi oluşturur.
+ * Offline kullanım için soru objesi oluşturur.
  */
 export function generateOfflineQuestion(
   word: string,
