@@ -1,22 +1,43 @@
+Dosyanın tamamını revize ettim. github.dev'de `src/screens/GameScreen.tsx` dosyasının tüm içeriğini silip şunu yapıştır:
+
+```typescript
 import React, { useReducer, useEffect, useRef, useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Animated } from "react-native";
 import { Question } from "../types";
 import { gameReducer, initialGameState, FLASH_DURATION, calculateQuestionPoints } from "../utils/gameReducer";
-import { SAMPLE_QUESTIONS } from "../data/sampleGame";
 import { COLORS } from "../theme/colors";
+import { generateGameQuestions } from "../utils/questionGenerator";
 
 export default function GameScreen({ navigation }: any) {
   const [state, dispatch] = useReducer(gameReducer, initialGameState);
   const [answer, setAnswer] = useState("");
+  const [loading, setLoading] = useState(false);
   const flashOpacity = useRef(new Animated.Value(0)).current;
   const totalTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const answerTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const allWordsRef = useRef<string[]>([]);
 
-  const startGame = () => {
-    dispatch({ type: "START_GAME", questions: SAMPLE_QUESTIONS });
+  useEffect(() => {
+    fetch("https://sozluk.gov.tr/autocomplete.json", { headers: { "User-Agent": "KelimeOyunu/1.0" } })
+      .then((r) => r.json())
+      .then((data) => {
+        const words = data
+          .map((d: any) => d.madde || d)
+          .filter((w: string) => typeof w === "string" && /^[a-zA-ZçÇğĞıİöÖşŞüÜ]+$/.test(w));
+        allWordsRef.current = words;
+      })
+      .catch(() => {});
+  }, []);
+
+  const startGame = async () => {
+    if (allWordsRef.current.length === 0) return;
+    setLoading(true);
+    const questions = await generateGameQuestions(allWordsRef.current);
+    setLoading(false);
+    if (questions.length > 0) {
+      dispatch({ type: "START_GAME", questions });
+    }
   };
-
-  useEffect(() => { startGame(); }, []);
 
   useEffect(() => {
     if (state.status === "flash") {
@@ -72,6 +93,27 @@ export default function GameScreen({ navigation }: any) {
     const s = seconds % 60;
     return m + ":" + s.toString().padStart(2, "0");
   };
+
+  if (state.status === "idle") {
+    const isReady = allWordsRef.current.length > 0;
+    return (
+      <View style={styles.container}>
+        <Text style={styles.gameOverTitle}>Kelime Oyunu</Text>
+        <Text style={styles.statsText}>{isReady ? "Hazır!" : "Kelimeler yükleniyor..."}</Text>
+        {loading ? (
+          <Text style={styles.statsText}>Sorular hazırlanıyor...</Text>
+        ) : (
+          <TouchableOpacity
+            style={[styles.replayButton, !isReady && { opacity: 0.5 }]}
+            onPress={startGame}
+            disabled={!isReady}
+          >
+            <Text style={styles.replayButtonText}>OYNA</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    );
+  }
 
   if (state.status === "gameover") {
     const answered = state.questions.filter((q) => q.answered);
@@ -247,3 +289,6 @@ const styles = StyleSheet.create({
   homeButton: { backgroundColor: COLORS.bgDark, paddingVertical: 16, borderRadius: 14, alignItems: "center", borderWidth: 1, borderColor: COLORS.primaryDark },
   homeButtonText: { fontSize: 16, fontWeight: "600", color: COLORS.textSecondary },
 });
+```
+
+Commit & push: `"fetch real questions from TDK API"`. Sonra lokal `git pull` ve test et.
