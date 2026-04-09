@@ -1,30 +1,30 @@
 const ORIGIN_HINTS: Record<string, string[]> = {
-  "Arapca": ["Arapca kokenli bir kelime!", "Dogudan gelen bir soz..."],
-  "Farsca": ["Farsca kokenli bir kelime!", "Iran kulturunden dilimize gecmis..."],
-  "Fransizca": ["Bati kokenli bir kelime!", "Fransizcadan dilimize girmis..."],
-  "Italyanca": ["Bati kokenli bir kelime!", "Akdeniz esintili bir soz..."],
-  "Ingilizce": ["Bati kokenli bir kelime!", "Ingilizceden dilimize gecmis..."],
-  "Rumca": ["Kadim bir kelime!", "Anadolu topraklarindan bir miras..."],
-  "Yunanca": ["Kadim bir kelime!", "Antik dunyadan bir miras..."],
-  "Almanca": ["Bati kokenli bir kelime!", "Almancadan dilimize gecmis..."],
+  "Arapça": ["Arapça kökenli bir kelime!", "Doğudan gelen bir söz..."],
+  "Farsça": ["Farsça kökenli bir kelime!", "İran kültüründen dilimize geçmiş..."],
+  "Fransızca": ["Batı kökenli bir kelime!", "Fransızcadan dilimize girmiş..."],
+  "İtalyanca": ["Batı kökenli bir kelime!", "Akdeniz esintili bir söz..."],
+  "İngilizce": ["Batı kökenli bir kelime!", "İngilizceden dilimize geçmiş..."],
+  "Rumca": ["Kadim bir kelime!", "Anadolu topraklarından bir miras..."],
+  "Yunanca": ["Kadim bir kelime!", "Antik dünyadan bir miras..."],
+  "Almanca": ["Batı kökenli bir kelime!", "Almancadan dilimize geçmiş..."],
 };
 
 const GENERIC_HINTS = [
-  "Dikkat, zipir bir soru!",
+  "Dikkat, zıpır bir soru!",
   "Muzip bir soru geliyor...",
-  "Kolay gorunup yaniltabilir!",
-  "Herkesin bildigi ama kimsenin dusunemedigi...",
-  "Ipucunu iyi dinle!",
+  "Kolay görünüp yanıltabilir!",
+  "Herkesin bildiği ama kimsenin düşünemediği...",
+  "İpucunu iyi dinle!",
   "Bu kelimeyi herkes bilir!",
-  "Gunluk hayattan bir soz...",
-  "Biraz dusun, bulacaksin!",
-  "Hadi bakalim, bu kolay!",
-  "Dikkatli ol, yakistirma yollu!",
-  "Oz Turkce bir kelime!",
-  "Dilimizin guzelligi...",
+  "Günlük hayattan bir söz...",
+  "Biraz düşün, bulacaksın!",
+  "Hadi bakalım, bu kolay!",
+  "Dikkatli ol, yakıştırma yollu!",
+  "Öz Türkçe bir kelime!",
+  "Dilimizin güzelliği...",
   "Klasik bir soru!",
-  "Kelimelerin gucunu hisset!",
-  "Bu sana tanidik gelecek...",
+  "Kelimelerin gücünü hisset!",
+  "Bu sana tanıdık gelecek...",
 ];
 
 export function generateFlashHint(origin: string, category: string, wordLength: number): string {
@@ -38,11 +38,11 @@ export function generateFlashHint(origin: string, category: string, wordLength: 
   }
 
   if (hints.length === 0 && (!origin || origin === "")) {
-    hints.push("Oz Turkce bir kelime!", "Turkcemizin oz mali!");
+    hints.push("Öz Türkçe bir kelime!", "Türkçemizin öz malı!");
   }
 
   if (wordLength >= 8) {
-    hints.push("Uzun bir kelime, dikkat!", "Bu biraz uzun, hazir ol!");
+    hints.push("Uzun bir kelime, dikkat!", "Bu biraz uzun, hazır ol!");
   }
 
   hints.push(...GENERIC_HINTS);

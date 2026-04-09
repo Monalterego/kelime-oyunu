@@ -2,59 +2,59 @@ import { Question } from "../types";
 
 export const SAMPLE_QUESTIONS: Question[] = [
   {
-    wordData: { word: "fakr", length: 4, definition: "Yoksulluk", origin: "Arapca", category: "isim", example: "", flashHint: "Arapca kokenli bir kelime!" },
+    wordData: { word: "fakr", length: 4, definition: "Yoksulluk", origin: "Arapça", category: "isim", example: "", flashHint: "Arapça kökenli bir kelime!" },
     points: 400, revealedLetters: [], answered: false, correct: false, earnedPoints: 0,
   },
   {
-    wordData: { word: "hile", length: 4, definition: "Birini aldatmak, yaniltmak icin yapilan duzen", origin: "Arapca", category: "isim", example: "Hile yaparak kazanmak", flashHint: "Herkesin bildigi bir kelime!" },
+    wordData: { word: "hile", length: 4, definition: "Birini aldatmak, yanıltmak için yapılan düzen", origin: "Arapça", category: "isim", example: "", flashHint: "Herkesin bildiği bir kelime!" },
     points: 400, revealedLetters: [], answered: false, correct: false, earnedPoints: 0,
   },
   {
-    wordData: { word: "ceker", length: 5, definition: "Bir tartma aletinin kaldirabildigi agirlik miktari", origin: "", category: "isim", example: "", flashHint: "Oz Turkce bir kelime!" },
+    wordData: { word: "çeker", length: 5, definition: "Bir tartma aletinin kaldırabildiği ağırlık miktarı", origin: "", category: "isim", example: "", flashHint: "Öz Türkçe bir kelime!" },
     points: 500, revealedLetters: [], answered: false, correct: false, earnedPoints: 0,
   },
   {
-    wordData: { word: "vuruk", length: 5, definition: "Carpik, carpilmis", origin: "", category: "sifat", example: "", flashHint: "Muzip bir soru geliyor..." },
+    wordData: { word: "vuruk", length: 5, definition: "Çarpık, çarpılmış", origin: "", category: "sıfat", example: "", flashHint: "Muzip bir soru geliyor..." },
     points: 500, revealedLetters: [], answered: false, correct: false, earnedPoints: 0,
   },
   {
-    wordData: { word: "duyuru", length: 6, definition: "Bir haberin halka bildirilmesi, ilan", origin: "", category: "isim", example: "Resmi duyuru yayimlandi", flashHint: "Gunluk hayattan bir soz..." },
+    wordData: { word: "duyuru", length: 6, definition: "Bir haberin halka bildirilmesi, ilan", origin: "", category: "isim", example: "", flashHint: "Günlük hayattan bir söz..." },
     points: 600, revealedLetters: [], answered: false, correct: false, earnedPoints: 0,
   },
   {
-    wordData: { word: "mektup", length: 6, definition: "Bir sey haber vermek, sormak veya duygulari bildirmek icin birine gonderilen yazili kagit", origin: "Arapca", category: "isim", example: "", flashHint: "Arapca kokenli bir kelime!" },
+    wordData: { word: "mektup", length: 6, definition: "Bir şey haber vermek, sormak veya duyguları bildirmek için birine gönderilen yazılı kâğıt", origin: "Arapça", category: "isim", example: "", flashHint: "Arapça kökenli bir kelime!" },
     points: 600, revealedLetters: [], answered: false, correct: false, earnedPoints: 0,
   },
   {
-    wordData: { word: "duyurum", length: 7, definition: "Duyurmak isi, sirkuler", origin: "", category: "isim", example: "", flashHint: "Oz Turkce bir kelime!" },
+    wordData: { word: "duyurum", length: 7, definition: "Duyurmak işi, sirküler", origin: "", category: "isim", example: "", flashHint: "Öz Türkçe bir kelime!" },
     points: 700, revealedLetters: [], answered: false, correct: false, earnedPoints: 0,
   },
   {
-    wordData: { word: "kelebek", length: 7, definition: "Pul kanatlilardan, cesitli renklerde, dort kanatli boceklere verilen genel ad", origin: "", category: "isim", example: "", flashHint: "Dogadan bir guzellik..." },
+    wordData: { word: "kelebek", length: 7, definition: "Pul kanatlılardan, çeşitli renklerde, dört kanatlı böceklere verilen genel ad", origin: "", category: "isim", example: "", flashHint: "Doğadan bir güzellik..." },
     points: 700, revealedLetters: [], answered: false, correct: false, earnedPoints: 0,
   },
   {
-    wordData: { word: "beklenti", length: 8, definition: "Gerceklesmesi beklenen sey", origin: "", category: "isim", example: "", flashHint: "Herkesin bildigi bir kelime!" },
+    wordData: { word: "beklenti", length: 8, definition: "Gerçekleşmesi beklenen şey", origin: "", category: "isim", example: "", flashHint: "Herkesin bildiği bir kelime!" },
     points: 800, revealedLetters: [], answered: false, correct: false, earnedPoints: 0,
   },
   {
-    wordData: { word: "pencere", length: 7, definition: "Yapilari aydinlatmak, havalandirmak amaciyla yapilan aciklik", origin: "Farsca", category: "isim", example: "", flashHint: "Farsca kokenli bir kelime!" },
+    wordData: { word: "pencere", length: 7, definition: "Yapıları aydınlatmak, havalandırmak amacıyla yapılan açıklık", origin: "Farsça", category: "isim", example: "", flashHint: "Farsça kökenli bir kelime!" },
     points: 700, revealedLetters: [], answered: false, correct: false, earnedPoints: 0,
   },
   {
-    wordData: { word: "cektirmek", length: 9, definition: "Cekme isini yaptirmak", origin: "", category: "fiil", example: "", flashHint: "Bir eylem sozcugu!" },
+    wordData: { word: "çektirmek", length: 9, definition: "Çekme işini yaptırmak", origin: "", category: "fiil", example: "", flashHint: "Bir eylem sözcüğü!" },
     points: 900, revealedLetters: [], answered: false, correct: false, earnedPoints: 0,
   },
   {
-    wordData: { word: "afallamak", length: 9, definition: "Saskinliktan sersemlesmek", origin: "", category: "fiil", example: "", flashHint: "Zipir bir soru!" },
+    wordData: { word: "afallamak", length: 9, definition: "Şaşkınlıktan sersemleşmek", origin: "", category: "fiil", example: "", flashHint: "Zıpır bir soru!" },
     points: 900, revealedLetters: [], answered: false, correct: false, earnedPoints: 0,
   },
   {
-    wordData: { word: "liberallik", length: 10, definition: "Liberal olma durumu", origin: "Fransizca", category: "isim", example: "", flashHint: "Bati kokenli bir kelime!" },
+    wordData: { word: "liberallik", length: 10, definition: "Liberal olma durumu", origin: "Fransızca", category: "isim", example: "", flashHint: "Batı kökenli bir kelime!" },
     points: 1000, revealedLetters: [], answered: false, correct: false, earnedPoints: 0,
   },
   {
-    wordData: { word: "cogullasma", length: 10, definition: "Cogullasmak isi", origin: "", category: "isim", example: "", flashHint: "Oz Turkce bir kelime!" },
+    wordData: { word: "çoğullaşma", length: 10, definition: "Çoğullaşmak işi", origin: "", category: "isim", example: "", flashHint: "Öz Türkçe bir kelime!" },
     points: 1000, revealedLetters: [], answered: false, correct: false, earnedPoints: 0,
   },
 ];

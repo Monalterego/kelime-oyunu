@@ -54,7 +54,7 @@ export default function GameScreen() {
           const isRevealed = question.revealedLetters.includes(i);
           return (
             <View key={i} style={[styles.letterBox, isRevealed && styles.letterBoxRevealed]}>
-              <Text style={styles.letterText}>{isRevealed ? letter.toUpperCase() : ""}</Text>
+              <Text style={styles.letterText}>{isRevealed ? letter.toLocaleUpperCase("tr-TR") : ""}</Text>
             </View>
           );
         })}
@@ -114,7 +114,7 @@ export default function GameScreen() {
         </View>
         <View style={[styles.resultCard, currentQuestion.correct ? styles.resultCorrect : styles.resultWrong]}>
           <Text style={styles.resultEmoji}>{currentQuestion.correct ? "\u2713" : "\u2717"}</Text>
-          <Text style={styles.resultWord}>{currentQuestion.wordData.word.toUpperCase()}</Text>
+          <Text style={styles.resultWord}>{currentQuestion.wordData.word.toLocaleUpperCase("tr-TR")}</Text>
           <Text style={styles.resultPoints}>{currentQuestion.earnedPoints > 0 ? "+" : ""}{currentQuestion.earnedPoints} puan</Text>
         </View>
         <TouchableOpacity style={styles.nextButton} onPress={() => dispatch({ type: "NEXT_QUESTION" })}>
