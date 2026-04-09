@@ -3,9 +3,6 @@ import { generateFlashHint } from "./flashHints";
 
 const TDK_API = "https://sozluk.gov.tr/gts?ara=";
 
-/**
- * Oyun yapısı: TV formatındaki 4h'den 10h'ye gidişi koruyoruz (toplam 14 soru).
- */
 export const GAME_STRUCTURE = [
   { length: 4, count: 2 },
   { length: 5, count: 2 },
@@ -17,67 +14,48 @@ export const GAME_STRUCTURE = [
 ];
 
 /**
- * Kelime listesinden harf sayısına göre filtreleme yapar.
- * Sadece Türkçe karakterleri kabul eder ve boşluklu kelimeleri eler.
+ * Filtreleme: Boşluksuz ve sadece Türkçe karakter içeren kelimeler.
  */
 export function filterWordsByLength(words: string[], length: number): string[] {
   return words.filter(
-    (w) => w.length === length && /^[a-zA-ZçÇğĞıİöÖşŞüÜ]+$/.test(w)
+    (w) => w && w.length === length && /^[a-zA-ZçÇğĞıİöÖşŞüÜ]+$/.test(w)
   );
 }
 
 /**
- * Diziden rastgele n adet eleman seçer.
- */
-export function pickRandom<T>(arr: T[], count: number): T[] {
-  const shuffled = [...arr].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, count);
-}
-
-/**
- * Tanım içindeki kelimeyi temizler veya sansürler.
+ * Sansürleme: Tanım içinde kelimenin kendisi geçiyorsa gizler.
  */
 function sanitizeDefinition(definition: string, word: string): string {
-  if (!definition) return "";
   const regex = new RegExp(word, "gi");
-  // Baştaki "Kelime:" veya "İsim:" gibi ibareleri temizle
   let cleaned = definition.replace(/^.*?:/g, "").trim();
-  // Tanım içinde kelime geçiyorsa sansürle
   cleaned = cleaned.replace(regex, ".......");
-  // İlk harfi büyüt
   return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
 }
 
 /**
- * TDK API'den kelime detaylarını çeker.
+ * TDK API Motoru: Tekil kelime çekimi
  */
 export async function fetchWordDetails(word: string): Promise<WordData | null> {
   try {
-    const res = await fetch(TDK_API + encodeURIComponent(word.toLowerCase()), {
+    // Türkçe karakter uyumlu arama
+    const searchWord = word.trim().toLocaleLowerCase('tr-TR');
+    const res = await fetch(TDK_API + encodeURIComponent(searchWord), {
       headers: { "User-Agent": "KelimeOyunu/1.0" },
     });
+    
     const data = await res.json();
-
-    if (!data || !data[0]) return null;
+    if (!data || !data[0] || !data[0].anlamlarListe) return null;
 
     const entry = data[0];
-    const firstMeaning = entry.anlamlarListe?.[0];
+    const firstMeaning = entry.anlamlarListe[0];
     
-    if (!firstMeaning || !firstMeaning.anlam) return null;
-
-    const rawDefinition = firstMeaning.anlam;
-    
-    // Geçersiz tanımları ele (çok kısa veya yönlendirme içerenler)
-    if (rawDefinition.length < 5 || rawDefinition.toLowerCase().includes("bakınız")) {
+    if (!firstMeaning.anlam || firstMeaning.anlam.length < 3 || firstMeaning.anlam.toLowerCase().includes("bakınız")) {
       return null;
     }
 
-    const definition = sanitizeDefinition(rawDefinition, word);
-    const example = firstMeaning.orneklerListe?.[0]?.ornek || "";
-    const category = firstMeaning.ozelliklerListe?.[0]?.tam_adi || "Genel";
+    const definition = sanitizeDefinition(firstMeaning.anlam, word);
     const origin = entry.lisan || "Türkçe";
-
-    const flashHint = generateFlashHint(origin, category, word.length);
+    const category = firstMeaning.ozelliklerListe?.[0]?.tam_adi || "Genel";
 
     return {
       word: word.toLocaleUpperCase('tr-TR'),
@@ -85,74 +63,67 @@ export async function fetchWordDetails(word: string): Promise<WordData | null> {
       definition,
       origin,
       category,
-      example,
-      flashHint,
+      example: firstMeaning.orneklerListe?.[0]?.ornek || "",
+      flashHint: generateFlashHint(origin, category, word.length),
     };
   } catch (error) {
-    console.error("TDK fetch error for", word, error);
+    console.error(`Fetch error for ${word}:`, error);
     return null;
   }
 }
 
 /**
- * Dinamik oyun sorularını üretir.
- * Paralel fetch (Promise.all) kullanarak hızı artırılmıştır.
+ * Soruları Hazırlayan Ana Motor (Paralel İşleme Revizesi)
  */
-export async function generateGameQuestions(
-  allWords: string[]
-): Promise<Question[]> {
-  const questions: Question[] = [];
+export async function generateGameQuestions(allWords: string[]): Promise<Question[]> {
+  const allQuestions: Question[] = [];
 
-  // Önce tüm kelimeleri harf uzunluklarına göre bir Map'e koyalım (Performans)
-  const wordMap = new Map<number, string[]>();
-  GAME_STRUCTURE.forEach(({ length }) => {
-    wordMap.set(length, filterWordsByLength(allWords, length));
+  // Her harf uzunluğu için paralel işlem başlatıyoruz
+  const groupPromises = GAME_STRUCTURE.map(async ({ length, count }) => {
+    const candidates = filterWordsByLength(allWords, length);
+    if (candidates.length === 0) return [];
+
+    // Hata payı için 5 katı fazla aday seçip aynı anda sorgula
+    const selectedCandidates = [...candidates]
+      .sort(() => Math.random() - 0.5)
+      .slice(0, count * 5);
+
+    const groupQuestions: Question[] = [];
+    
+    // Kelimeleri paralel çek (Performansın anahtarı burası)
+    const results = await Promise.all(selectedCandidates.map(w => fetchWordDetails(w)));
+
+    for (const wordData of results) {
+      if (wordData && groupQuestions.length < count) {
+        groupQuestions.push({
+          wordData,
+          points: length * 100,
+          revealedLetters: [],
+          answered: false,
+          correct: false,
+          earnedPoints: 0,
+        });
+      }
+    }
+    return groupQuestions;
   });
 
-  // Her harf grubu için işlemleri yürüt
-  for (const { length, count } of GAME_STRUCTURE) {
-    const candidates = wordMap.get(length) || [];
-    if (candidates.length === 0) continue;
+  const results = await Promise.all(groupPromises);
+  results.forEach(g => allQuestions.push(...g));
 
-    // API hataları veya geçersiz tanımlar için yedekli (count * 4) seçim yap
-    const selectedBatch = pickRandom(candidates, count * 4);
-    
-    // Paralel istekleri başlat
-    const batchPromises = selectedBatch.map(word => fetchWordDetails(word));
-    const batchResults = await Promise.all(batchPromises);
-
-    // null olmayan ve geçerli olan sonuçları ayıkla
-    const validBatch = batchResults
-      .filter((r): r is WordData => r !== null && r.definition.length > 3)
-      .slice(0, count);
-
-    validBatch.forEach((wordData) => {
-      questions.push({
-        wordData,
-        points: length * 100,
-        revealedLetters: [],
-        answered: false,
-        correct: false,
-        earnedPoints: 0,
-      });
-    });
+  if (allQuestions.length === 0) {
+    throw new Error("API'den veri çekilemedi. Bağlantını kontrol et.");
   }
 
-  return questions;
+  return allQuestions;
 }
 
 /**
- * Offline kullanım için soru objesi oluşturur.
+ * Manuel/Offline Soru Oluşturucu
  */
 export function generateOfflineQuestion(
-  word: string,
-  definition: string,
-  origin: string,
-  category: string,
-  example: string
+  word: string, definition: string, origin: string, category: string, example: string
 ): Question {
-  const flashHint = generateFlashHint(origin, category, word.length);
-  
   return {
     wordData: {
       word: word.toLocaleUpperCase('tr-TR'),
@@ -161,7 +132,7 @@ export function generateOfflineQuestion(
       origin,
       category,
       example,
-      flashHint,
+      flashHint: generateFlashHint(origin, category, word.length),
     },
     points: word.length * 100,
     revealedLetters: [],
