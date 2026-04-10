@@ -20,15 +20,21 @@ export const initialGameState: GameState = {
   maxCombo: 0,
 };
 
-function getBasePoints(question: Question): number {
+export function getBasePoints(question: Question): number {
   return question.wordData.length * 100;
 }
 
-function getHintPenalty(question: Question): number {
-  return question.usedHints.reduce((sum, hint) => sum + HINT_COSTS[hint], 0);
+export function getHintPenalty(question: Question): number {
+  const HINT_COSTS: Record<HintType, number> = {
+    firstLetter: 50,
+    lastLetter: 50,
+    category: 25,
+  };
+
+return question.usedHints.reduce((sum, hint) => sum + HINT_COSTS[hint], 0);
 }
 
-function getComboMultiplier(comboCount: number): number {
+export function getComboMultiplier(comboCount: number): number {
   if (comboCount >= 5) return 1.4;
   if (comboCount >= 3) return 1.2;
   if (comboCount >= 2) return 1.1;
