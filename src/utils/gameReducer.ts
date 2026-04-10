@@ -1,14 +1,10 @@
-import { GameState, GameAction, Question, HintType } from "../types";
+import { GameState, GameAction, Question } from "../types";
 
 export const TOTAL_TIME = 180;
 export const ANSWER_TIME = 12;
-
-const HINT_COSTS: Record<HintType, number> = {
-  firstLetter: 50,
-  lastLetter: 50,
-  category: 25,
-  randomLetter: 75,
-};
+export const LETTER_PENALTY = 100;
+export const FLASH_DURATION = 2500;
+export const SKIP_PENALTY_RATIO = 0.25;
 
 export const initialGameState: GameState = {
   status: "idle",
@@ -19,21 +15,15 @@ export const initialGameState: GameState = {
   answerTimeLeft: ANSWER_TIME,
   comboCount: 0,
   maxCombo: 0,
+  currentFlashHint: "",
 };
 
 export function getBasePoints(question: Question): number {
   return question.wordData.length * 100;
 }
 
-export function getHintPenalty(question: Question): number {
-  const HINT_COSTS: Record<HintType, number> = {
-    firstLetter: 50,
-    lastLetter: 50,
-    category: 25,
-    randomLetter: 75,
-  };
-
-  return question.usedHints.reduce((sum, hint) => sum + HINT_COSTS[hint], 0);
+export function getLetterPenalty(question: Question): number {
+  return question.revealedLetters.length * LETTER_PENALTY;
 }
 
 export function getComboMultiplier(comboCount: number): number {
@@ -43,59 +33,19 @@ export function getComboMultiplier(comboCount: number): number {
   return 1;
 }
 
-function revealIndexForHint(question: Question, hint: HintType): number[] {
-  const length = question.wordData.word.length;
-
-  switch (hint) {
-    case "firstLetter":
-      return question.revealedLetters.includes(0)
-        ? question.revealedLetters
-        : [...question.revealedLetters, 0];
-
-    case "lastLetter": {
-      const lastIndex = length - 1;
-      return question.revealedLetters.includes(lastIndex)
-        ? question.revealedLetters
-        : [...question.revealedLetters, lastIndex];
-    }
-
-    case "randomLetter": {
-      const lockedIndexes = new Set<number>();
-
-      if (question.usedHints.includes("firstLetter")) lockedIndexes.add(0);
-      if (question.usedHints.includes("lastLetter")) lockedIndexes.add(length - 1);
-
-      const availableIndexes = Array.from({ length }, (_, i) => i).filter(
-        (i) => !question.revealedLetters.includes(i) && !lockedIndexes.has(i)
-      );
-
-      if (availableIndexes.length === 0) {
-        return question.revealedLetters;
-      }
-
-      const randomIndex =
-        availableIndexes[Math.floor(Math.random() * availableIndexes.length)];
-
-      return [...question.revealedLetters, randomIndex];
-    }
-
-    case "category":
-      return question.revealedLetters;
-
-    default:
-      return question.revealedLetters;
-  }
-}
-
 export function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
     case "START_GAME":
       return {
         ...initialGameState,
-        status: "playing",
+        status: "flash",
         questions: action.questions,
         totalTimeLeft: TOTAL_TIME,
+        currentFlashHint: action.questions[0]?.wordData.flashHint || "",
       };
+
+    case "FLASH_DONE":
+      return { ...state, status: "playing" };
 
     case "TICK_TOTAL": {
       const newTime = state.totalTimeLeft - 1;
@@ -105,41 +55,20 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       return { ...state, totalTimeLeft: newTime };
     }
 
-    case "USE_HINT": {
+    case "REQUEST_LETTER": {
       const q = state.questions[state.currentQuestionIndex];
       if (!q || q.answered) return state;
-
-      if (q.usedHints.includes(action.hint)) return state;
-
-      const updatedQuestion: Question = {
-        ...q,
-        usedHints: [...q.usedHints, action.hint],
-        revealedLetters: revealIndexForHint(q, action.hint),
-      };
-
-      const newQuestions = [...state.questions];
-      newQuestions[state.currentQuestionIndex] = updatedQuestion;
-
-      return {
-        ...state,
-        questions: newQuestions,
-      };
-    }
-
-    case "TOGGLE_RISK_MODE": {
-      const q = state.questions[state.currentQuestionIndex];
-      if (!q || q.answered) return state;
-
+      const word = q.wordData.word;
+      const unrevealed = Array.from({ length: word.length }, (_, i) => i)
+        .filter((i) => !q.revealedLetters.includes(i));
+      if (unrevealed.length <= 1) return state;
+      const randomIndex = unrevealed[Math.floor(Math.random() * unrevealed.length)];
       const newQuestions = [...state.questions];
       newQuestions[state.currentQuestionIndex] = {
         ...q,
-        riskMode: !q.riskMode,
+        revealedLetters: [...q.revealedLetters, randomIndex],
       };
-
-      return {
-        ...state,
-        questions: newQuestions,
-      };
+      return { ...state, questions: newQuestions };
     }
 
     case "PRESS_BUTTON":
@@ -160,24 +89,18 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       const isCorrect = normalizedAnswer === normalizedWord;
 
       const basePoints = getBasePoints(q);
-      const hintPenalty = getHintPenalty(q);
+      const letterPenalty = getLetterPenalty(q);
 
       let earnedPoints = 0;
       let newCombo = state.comboCount;
 
       if (isCorrect) {
         newCombo = state.comboCount + 1;
-        const comboMultiplier = getComboMultiplier(newCombo);
-        const riskMultiplier = q.riskMode ? 1.5 : 1;
-        earnedPoints = Math.max(
-          0,
-          Math.round((basePoints - hintPenalty) * comboMultiplier * riskMultiplier)
-        );
+        const multiplier = getComboMultiplier(newCombo);
+        earnedPoints = Math.max(0, Math.round((basePoints - letterPenalty) * multiplier));
       } else {
         newCombo = 0;
-        earnedPoints = q.riskMode
-          ? -Math.round(basePoints * 1.5)
-          : -basePoints;
+        earnedPoints = -basePoints;
       }
 
       const newQuestions = [...state.questions];
@@ -201,11 +124,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     case "ANSWER_TIMEOUT": {
       const q = state.questions[state.currentQuestionIndex];
       if (!q) return state;
-
-      const penalty = q.riskMode
-        ? -Math.round(getBasePoints(q) * 1.5)
-        : -getBasePoints(q);
-
+      const penalty = -getBasePoints(q);
       const newQuestions = [...state.questions];
       newQuestions[state.currentQuestionIndex] = {
         ...q,
@@ -213,7 +132,6 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         correct: false,
         earnedPoints: penalty,
       };
-
       return {
         ...state,
         status: "result",
@@ -226,9 +144,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
     case "SKIP_QUESTION": {
       const q = state.questions[state.currentQuestionIndex];
-      if (!q) return state;
-
-      const penalty = -150;
+      if (!q || q.answered) return state;
+      const penalty = -Math.round(getBasePoints(q) * SKIP_PENALTY_RATIO);
       const newQuestions = [...state.questions];
       newQuestions[state.currentQuestionIndex] = {
         ...q,
@@ -237,7 +154,6 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         skipped: true,
         earnedPoints: penalty,
       };
-
       return {
         ...state,
         status: "result",
@@ -254,9 +170,10 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       }
       return {
         ...state,
-        status: "playing",
+        status: "flash",
         currentQuestionIndex: nextIndex,
         answerTimeLeft: ANSWER_TIME,
+        currentFlashHint: state.questions[nextIndex]?.wordData.flashHint || "",
       };
     }
 
@@ -270,12 +187,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
 export function calculateQuestionPoints(question: Question, comboCount = 0): number {
   const basePoints = getBasePoints(question);
-  const hintPenalty = getHintPenalty(question);
-  const comboMultiplier = getComboMultiplier(comboCount);
-  const riskMultiplier = question.riskMode ? 1.5 : 1;
-
-  return Math.max(
-    0,
-    Math.round((basePoints - hintPenalty) * comboMultiplier * riskMultiplier)
-  );
+  const letterPenalty = getLetterPenalty(question);
+  const multiplier = getComboMultiplier(comboCount + 1);
+  return Math.max(0, Math.round((basePoints - letterPenalty) * multiplier));
 }

@@ -1,5 +1,3 @@
-export type HintType = "firstLetter" | "lastLetter" | "category";
-
 export interface WordData {
   word: string;
   length: number;
@@ -17,13 +15,11 @@ export interface Question {
   answered: boolean;
   correct: boolean;
   earnedPoints: number;
-  usedHints: HintType[];
-  riskMode: boolean;
   skipped: boolean;
 }
 
 export interface GameState {
-  status: "idle" | "playing" | "answering" | "result" | "gameover";
+  status: "idle" | "flash" | "playing" | "answering" | "result" | "gameover";
   questions: Question[];
   currentQuestionIndex: number;
   totalScore: number;
@@ -31,13 +27,14 @@ export interface GameState {
   answerTimeLeft: number;
   comboCount: number;
   maxCombo: number;
+  currentFlashHint: string;
 }
 
 export type GameAction =
   | { type: "START_GAME"; questions: Question[] }
+  | { type: "FLASH_DONE" }
   | { type: "TICK_TOTAL" }
-  | { type: "USE_HINT"; hint: HintType }
-  | { type: "TOGGLE_RISK_MODE" }
+  | { type: "REQUEST_LETTER" }
   | { type: "PRESS_BUTTON" }
   | { type: "SUBMIT_ANSWER"; answer: string }
   | { type: "TICK_ANSWER" }

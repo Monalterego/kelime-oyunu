@@ -10,35 +10,27 @@ export const GAME_STRUCTURE = [
   { length: 7, count: 2 },
   { length: 8, count: 2 },
   { length: 9, count: 2 },
+  { length: 10, count: 2 },
 ];
 
-/**
- * Filtreleme: Boşluksuz ve sadece Türkçe karakter içeren kelimeler.
- */
 export function filterWordsByLength(words: string[], length: number): string[] {
   return words.filter(
     (w) => w && w.length === length && /^[a-zA-ZçÇğĞıİöÖşŞüÜ]+$/.test(w)
   );
 }
 
-/**
- * Sansürleme: Tanım içinde kelimenin kendisi geçiyorsa gizler.
- */
 function sanitizeDefinition(definition: string, word: string): string {
   const regex = new RegExp(word, "gi");
   let cleaned = definition.replace(/^.*?:/g, "").trim();
   cleaned = cleaned.replace(regex, ".......");
-  return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+  return cleaned.charAt(0).toLocaleUpperCase("tr-TR") + cleaned.slice(1);
 }
 
-/**
- * TDK API Motoru: Tekil kelime çekimi
- */
 export async function fetchWordDetails(word: string): Promise<WordData | null> {
   try {
     const searchWord = word.trim().toLocaleLowerCase("tr-TR");
     const res = await fetch(TDK_API + encodeURIComponent(searchWord), {
-      headers: { "User-Agent": "KelimeOyunu/1.0" },
+      headers: { "User-Agent": "Dagarcik/1.0" },
     });
 
     const data = await res.json();
@@ -56,11 +48,11 @@ export async function fetchWordDetails(word: string): Promise<WordData | null> {
     }
 
     const definition = sanitizeDefinition(firstMeaning.anlam, word);
-    const origin = entry.lisan || "Türkçe";
-    const category = firstMeaning.ozelliklerListe?.[0]?.tam_adi || "Genel";
+    const origin = entry.lisan || "";
+    const category = firstMeaning.ozelliklerListe?.[0]?.tam_adi || "";
 
     return {
-      word: word.toLocaleUpperCase("tr-TR"),
+      word: word,
       length: word.length,
       definition,
       origin,
@@ -69,14 +61,11 @@ export async function fetchWordDetails(word: string): Promise<WordData | null> {
       flashHint: generateFlashHint(origin, category, word.length),
     };
   } catch (error) {
-    console.error(`Fetch error for ${word}:`, error);
+    console.error("Fetch error for " + word, error);
     return null;
   }
 }
 
-/**
- * Soruları Hazırlayan Ana Motor
- */
 export async function generateGameQuestions(allWords: string[]): Promise<Question[]> {
   const allQuestions: Question[] = [];
 
@@ -102,8 +91,6 @@ export async function generateGameQuestions(allWords: string[]): Promise<Questio
           answered: false,
           correct: false,
           earnedPoints: 0,
-          usedHints: [],
-          riskMode: false,
           skipped: false,
         });
       }
@@ -120,35 +107,4 @@ export async function generateGameQuestions(allWords: string[]): Promise<Questio
   }
 
   return allQuestions;
-}
-
-/**
- * Manuel/Offline Soru Oluşturucu
- */
-export function generateOfflineQuestion(
-  word: string,
-  definition: string,
-  origin: string,
-  category: string,
-  example: string
-): Question {
-  return {
-    wordData: {
-      word: word.toLocaleUpperCase("tr-TR"),
-      length: word.length,
-      definition: sanitizeDefinition(definition, word),
-      origin,
-      category,
-      example,
-      flashHint: generateFlashHint(origin, category, word.length),
-    },
-    points: word.length * 100,
-    revealedLetters: [],
-    answered: false,
-    correct: false,
-    earnedPoints: 0,
-    usedHints: [],
-    riskMode: false,
-    skipped: false,
-  };
 }
