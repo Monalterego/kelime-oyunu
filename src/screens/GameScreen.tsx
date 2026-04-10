@@ -15,21 +15,12 @@ export default function GameScreen({ navigation }: any) {
   const allWordsRef = useRef<string[]>([]);
 
   // Kelime listesini başlangıçta bir kez çek
-  useEffect(() => {
-    fetch("https://sozluk.gov.tr/autocomplete.json", { 
-      headers: { "User-Agent": "KelimeOyunu/1.0" } 
-    })
-      .then((r) => r.json())
-      .then((data) => {
-        const words = data
-          .map((d: any) => d.madde || d)
-          .filter((w: string) => typeof w === "string" && /^[a-zA-ZçÇğĞıİöÖşŞüÜ]+$/.test(w));
-        allWordsRef.current = words;
-      })
-      .catch((err) => {
-        console.error("Kelime listesi yüklenemedi:", err);
-        Alert.alert("Hata", "Kelime listesi yüklenemedi. Lütfen internetinizi kontrol edin.");
-      });
+useEffect(() => {
+    const data = require("../data/autocomplete.json");
+    const words = data
+      .map((d: any) => d.madde || d)
+      .filter((w: string) => typeof w === "string" && /^[a-zA-ZçÇğĞıİöÖşŞüÜ]+$/.test(w));
+    allWordsRef.current = words;
   }, []);
 
   // Oyunu başlatan asenkron fonksiyon
