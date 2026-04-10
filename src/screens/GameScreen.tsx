@@ -29,7 +29,7 @@ useEffect(() => {
 
   // Oyunu başlatan asenkron fonksiyon
   const startGame = async () => {
-    if (allWordsRef.current.length === 0) {
+    if (allWords.length === 0) {
       Alert.alert("Bekleyin", "Kelimeler henüz yüklenmedi.");
       return;
     }
