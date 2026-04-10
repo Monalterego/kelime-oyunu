@@ -2,6 +2,8 @@ import { WordData, Question } from "../types";
 import { generateFlashHint } from "./flashHints";
 
 const TDK_API = "https://sozluk.gov.tr/gts?ara=";
+const BATCH_SIZE = 4;
+const BATCH_DELAY = 400;
 
 export const GAME_STRUCTURE = [
   { length: 4, count: 2 },
@@ -26,63 +28,97 @@ function sanitizeDefinition(definition: string, word: string): string {
   return cleaned.charAt(0).toLocaleUpperCase("tr-TR") + cleaned.slice(1);
 }
 
-export async function fetchWordDetails(word: string): Promise<WordData | null> {
-  try {
-    const searchWord = word.trim().toLocaleLowerCase("tr-TR");
-    const res = await fetch(TDK_API + encodeURIComponent(searchWord), {
-      headers: { "User-Agent": "Dagarcik/1.0" },
-    });
+const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-    const data = await res.json();
-    if (!data || !data[0] || !data[0].anlamlarListe) return null;
+export async function fetchWordDetails(word: string, retries = 2): Promise<WordData | null> {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const searchWord = word.trim().toLocaleLowerCase("tr-TR");
+      const res = await fetch(TDK_API + encodeURIComponent(searchWord));
 
-    const entry = data[0];
-    const firstMeaning = entry.anlamlarListe[0];
+      if (!res.ok) {
+        if (attempt < retries) {
+          await delay(500 * (attempt + 1));
+          continue;
+        }
+        return null;
+      }
 
-    if (
-      !firstMeaning.anlam ||
-      firstMeaning.anlam.length < 3 ||
-      firstMeaning.anlam.toLowerCase().includes("bakınız")
-    ) {
+      const data = await res.json();
+      if (!data || !data[0] || !data[0].anlamlarListe) return null;
+
+      const entry = data[0];
+      const firstMeaning = entry.anlamlarListe[0];
+
+      if (
+        !firstMeaning.anlam ||
+        firstMeaning.anlam.length < 3 ||
+        firstMeaning.anlam.toLowerCase().includes("bakınız")
+      ) {
+        return null;
+      }
+
+      const definition = sanitizeDefinition(firstMeaning.anlam, word);
+      const origin = entry.lisan || "";
+      const category = firstMeaning.ozelliklerListe?.[0]?.tam_adi || "";
+
+      return {
+        word: word,
+        length: word.length,
+        definition,
+        origin,
+        category,
+        example: firstMeaning.orneklerListe?.[0]?.ornek || "",
+        flashHint: generateFlashHint(origin, category, word.length),
+      };
+    } catch (error) {
+      if (attempt < retries) {
+        await delay(500 * (attempt + 1));
+        continue;
+      }
       return null;
     }
-
-    const definition = sanitizeDefinition(firstMeaning.anlam, word);
-    const origin = entry.lisan || "";
-    const category = firstMeaning.ozelliklerListe?.[0]?.tam_adi || "";
-
-    return {
-      word: word,
-      length: word.length,
-      definition,
-      origin,
-      category,
-      example: firstMeaning.orneklerListe?.[0]?.ornek || "",
-      flashHint: generateFlashHint(origin, category, word.length),
-    };
-  } catch (error) {
-    console.error("Fetch error for " + word, error);
-    return null;
   }
+  return null;
+}
+
+async function fetchInBatches(words: string[]): Promise<(WordData | null)[]> {
+  const results: (WordData | null)[] = [];
+  for (let i = 0; i < words.length; i += BATCH_SIZE) {
+    const batch = words.slice(i, i + BATCH_SIZE);
+    const batchResults = await Promise.all(batch.map((w) => fetchWordDetails(w)));
+    results.push(...batchResults);
+    if (i + BATCH_SIZE < words.length) {
+      await delay(BATCH_DELAY);
+    }
+  }
+  return results;
 }
 
 export async function generateGameQuestions(allWords: string[]): Promise<Question[]> {
-  const allQuestions: Question[] = [];
+  const allCandidates: { length: number; count: number; words: string[] }[] = [];
 
-  const groupPromises = GAME_STRUCTURE.map(async ({ length, count }) => {
+  for (const { length, count } of GAME_STRUCTURE) {
     const candidates = filterWordsByLength(allWords, length);
-    if (candidates.length === 0) return [];
-
-    const selectedCandidates = [...candidates]
+    if (candidates.length === 0) continue;
+    const selected = [...candidates]
       .sort(() => Math.random() - 0.5)
-      .slice(0, count * 5);
+      .slice(0, count * 3);
+    allCandidates.push({ length, count, words: selected });
+  }
+
+  const flatWords = allCandidates.flatMap((g) => g.words);
+  const allResults = await fetchInBatches(flatWords);
+
+  const allQuestions: Question[] = [];
+  let resultIndex = 0;
+
+  for (const { length, count, words } of allCandidates) {
+    const groupResults = allResults.slice(resultIndex, resultIndex + words.length);
+    resultIndex += words.length;
 
     const groupQuestions: Question[] = [];
-    const results = await Promise.all(
-      selectedCandidates.map((w) => fetchWordDetails(w))
-    );
-
-    for (const wordData of results) {
+    for (const wordData of groupResults) {
       if (wordData && groupQuestions.length < count) {
         groupQuestions.push({
           wordData,
@@ -95,12 +131,8 @@ export async function generateGameQuestions(allWords: string[]): Promise<Questio
         });
       }
     }
-
-    return groupQuestions;
-  });
-
-  const results = await Promise.all(groupPromises);
-  results.forEach((g) => allQuestions.push(...g));
+    allQuestions.push(...groupQuestions);
+  }
 
   if (allQuestions.length === 0) {
     throw new Error("API'den veri çekilemedi. Bağlantını kontrol et.");
