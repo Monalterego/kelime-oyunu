@@ -1,5 +1,5 @@
 import React, { useReducer, useEffect, useRef, useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Animated, ActivityIndicator } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Animated } from "react-native";
 import { Question } from "../types";
 import { gameReducer, initialGameState, FLASH_DURATION, calculateQuestionPoints, LETTER_PENALTY, SKIP_PENALTY_RATIO, getBasePoints } from "../utils/gameReducer";
 import { COLORS } from "../theme/colors";
@@ -8,36 +8,18 @@ import { generateGameQuestions } from "../utils/questionGenerator";
 export default function GameScreen({ navigation }: any) {
   const [state, dispatch] = useReducer(gameReducer, initialGameState);
   const [answer, setAnswer] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [allWords, setAllWords] = useState<string[]>([]);
   const flashOpacity = useRef(new Animated.Value(0)).current;
   const totalTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const answerTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  useEffect(() => {
+  const startGame = () => {
     try {
-      const data = require("../data/autocomplete.json");
-      const words = data
-        .map((d: any) => d.madde || d)
-        .filter((w: string) => typeof w === "string" && /^[a-zA-ZçÇğĞıİöÖşŞüÜ]+$/.test(w));
-      setAllWords(words);
-    } catch (err) {
-      console.error("Kelime listesi yüklenemedi:", err);
-    }
-  }, []);
-
-  const startGame = async () => {
-    if (allWords.length === 0) return;
-    setLoading(true);
-    try {
-      const questions = await generateGameQuestions(allWords);
-      if (questions && questions.length > 0) {
+      const questions = generateGameQuestions();
+      if (questions.length > 0) {
         dispatch({ type: "START_GAME", questions });
       }
     } catch (error) {
-      console.error("Başlatma hatası:", error);
-    } finally {
-      setLoading(false);
+      console.error("Oyun başlatılamadı:", error);
     }
   };
 
@@ -97,25 +79,13 @@ export default function GameScreen({ navigation }: any) {
   };
 
   if (state.status === "idle") {
-    const isReady = allWords.length > 0;
     return (
       <View style={styles.container}>
         <Text style={styles.bigTitle}>Dağarcık</Text>
-        <Text style={styles.statsText}>{isReady ? "Kelime hazinenizi test edin!" : "Kelimeler yükleniyor..."}</Text>
-        {loading ? (
-          <View style={{ alignItems: "center", marginTop: 20 }}>
-            <ActivityIndicator size="large" color={COLORS.primary} />
-            <Text style={[styles.statsText, { marginTop: 12 }]}>Sorular hazırlanıyor...</Text>
-          </View>
-        ) : (
-          <TouchableOpacity
-            style={[styles.replayButton, !isReady && { opacity: 0.5 }]}
-            onPress={startGame}
-            disabled={!isReady}
-          >
-            <Text style={styles.replayButtonText}>OYNA</Text>
-          </TouchableOpacity>
-        )}
+        <Text style={styles.statsText}>Kelime hazinenizi test edin!</Text>
+        <TouchableOpacity style={styles.replayButton} onPress={startGame}>
+          <Text style={styles.replayButtonText}>OYNA</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -218,7 +188,7 @@ export default function GameScreen({ navigation }: any) {
         </View>
         {state.comboCount >= 2 && (
           <View style={styles.comboBadge}>
-            <Text style={styles.comboBadgeText}>🔥 {state.comboCount}x COMBO</Text>
+            <Text style={styles.comboBadgeText}>x{state.comboCount} COMBO</Text>
           </View>
         )}
         <Text style={styles.lengthInfo}>{currentQuestion.wordData.length} Harfli</Text>
