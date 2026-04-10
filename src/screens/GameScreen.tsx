@@ -12,15 +12,19 @@ export default function GameScreen({ navigation }: any) {
   const flashOpacity = useRef(new Animated.Value(0)).current;
   const totalTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const answerTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const allWordsRef = useRef<string[]>([]);
+  const [allWords, setAllWords] = useState<string[]>([]);
 
   // Kelime listesini başlangıçta bir kez çek
 useEffect(() => {
-    const data = require("../data/autocomplete.json");
-    const words = data
-      .map((d: any) => d.madde || d)
-      .filter((w: string) => typeof w === "string" && /^[a-zA-ZçÇğĞıİöÖşŞüÜ]+$/.test(w));
-    allWordsRef.current = words;
+    try {
+      const data = require("../data/autocomplete.json");
+      const words = data
+        .map((d: any) => d.madde || d)
+        .filter((w: string) => typeof w === "string" && /^[a-zA-ZçÇğĞıİöÖşŞüÜ]+$/.test(w));
+      setAllWords(words);
+    } catch (err) {
+      console.error("Kelime listesi yüklenemedi:", err);
+    }
   }, []);
 
   // Oyunu başlatan asenkron fonksiyon
@@ -33,7 +37,7 @@ useEffect(() => {
     setLoading(true);
     try {
       // Parallel fetch ve optimize edilmiş filtreleme ile soruları üret
-      const questions = await generateGameQuestions(allWordsRef.current);
+      const questions = await generateGameQuestions(allWords);
       
       if (questions && questions.length > 0) {
         dispatch({ type: "START_GAME", questions });
@@ -111,7 +115,7 @@ useEffect(() => {
   // --- EKRAN DURUMLARI ---
 
   if (state.status === "idle") {
-    const isReady = allWordsRef.current.length > 0;
+    const isReady = allWords.length > 0;
     return (
       <View style={styles.container}>
         <Text style={styles.gameOverTitle}>Kelime Oyunu</Text>
