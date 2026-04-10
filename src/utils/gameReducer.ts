@@ -7,6 +7,7 @@ const HINT_COSTS: Record<HintType, number> = {
   firstLetter: 50,
   lastLetter: 50,
   category: 25,
+  randomLetter: 75,
 };
 
 export const initialGameState: GameState = {
@@ -29,9 +30,10 @@ export function getHintPenalty(question: Question): number {
     firstLetter: 50,
     lastLetter: 50,
     category: 25,
+    randomLetter: 75,
   };
 
-return question.usedHints.reduce((sum, hint) => sum + HINT_COSTS[hint], 0);
+  return question.usedHints.reduce((sum, hint) => sum + HINT_COSTS[hint], 0);
 }
 
 export function getComboMultiplier(comboCount: number): number {
@@ -55,6 +57,26 @@ function revealIndexForHint(question: Question, hint: HintType): number[] {
       return question.revealedLetters.includes(lastIndex)
         ? question.revealedLetters
         : [...question.revealedLetters, lastIndex];
+    }
+
+    case "randomLetter": {
+      const lockedIndexes = new Set<number>();
+
+      if (question.usedHints.includes("firstLetter")) lockedIndexes.add(0);
+      if (question.usedHints.includes("lastLetter")) lockedIndexes.add(length - 1);
+
+      const availableIndexes = Array.from({ length }, (_, i) => i).filter(
+        (i) => !question.revealedLetters.includes(i) && !lockedIndexes.has(i)
+      );
+
+      if (availableIndexes.length === 0) {
+        return question.revealedLetters;
+      }
+
+      const randomIndex =
+        availableIndexes[Math.floor(Math.random() * availableIndexes.length)];
+
+      return [...question.revealedLetters, randomIndex];
     }
 
     case "category":

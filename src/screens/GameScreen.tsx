@@ -83,9 +83,7 @@ export default function GameScreen({ navigation }: any) {
     }
 
     return () => {
-      if (totalTimerRef.current) {
-        clearInterval(totalTimerRef.current);
-      }
+      if (totalTimerRef.current) clearInterval(totalTimerRef.current);
     };
   }, [state.status]);
 
@@ -100,9 +98,7 @@ export default function GameScreen({ navigation }: any) {
     }
 
     return () => {
-      if (answerTimerRef.current) {
-        clearInterval(answerTimerRef.current);
-      }
+      if (answerTimerRef.current) clearInterval(answerTimerRef.current);
     };
   }, [state.status]);
 
@@ -194,7 +190,9 @@ export default function GameScreen({ navigation }: any) {
           {correct.length}/{state.questions.length} doğru
         </Text>
         <Text style={styles.statsSubText}>Maks. Combo: {state.maxCombo}</Text>
-        <Text style={styles.statsSubText}>Riskli Doğru: {riskyCorrect.length}</Text>
+        <Text style={styles.statsSubText}>
+          Riskli Doğru: {riskyCorrect.length}
+        </Text>
         <Text style={styles.statsSubText}>Pas Geçilen: {skippedCount}</Text>
 
         <View style={styles.endButtons}>
@@ -216,7 +214,10 @@ export default function GameScreen({ navigation }: any) {
   if (!currentQuestion) return null;
 
   const questionNumber = state.currentQuestionIndex + 1;
-  const remainingPoints = calculateQuestionPoints(currentQuestion, state.comboCount);
+  const remainingPoints = calculateQuestionPoints(
+    currentQuestion,
+    state.comboCount
+  );
   const timeColor =
     state.totalTimeLeft <= 30 ? COLORS.timerDanger : COLORS.primary;
 
@@ -225,6 +226,7 @@ export default function GameScreen({ navigation }: any) {
   const categoryUsed = currentQuestion.usedHints.includes("category");
   const firstLetterUsed = currentQuestion.usedHints.includes("firstLetter");
   const lastLetterUsed = currentQuestion.usedHints.includes("lastLetter");
+  const randomLetterUsed = currentQuestion.usedHints.includes("randomLetter");
 
   if (state.status === "result") {
     const basePoints = getBasePoints(currentQuestion);
@@ -272,7 +274,8 @@ export default function GameScreen({ navigation }: any) {
             {currentQuestion.correct ? (
               <>
                 <Text style={styles.breakdownLine}>
-                  Combo çarpanı: x{getComboMultiplier(state.comboCount).toFixed(1)}
+                  Combo çarpanı: x
+                  {getComboMultiplier(state.comboCount).toFixed(1)}
                 </Text>
                 <Text style={styles.breakdownLine}>
                   Risk çarpanı: x{currentQuestion.riskMode ? "1.5" : "1.0"}
@@ -373,7 +376,9 @@ export default function GameScreen({ navigation }: any) {
         <View style={styles.infoCard}>
           <Text style={styles.infoCardLabel}>Kategori</Text>
           <Text style={styles.infoCardValue}>
-            {categoryUsed ? currentQuestion.wordData.category : "Açmak için kullan"}
+            {categoryUsed
+              ? currentQuestion.wordData.category
+              : "İpucu kullanarak aç"}
           </Text>
         </View>
       </View>
@@ -424,7 +429,9 @@ export default function GameScreen({ navigation }: any) {
               <Text style={styles.hintButtonText}>
                 {firstLetterUsed ? "İlk Harf ✓" : "İlk Harf"}
               </Text>
-              <Text style={styles.hintCost}>{firstLetterUsed ? "Kullanıldı" : "-50P"}</Text>
+              <Text style={styles.hintCost}>
+                {firstLetterUsed ? "Kullanıldı" : "-50P"}
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -438,7 +445,9 @@ export default function GameScreen({ navigation }: any) {
               <Text style={styles.hintButtonText}>
                 {lastLetterUsed ? "Son Harf ✓" : "Son Harf"}
               </Text>
-              <Text style={styles.hintCost}>{lastLetterUsed ? "Kullanıldı" : "-50P"}</Text>
+              <Text style={styles.hintCost}>
+                {lastLetterUsed ? "Kullanıldı" : "-50P"}
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -452,7 +461,27 @@ export default function GameScreen({ navigation }: any) {
               <Text style={styles.hintButtonText}>
                 {categoryUsed ? "Kategori ✓" : "Kategori"}
               </Text>
-              <Text style={styles.hintCost}>{categoryUsed ? "Kullanıldı" : "-25P"}</Text>
+              <Text style={styles.hintCost}>
+                {categoryUsed ? "Kullanıldı" : "-25P"}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.hintButton,
+                randomLetterUsed && styles.disabledHintButton,
+              ]}
+              onPress={() =>
+                dispatch({ type: "USE_HINT", hint: "randomLetter" })
+              }
+              disabled={randomLetterUsed}
+            >
+              <Text style={styles.hintButtonText}>
+                {randomLetterUsed ? "Rastgele Harf ✓" : "Rastgele Harf"}
+              </Text>
+              <Text style={styles.hintCost}>
+                {randomLetterUsed ? "Kullanıldı" : "-75P"}
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -667,9 +696,10 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: 12,
     marginBottom: 14,
+    justifyContent: "space-between",
   },
   hintButton: {
-    width: "48%",
+    width: "31.5%",
     backgroundColor: COLORS.bgDark,
     borderWidth: 1,
     borderColor: COLORS.primaryDark,
@@ -684,14 +714,16 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "700",
     color: COLORS.textSecondary,
+    textAlign: "center",
   },
   hintCost: {
     fontSize: 11,
     color: COLORS.textMuted,
     marginTop: 2,
+    textAlign: "center",
   },
   skipButton: {
-    width: "48%",
+    width: "31.5%",
     backgroundColor: "#2E0A0E",
     borderWidth: 1,
     borderColor: COLORS.wrong,
