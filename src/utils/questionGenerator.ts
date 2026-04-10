@@ -10,7 +10,6 @@ export const GAME_STRUCTURE = [
   { length: 7, count: 2 },
   { length: 8, count: 2 },
   { length: 9, count: 2 },
-  { length: 10, count: 2 },
 ];
 
 /**
@@ -96,13 +95,16 @@ export async function generateGameQuestions(allWords: string[]): Promise<Questio
     for (const wordData of results) {
       if (wordData && groupQuestions.length < count) {
         groupQuestions.push({
-          wordData,
-          points: length * 100,
-          revealedLetters: [],
-          answered: false,
-          correct: false,
-          earnedPoints: 0,
-        });
+  wordData,
+  points: length * 100,
+  revealedLetters: [],
+  answered: false,
+  correct: false,
+  earnedPoints: 0,
+  usedHints: [],
+  riskMode: false,
+  skipped: false,
+});
       }
     }
     return groupQuestions;
@@ -125,19 +127,21 @@ export function generateOfflineQuestion(
   word: string, definition: string, origin: string, category: string, example: string
 ): Question {
   return {
-    wordData: {
-      word: word.toLocaleUpperCase('tr-TR'),
-      length: word.length,
-      definition: sanitizeDefinition(definition, word),
-      origin,
-      category,
-      example,
-      flashHint: generateFlashHint(origin, category, word.length),
-    },
-    points: word.length * 100,
-    revealedLetters: [],
-    answered: false,
-    correct: false,
-    earnedPoints: 0,
-  };
-}
+  wordData: {
+    word: word.toLocaleUpperCase("tr-TR"),
+    length: word.length,
+    definition: sanitizeDefinition(definition, word),
+    origin,
+    category,
+    example,
+    flashHint: generateFlashHint(origin, category, word.length),
+  },
+  points: word.length * 100,
+  revealedLetters: [],
+  answered: false,
+  correct: false,
+  earnedPoints: 0,
+  usedHints: [],
+  riskMode: false,
+  skipped: false,
+};

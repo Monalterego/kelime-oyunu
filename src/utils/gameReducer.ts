@@ -1,9 +1,13 @@
-import { GameState, GameAction, Question } from "../types";
+import { GameState, GameAction, Question, HintType } from "../types";
 
-export const TOTAL_TIME = 240;
-export const ANSWER_TIME = 10;
-export const LETTER_PENALTY = 100;
-export const FLASH_DURATION = 2500;
+export const TOTAL_TIME = 180;
+export const ANSWER_TIME = 12;
+
+const HINT_COSTS: Record<HintType, number> = {
+  firstLetter: 50,
+  lastLetter: 50,
+  category: 25,
+};
 
 export const initialGameState: GameState = {
   status: "idle",
@@ -12,22 +16,58 @@ export const initialGameState: GameState = {
   totalScore: 0,
   totalTimeLeft: TOTAL_TIME,
   answerTimeLeft: ANSWER_TIME,
-  currentFlashHint: "",
+  comboCount: 0,
+  maxCombo: 0,
 };
+
+function getBasePoints(question: Question): number {
+  return question.wordData.length * 100;
+}
+
+function getHintPenalty(question: Question): number {
+  return question.usedHints.reduce((sum, hint) => sum + HINT_COSTS[hint], 0);
+}
+
+function getComboMultiplier(comboCount: number): number {
+  if (comboCount >= 5) return 1.4;
+  if (comboCount >= 3) return 1.2;
+  if (comboCount >= 2) return 1.1;
+  return 1;
+}
+
+function revealIndexForHint(question: Question, hint: HintType): number[] {
+  const length = question.wordData.word.length;
+
+  switch (hint) {
+    case "firstLetter":
+      return question.revealedLetters.includes(0)
+        ? question.revealedLetters
+        : [...question.revealedLetters, 0];
+
+    case "lastLetter": {
+      const lastIndex = length - 1;
+      return question.revealedLetters.includes(lastIndex)
+        ? question.revealedLetters
+        : [...question.revealedLetters, lastIndex];
+    }
+
+    case "category":
+      return question.revealedLetters;
+
+    default:
+      return question.revealedLetters;
+  }
+}
 
 export function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
     case "START_GAME":
       return {
         ...initialGameState,
-        status: "flash",
+        status: "playing",
         questions: action.questions,
         totalTimeLeft: TOTAL_TIME,
-        currentFlashHint: action.questions[0]?.wordData.flashHint || "",
       };
-
-    case "FLASH_DONE":
-      return { ...state, status: "playing" };
 
     case "TICK_TOTAL": {
       const newTime = state.totalTimeLeft - 1;
@@ -37,18 +77,41 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       return { ...state, totalTimeLeft: newTime };
     }
 
-    case "REQUEST_LETTER": {
+    case "USE_HINT": {
       const q = state.questions[state.currentQuestionIndex];
-      if (!q) return state;
-      const word = q.wordData.word;
-      const unrevealed = Array.from({ length: word.length }, (_, i) => i)
-        .filter((i) => !q.revealedLetters.includes(i));
-      if (unrevealed.length === 0) return state;
-      const randomIndex = unrevealed[Math.floor(Math.random() * unrevealed.length)];
-      const newRevealed = [...q.revealedLetters, randomIndex];
+      if (!q || q.answered) return state;
+
+      if (q.usedHints.includes(action.hint)) return state;
+
+      const updatedQuestion: Question = {
+        ...q,
+        usedHints: [...q.usedHints, action.hint],
+        revealedLetters: revealIndexForHint(q, action.hint),
+      };
+
       const newQuestions = [...state.questions];
-      newQuestions[state.currentQuestionIndex] = { ...q, revealedLetters: newRevealed };
-      return { ...state, questions: newQuestions };
+      newQuestions[state.currentQuestionIndex] = updatedQuestion;
+
+      return {
+        ...state,
+        questions: newQuestions,
+      };
+    }
+
+    case "TOGGLE_RISK_MODE": {
+      const q = state.questions[state.currentQuestionIndex];
+      if (!q || q.answered) return state;
+
+      const newQuestions = [...state.questions];
+      newQuestions[state.currentQuestionIndex] = {
+        ...q,
+        riskMode: !q.riskMode,
+      };
+
+      return {
+        ...state,
+        questions: newQuestions,
+      };
     }
 
     case "PRESS_BUTTON":
@@ -63,32 +126,96 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     case "SUBMIT_ANSWER": {
       const q = state.questions[state.currentQuestionIndex];
       if (!q) return state;
-      const isCorrect = action.answer.toLowerCase().trim() === q.wordData.word.toLowerCase().trim();
-      const basePoints = q.wordData.word.length * 100;
-      const earnedPoints = isCorrect
-        ? basePoints - q.revealedLetters.length * LETTER_PENALTY
-        : -basePoints;
+
+      const normalizedAnswer = action.answer.toLocaleLowerCase("tr-TR").trim();
+      const normalizedWord = q.wordData.word.toLocaleLowerCase("tr-TR").trim();
+      const isCorrect = normalizedAnswer === normalizedWord;
+
+      const basePoints = getBasePoints(q);
+      const hintPenalty = getHintPenalty(q);
+
+      let earnedPoints = 0;
+      let newCombo = state.comboCount;
+
+      if (isCorrect) {
+        newCombo = state.comboCount + 1;
+        const comboMultiplier = getComboMultiplier(newCombo);
+        const riskMultiplier = q.riskMode ? 1.5 : 1;
+        earnedPoints = Math.max(
+          0,
+          Math.round((basePoints - hintPenalty) * comboMultiplier * riskMultiplier)
+        );
+      } else {
+        newCombo = 0;
+        earnedPoints = q.riskMode
+          ? -Math.round(basePoints * 1.5)
+          : -basePoints;
+      }
+
       const newQuestions = [...state.questions];
       newQuestions[state.currentQuestionIndex] = {
-        ...q, answered: true, correct: isCorrect, earnedPoints,
+        ...q,
+        answered: true,
+        correct: isCorrect,
+        earnedPoints,
       };
+
       return {
-        ...state, status: "result", questions: newQuestions,
+        ...state,
+        status: "result",
+        questions: newQuestions,
         totalScore: state.totalScore + earnedPoints,
+        comboCount: newCombo,
+        maxCombo: Math.max(state.maxCombo, newCombo),
       };
     }
 
     case "ANSWER_TIMEOUT": {
       const q = state.questions[state.currentQuestionIndex];
       if (!q) return state;
-      const penalty = -(q.wordData.word.length * 100);
+
+      const penalty = q.riskMode
+        ? -Math.round(getBasePoints(q) * 1.5)
+        : -getBasePoints(q);
+
       const newQuestions = [...state.questions];
       newQuestions[state.currentQuestionIndex] = {
-        ...q, answered: true, correct: false, earnedPoints: penalty,
+        ...q,
+        answered: true,
+        correct: false,
+        earnedPoints: penalty,
       };
+
       return {
-        ...state, status: "result", questions: newQuestions,
-        totalScore: state.totalScore + penalty, answerTimeLeft: 0,
+        ...state,
+        status: "result",
+        questions: newQuestions,
+        totalScore: state.totalScore + penalty,
+        answerTimeLeft: 0,
+        comboCount: 0,
+      };
+    }
+
+    case "SKIP_QUESTION": {
+      const q = state.questions[state.currentQuestionIndex];
+      if (!q) return state;
+
+      const penalty = -150;
+      const newQuestions = [...state.questions];
+      newQuestions[state.currentQuestionIndex] = {
+        ...q,
+        answered: true,
+        correct: false,
+        skipped: true,
+        earnedPoints: penalty,
+      };
+
+      return {
+        ...state,
+        status: "result",
+        questions: newQuestions,
+        totalScore: state.totalScore + penalty,
+        comboCount: 0,
       };
     }
 
@@ -98,8 +225,10 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         return { ...state, status: "gameover" };
       }
       return {
-        ...state, status: "flash", currentQuestionIndex: nextIndex,
-        currentFlashHint: state.questions[nextIndex]?.wordData.flashHint || "",
+        ...state,
+        status: "playing",
+        currentQuestionIndex: nextIndex,
+        answerTimeLeft: ANSWER_TIME,
       };
     }
 
@@ -111,8 +240,14 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
   }
 }
 
-export function calculateQuestionPoints(question: Question): number {
-  const basePoints = question.wordData.word.length * 100;
-  const penalty = question.revealedLetters.length * LETTER_PENALTY;
-  return Math.max(0, basePoints - penalty);
+export function calculateQuestionPoints(question: Question, comboCount = 0): number {
+  const basePoints = getBasePoints(question);
+  const hintPenalty = getHintPenalty(question);
+  const comboMultiplier = getComboMultiplier(comboCount);
+  const riskMultiplier = question.riskMode ? 1.5 : 1;
+
+  return Math.max(
+    0,
+    Math.round((basePoints - hintPenalty) * comboMultiplier * riskMultiplier)
+  );
 }
