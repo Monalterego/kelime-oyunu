@@ -9,7 +9,7 @@ export default function HomeScreen({ navigation }: any) {
         <View style={styles.logoCircle}>
           <Text style={styles.logoLetter}>K</Text>
         </View>
-        <Text style={styles.title}>Kelime Oyunu</Text>
+        <Text style={styles.title}>Dağarcık</Text>
         <Text style={styles.subtitle}>Bilginizi test edin!</Text>
       </View>
 
