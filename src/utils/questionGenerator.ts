@@ -8,16 +8,17 @@ interface QuestionDBEntry {
   origin: string;
   category: string;
   example: string;
+  difficulty: "easy" | "medium" | "hard";
 }
 
 const GAME_STRUCTURE = [
-  { length: 4, count: 2 },
-  { length: 5, count: 2 },
-  { length: 6, count: 2 },
-  { length: 7, count: 2 },
-  { length: 8, count: 2 },
-  { length: 9, count: 2 },
-  { length: 10, count: 2 },
+  { length: 4, count: 2, preferDifficulty: "easy" },
+  { length: 5, count: 2, preferDifficulty: "easy" },
+  { length: 6, count: 2, preferDifficulty: "medium" },
+  { length: 7, count: 2, preferDifficulty: "medium" },
+  { length: 8, count: 2, preferDifficulty: "medium" },
+  { length: 9, count: 2, preferDifficulty: "hard" },
+  { length: 10, count: 2, preferDifficulty: "hard" },
 ];
 
 let questionsDB: QuestionDBEntry[] | null = null;
@@ -38,9 +39,11 @@ export function generateGameQuestions(): Question[] {
   const db = loadDB();
   const questions: Question[] = [];
 
-  for (const { length, count } of GAME_STRUCTURE) {
-    const candidates = db.filter((q) => q.length === length);
-    const selected = pickRandom(candidates, count);
+  for (const { length, count, preferDifficulty } of GAME_STRUCTURE) {
+    const byLength = db.filter((q) => q.length === length);
+    const preferred = byLength.filter((q) => q.difficulty === preferDifficulty);
+    const pool = preferred.length >= count ? preferred : byLength;
+    const selected = pickRandom(pool, count);
 
     for (const entry of selected) {
       questions.push({
