@@ -5,7 +5,10 @@ import { gameReducer, initialGameState, calculateQuestionPoints, LETTER_PENALTY,
 import { COLORS } from "../theme/colors";
 import { generateGameQuestions } from "../utils/questionGenerator";
 
-export default function GameScreen({ navigation }: any) {
+export default function GameScreen({ navigation, route }: any) {
+  const mode = route?.params?.mode || "classic";
+  const category = route?.params?.category;
+
   const [state, dispatch] = useReducer(gameReducer, initialGameState);
   const [answer, setAnswer] = useState("");
   const [showHint, setShowHint] = useState(false);
@@ -16,8 +19,8 @@ export default function GameScreen({ navigation }: any) {
 
   const startGame = () => {
     try {
-      const questions = generateGameQuestions();
-      if (questions.length > 0) dispatch({ type: "START_GAME", questions });
+      const questions = generateGameQuestions(mode, category);
+      if (questions.length > 0) dispatch({ type: "START_GAME", questions, totalTime: mode === "category" ? 120 : 180 });
     } catch (error) {
       console.error("Oyun baslatma hatasi:", error);
     }
@@ -91,7 +94,7 @@ export default function GameScreen({ navigation }: any) {
     return (
       <View style={styles.container}>
         <Text style={styles.bigTitle}>Dağarcık</Text>
-        <Text style={styles.statsText}>Kelime hazinenizi test edin!</Text>
+        <Text style={styles.statsText}>{mode === "category" ? "Kategori Modu" : "Klasik Mod"}</Text>
         <TouchableOpacity style={styles.replayButton} onPress={startGame}>
           <Text style={styles.replayButtonText}>OYNA</Text>
         </TouchableOpacity>

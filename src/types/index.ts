@@ -29,7 +29,7 @@ export interface GameState {
 }
 
 export type GameAction =
-  | { type: "START_GAME"; questions: Question[] }
+  | { type: "START_GAME"; questions: Question[]; totalTime?: number }
   | { type: "TICK_TOTAL" }
   | { type: "REQUEST_LETTER" }
   | { type: "PRESS_BUTTON" }

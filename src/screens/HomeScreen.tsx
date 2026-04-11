@@ -7,111 +7,54 @@ export default function HomeScreen({ navigation }: any) {
     <View style={styles.container}>
       <View style={styles.logoSection}>
         <View style={styles.logoCircle}>
-          <Text style={styles.logoLetter}>K</Text>
+          <Text style={styles.logoLetter}>D</Text>
         </View>
         <Text style={styles.title}>Dağarcık</Text>
-        <Text style={styles.subtitle}>Bilginizi test edin!</Text>
+        <Text style={styles.subtitle}>Kelime hazinenizi test edin!</Text>
       </View>
 
       <View style={styles.buttonSection}>
         <TouchableOpacity
           style={styles.playButton}
-          onPress={() => navigation.navigate("Game")}
+          onPress={() => navigation.navigate("Game", { mode: "classic" })}
         >
-          <Text style={styles.playButtonText}>OYNA</Text>
+          <Text style={styles.playButtonText}>KLASİK MOD</Text>
+          <Text style={styles.playButtonSub}>14 soru, 3 dakika, karışık</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={styles.secondaryButton}
-          onPress={() => {}}
+          style={styles.categoryButton}
+          onPress={() => navigation.navigate("Category")}
         >
-          <Text style={styles.secondaryButtonText}>Skor Tablosu</Text>
+          <Text style={styles.categoryButtonText}>KATEGORİ MODU</Text>
+          <Text style={styles.categoryButtonSub}>10 soru, 2 dakika, seçtiğin konu</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.secondaryButton}
-          onPress={() => {}}
-        >
+        <TouchableOpacity style={styles.secondaryButton} onPress={() => {}}>
           <Text style={styles.secondaryButtonText}>Nasıl Oynanır?</Text>
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.footer}>64.000+ kelime ile sınırsız eğlence</Text>
+      <Text style={styles.footer}>2135 kelime ile sınırsız eğlence</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.bgMain,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 24,
-  },
-  logoSection: {
-    alignItems: "center",
-    marginBottom: 60,
-  },
-  logoCircle: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: COLORS.primary,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  logoLetter: {
-    fontSize: 48,
-    fontWeight: "bold",
-    color: COLORS.white,
-  },
-  title: {
-    fontSize: 36,
-    fontWeight: "bold",
-    color: COLORS.white,
-    letterSpacing: 1,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: COLORS.textSecondary,
-    marginTop: 8,
-  },
-  buttonSection: {
-    width: "100%",
-    gap: 12,
-  },
-  playButton: {
-    backgroundColor: COLORS.primary,
-    paddingVertical: 18,
-    borderRadius: 16,
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  playButtonText: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: COLORS.white,
-    letterSpacing: 2,
-  },
-  secondaryButton: {
-    backgroundColor: COLORS.bgDark,
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: COLORS.primaryDark,
-  },
-  secondaryButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: COLORS.textSecondary,
-  },
-  footer: {
-    position: "absolute",
-    bottom: 40,
-    fontSize: 13,
-    color: COLORS.textMuted,
-  },
+  container: { flex: 1, backgroundColor: COLORS.bgMain, justifyContent: "center", alignItems: "center", padding: 24 },
+  logoSection: { alignItems: "center", marginBottom: 48 },
+  logoCircle: { width: 90, height: 90, borderRadius: 45, backgroundColor: COLORS.primary, justifyContent: "center", alignItems: "center", marginBottom: 16 },
+  logoLetter: { fontSize: 44, fontWeight: "bold", color: COLORS.white },
+  title: { fontSize: 36, fontWeight: "bold", color: COLORS.white, letterSpacing: 1 },
+  subtitle: { fontSize: 15, color: COLORS.textSecondary, marginTop: 6 },
+  buttonSection: { width: "100%", gap: 12 },
+  playButton: { backgroundColor: COLORS.primary, paddingVertical: 18, borderRadius: 16, alignItems: "center" },
+  playButtonText: { fontSize: 20, fontWeight: "bold", color: COLORS.white, letterSpacing: 2 },
+  playButtonSub: { fontSize: 12, color: COLORS.accent, marginTop: 4 },
+  categoryButton: { backgroundColor: COLORS.bgDark, paddingVertical: 18, borderRadius: 16, alignItems: "center", borderWidth: 2, borderColor: COLORS.primary },
+  categoryButtonText: { fontSize: 20, fontWeight: "bold", color: COLORS.primary, letterSpacing: 2 },
+  categoryButtonSub: { fontSize: 12, color: COLORS.textMuted, marginTop: 4 },
+  secondaryButton: { backgroundColor: COLORS.bgDark, paddingVertical: 14, borderRadius: 12, alignItems: "center", borderWidth: 1, borderColor: COLORS.primaryDark },
+  secondaryButtonText: { fontSize: 15, fontWeight: "600", color: COLORS.textSecondary },
+  footer: { position: "absolute", bottom: 40, fontSize: 13, color: COLORS.textMuted },
 });

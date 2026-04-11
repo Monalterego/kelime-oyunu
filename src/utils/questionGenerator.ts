@@ -10,9 +10,10 @@ interface QuestionDBEntry {
   example: string;
   difficulty: "easy" | "medium" | "hard";
   flashHint?: string;
+  themeCategory?: string;
 }
 
-const GAME_STRUCTURE = [
+const CLASSIC_STRUCTURE = [
   { length: 4, count: 2, preferDifficulty: "easy" },
   { length: 5, count: 2, preferDifficulty: "easy" },
   { length: 6, count: 2, preferDifficulty: "medium" },
@@ -20,6 +21,16 @@ const GAME_STRUCTURE = [
   { length: 8, count: 2, preferDifficulty: "medium" },
   { length: 9, count: 2, preferDifficulty: "hard" },
   { length: 10, count: 2, preferDifficulty: "hard" },
+];
+
+const CATEGORY_STRUCTURE = [
+  { length: 4, count: 1, preferDifficulty: "easy" },
+  { length: 5, count: 2, preferDifficulty: "easy" },
+  { length: 6, count: 2, preferDifficulty: "medium" },
+  { length: 7, count: 2, preferDifficulty: "medium" },
+  { length: 8, count: 1, preferDifficulty: "hard" },
+  { length: 9, count: 1, preferDifficulty: "hard" },
+  { length: 10, count: 1, preferDifficulty: "hard" },
 ];
 
 let questionsDB: QuestionDBEntry[] | null = null;
@@ -36,15 +47,13 @@ function pickRandom<T>(arr: T[], count: number): T[] {
   return shuffled.slice(0, count);
 }
 
-export function generateGameQuestions(): Question[] {
-  const db = loadDB();
+function buildQuestions(pool: QuestionDBEntry[], structure: any[]): Question[] {
   const questions: Question[] = [];
-
-  for (const { length, count, preferDifficulty } of GAME_STRUCTURE) {
-    const byLength = db.filter((q) => q.length === length);
+  for (const { length, count, preferDifficulty } of structure) {
+    const byLength = pool.filter((q) => q.length === length);
     const preferred = byLength.filter((q) => q.difficulty === preferDifficulty);
-    const pool = preferred.length >= count ? preferred : byLength;
-    const selected = pickRandom(pool, count);
+    const source = preferred.length >= count ? preferred : byLength;
+    const selected = pickRandom(source, count);
 
     for (const entry of selected) {
       questions.push({
@@ -66,6 +75,16 @@ export function generateGameQuestions(): Question[] {
       });
     }
   }
-
   return questions;
+}
+
+export function generateGameQuestions(mode: "classic" | "category" = "classic", themeCategory?: string): Question[] {
+  const db = loadDB();
+
+  if (mode === "category" && themeCategory) {
+    const pool = db.filter((q) => q.themeCategory === themeCategory);
+    return buildQuestions(pool, CATEGORY_STRUCTURE);
+  }
+
+  return buildQuestions(db, CLASSIC_STRUCTURE);
 }
