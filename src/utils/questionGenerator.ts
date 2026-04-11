@@ -1,14 +1,15 @@
 import { Question } from "../types";
-import { generateFlashHint } from "./flashHints";
 
 interface QuestionDBEntry {
   word: string;
   length: number;
   definition: string;
+  gameDefinition?: string;
   origin: string;
   category: string;
   example: string;
   difficulty: "easy" | "medium" | "hard";
+  flashHint?: string;
 }
 
 const GAME_STRUCTURE = [
@@ -50,11 +51,11 @@ export function generateGameQuestions(): Question[] {
         wordData: {
           word: entry.word,
           length: entry.length,
-          definition: entry.definition,
+          definition: entry.gameDefinition || entry.definition,
           origin: entry.origin,
           category: entry.category,
           example: entry.example,
-          flashHint: generateFlashHint(entry.origin, entry.category, entry.length),
+          flashHint: entry.flashHint || "",
         },
         points: entry.length * 100,
         revealedLetters: [],
