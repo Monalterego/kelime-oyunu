@@ -17,21 +17,17 @@ export default function GameScreen({ navigation }: any) {
   const startGame = () => {
     try {
       const questions = generateGameQuestions();
-      if (questions.length > 0) {
-        dispatch({ type: "START_GAME", questions });
-      }
+      if (questions.length > 0) dispatch({ type: "START_GAME", questions });
     } catch (error) {
       console.error("Oyun baslatma hatasi:", error);
     }
   };
 
-  // Delayed hint: soru acildiktan HINT_DELAY sonra goster, HINT_DISPLAY kadar goster
   useEffect(() => {
     if (state.status === "playing") {
       setShowHint(false);
       hintOpacity.setValue(0);
       if (hintTimer.current) clearTimeout(hintTimer.current);
-
       hintTimer.current = setTimeout(() => {
         setShowHint(true);
         Animated.sequence([
@@ -115,8 +111,7 @@ export default function GameScreen({ navigation }: any) {
           <Text style={styles.scoreLabel}>PUAN</Text>
         </View>
         <Text style={styles.statsText}>{correct.length}/{state.questions.length} Doğru Cevap</Text>
-        <Text style={styles.subStatsText}>En Yüksek Combo: {state.maxCombo}x</Text>
-        <Text style={styles.subStatsText}>Pas Geçilen: {skipped.length}</Text>
+        {skipped.length > 0 && <Text style={styles.subStatsText}>Pas Geçilen: {skipped.length}</Text>}
         <View style={styles.endButtons}>
           <TouchableOpacity style={styles.replayButton} onPress={startGame}>
             <Text style={styles.replayButtonText}>Tekrar Oyna</Text>
@@ -156,14 +151,13 @@ export default function GameScreen({ navigation }: any) {
   if (!currentQuestion) return null;
   const questionNumber = state.currentQuestionIndex + 1;
   const totalQuestions = state.questions.length;
-  const remainingPoints = calculateQuestionPoints(currentQuestion, state.comboCount);
+  const remainingPoints = calculateQuestionPoints(currentQuestion);
   const timeColor = state.totalTimeLeft < 30 ? COLORS.timerDanger : COLORS.primary;
   const skipPenalty = Math.round(getBasePoints(currentQuestion) * SKIP_PENALTY_RATIO);
   const canTakeLetter = currentQuestion.revealedLetters.length < currentQuestion.wordData.length - 1;
 
   return (
     <View style={styles.container}>
-      {/* Delayed hint banner */}
       {showHint && state.currentFlashHint ? (
         <Animated.View style={[styles.hintBanner, { opacity: hintOpacity }]}>
           <Text style={styles.hintBannerText}>{state.currentFlashHint}</Text>
@@ -182,11 +176,6 @@ export default function GameScreen({ navigation }: any) {
         <View style={styles.pointsBadge}>
           <Text style={styles.pointsBadgeText}>{remainingPoints} Puan</Text>
         </View>
-        {state.comboCount >= 2 && (
-          <View style={styles.comboBadge}>
-            <Text style={styles.comboBadgeText}>x{state.comboCount} COMBO</Text>
-          </View>
-        )}
         <Text style={styles.lengthInfo}>{currentQuestion.wordData.length} Harfli</Text>
       </View>
 
@@ -249,11 +238,9 @@ const styles = StyleSheet.create({
   timerText: { fontSize: 28, fontWeight: "bold", color: COLORS.primary },
   questionNum: { fontSize: 14, color: COLORS.textMuted },
   topScore: { fontSize: 18, fontWeight: "700", color: COLORS.white },
-  infoRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 8 },
+  infoRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
   pointsBadge: { backgroundColor: COLORS.primary, paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20 },
   pointsBadgeText: { fontSize: 14, fontWeight: "bold", color: COLORS.white },
-  comboBadge: { backgroundColor: "#FF6B35", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 },
-  comboBadgeText: { fontSize: 13, fontWeight: "bold", color: COLORS.white },
   lengthInfo: { fontSize: 14, color: COLORS.textMuted },
   definitionBox: { backgroundColor: COLORS.bgDark, borderRadius: 16, padding: 20, marginBottom: 28, borderWidth: 1, borderColor: COLORS.primaryDark },
   definitionText: { fontSize: 18, color: COLORS.white, lineHeight: 28, textAlign: "center" },

@@ -25,14 +25,11 @@ export interface GameState {
   totalScore: number;
   totalTimeLeft: number;
   answerTimeLeft: number;
-  comboCount: number;
-  maxCombo: number;
   currentFlashHint: string;
 }
 
 export type GameAction =
   | { type: "START_GAME"; questions: Question[] }
-  | { type: "FLASH_DONE" }
   | { type: "TICK_TOTAL" }
   | { type: "REQUEST_LETTER" }
   | { type: "PRESS_BUTTON" }

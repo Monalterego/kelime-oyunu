@@ -14,8 +14,6 @@ export const initialGameState: GameState = {
   totalScore: 0,
   totalTimeLeft: TOTAL_TIME,
   answerTimeLeft: ANSWER_TIME,
-  comboCount: 0,
-  maxCombo: 0,
   currentFlashHint: "",
 };
 
@@ -25,13 +23,6 @@ export function getBasePoints(question: Question): number {
 
 export function getLetterPenalty(question: Question): number {
   return question.revealedLetters.length * LETTER_PENALTY;
-}
-
-export function getComboMultiplier(comboCount: number): number {
-  if (comboCount >= 5) return 1.4;
-  if (comboCount >= 3) return 1.2;
-  if (comboCount >= 2) return 1.1;
-  return 1;
 }
 
 export function gameReducer(state: GameState, action: GameAction): GameState {
@@ -47,9 +38,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
     case "TICK_TOTAL": {
       const newTime = state.totalTimeLeft - 1;
-      if (newTime <= 0) {
-        return { ...state, status: "gameover", totalTimeLeft: 0 };
-      }
+      if (newTime <= 0) return { ...state, status: "gameover", totalTimeLeft: 0 };
       return { ...state, totalTimeLeft: newTime };
     }
 
@@ -81,41 +70,19 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     case "SUBMIT_ANSWER": {
       const q = state.questions[state.currentQuestionIndex];
       if (!q) return state;
-
-      const normalizedAnswer = action.answer.toLocaleLowerCase("tr-TR").trim();
-      const normalizedWord = q.wordData.word.toLocaleLowerCase("tr-TR").trim();
-      const isCorrect = normalizedAnswer === normalizedWord;
-
+      const isCorrect = action.answer.toLocaleLowerCase("tr-TR").trim() === q.wordData.word.toLocaleLowerCase("tr-TR").trim();
       const basePoints = getBasePoints(q);
       const letterPenalty = getLetterPenalty(q);
-
-      let earnedPoints = 0;
-      let newCombo = state.comboCount;
-
-      if (isCorrect) {
-        newCombo = state.comboCount + 1;
-        const multiplier = getComboMultiplier(newCombo);
-        earnedPoints = Math.max(0, Math.round((basePoints - letterPenalty) * multiplier));
-      } else {
-        newCombo = 0;
-        earnedPoints = -basePoints;
-      }
+      const earnedPoints = isCorrect ? Math.max(0, basePoints - letterPenalty) : -basePoints;
 
       const newQuestions = [...state.questions];
-      newQuestions[state.currentQuestionIndex] = {
-        ...q,
-        answered: true,
-        correct: isCorrect,
-        earnedPoints,
-      };
+      newQuestions[state.currentQuestionIndex] = { ...q, answered: true, correct: isCorrect, earnedPoints };
 
       return {
         ...state,
         status: "result",
         questions: newQuestions,
         totalScore: state.totalScore + earnedPoints,
-        comboCount: newCombo,
-        maxCombo: Math.max(state.maxCombo, newCombo),
       };
     }
 
@@ -124,20 +91,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       if (!q) return state;
       const penalty = -getBasePoints(q);
       const newQuestions = [...state.questions];
-      newQuestions[state.currentQuestionIndex] = {
-        ...q,
-        answered: true,
-        correct: false,
-        earnedPoints: penalty,
-      };
-      return {
-        ...state,
-        status: "result",
-        questions: newQuestions,
-        totalScore: state.totalScore + penalty,
-        answerTimeLeft: 0,
-        comboCount: 0,
-      };
+      newQuestions[state.currentQuestionIndex] = { ...q, answered: true, correct: false, earnedPoints: penalty };
+      return { ...state, status: "result", questions: newQuestions, totalScore: state.totalScore + penalty, answerTimeLeft: 0 };
     }
 
     case "SKIP_QUESTION": {
@@ -145,27 +100,13 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       if (!q || q.answered) return state;
       const penalty = -Math.round(getBasePoints(q) * SKIP_PENALTY_RATIO);
       const newQuestions = [...state.questions];
-      newQuestions[state.currentQuestionIndex] = {
-        ...q,
-        answered: true,
-        correct: false,
-        skipped: true,
-        earnedPoints: penalty,
-      };
-      return {
-        ...state,
-        status: "result",
-        questions: newQuestions,
-        totalScore: state.totalScore + penalty,
-        comboCount: 0,
-      };
+      newQuestions[state.currentQuestionIndex] = { ...q, answered: true, correct: false, skipped: true, earnedPoints: penalty };
+      return { ...state, status: "result", questions: newQuestions, totalScore: state.totalScore + penalty };
     }
 
     case "NEXT_QUESTION": {
       const nextIndex = state.currentQuestionIndex + 1;
-      if (nextIndex >= state.questions.length) {
-        return { ...state, status: "gameover" };
-      }
+      if (nextIndex >= state.questions.length) return { ...state, status: "gameover" };
       return {
         ...state,
         status: "playing",
@@ -183,9 +124,6 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
   }
 }
 
-export function calculateQuestionPoints(question: Question, comboCount = 0): number {
-  const basePoints = getBasePoints(question);
-  const letterPenalty = getLetterPenalty(question);
-  const multiplier = getComboMultiplier(comboCount + 1);
-  return Math.max(0, Math.round((basePoints - letterPenalty) * multiplier));
+export function calculateQuestionPoints(question: Question): number {
+  return Math.max(0, getBasePoints(question) - getLetterPenalty(question));
 }
