@@ -3,7 +3,8 @@ import { GameState, GameAction, Question } from "../types";
 export const TOTAL_TIME = 180;
 export const ANSWER_TIME = 12;
 export const LETTER_PENALTY = 100;
-export const FLASH_DURATION = 2500;
+export const HINT_DELAY = 5000;
+export const HINT_DISPLAY = 4000;
 export const SKIP_PENALTY_RATIO = 0.25;
 
 export const initialGameState: GameState = {
@@ -38,14 +39,11 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     case "START_GAME":
       return {
         ...initialGameState,
-        status: "flash",
+        status: "playing",
         questions: action.questions,
         totalTimeLeft: TOTAL_TIME,
         currentFlashHint: action.questions[0]?.wordData.flashHint || "",
       };
-
-    case "FLASH_DONE":
-      return { ...state, status: "playing" };
 
     case "TICK_TOTAL": {
       const newTime = state.totalTimeLeft - 1;
@@ -170,7 +168,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       }
       return {
         ...state,
-        status: "flash",
+        status: "playing",
         currentQuestionIndex: nextIndex,
         answerTimeLeft: ANSWER_TIME,
         currentFlashHint: state.questions[nextIndex]?.wordData.flashHint || "",

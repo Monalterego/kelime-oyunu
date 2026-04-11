@@ -1,14 +1,16 @@
 import React, { useReducer, useEffect, useRef, useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Animated } from "react-native";
 import { Question } from "../types";
-import { gameReducer, initialGameState, FLASH_DURATION, calculateQuestionPoints, LETTER_PENALTY, SKIP_PENALTY_RATIO, getBasePoints } from "../utils/gameReducer";
+import { gameReducer, initialGameState, calculateQuestionPoints, LETTER_PENALTY, SKIP_PENALTY_RATIO, getBasePoints, HINT_DELAY, HINT_DISPLAY } from "../utils/gameReducer";
 import { COLORS } from "../theme/colors";
 import { generateGameQuestions } from "../utils/questionGenerator";
 
 export default function GameScreen({ navigation }: any) {
   const [state, dispatch] = useReducer(gameReducer, initialGameState);
   const [answer, setAnswer] = useState("");
-  const flashOpacity = useRef(new Animated.Value(0)).current;
+  const [showHint, setShowHint] = useState(false);
+  const hintOpacity = useRef(new Animated.Value(0)).current;
+  const hintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const totalTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const answerTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -19,19 +21,30 @@ export default function GameScreen({ navigation }: any) {
         dispatch({ type: "START_GAME", questions });
       }
     } catch (error) {
-      console.error("Oyun başlatılamadı:", error);
+      console.error("Oyun baslatma hatasi:", error);
     }
   };
 
+  // Delayed hint: soru acildiktan HINT_DELAY sonra goster, HINT_DISPLAY kadar goster
   useEffect(() => {
-    if (state.status === "flash") {
-      flashOpacity.setValue(0);
-      Animated.sequence([
-        Animated.timing(flashOpacity, { toValue: 1, duration: 300, useNativeDriver: true }),
-        Animated.delay(FLASH_DURATION - 600),
-        Animated.timing(flashOpacity, { toValue: 0, duration: 300, useNativeDriver: true }),
-      ]).start(() => { dispatch({ type: "FLASH_DONE" }); });
+    if (state.status === "playing") {
+      setShowHint(false);
+      hintOpacity.setValue(0);
+      if (hintTimer.current) clearTimeout(hintTimer.current);
+
+      hintTimer.current = setTimeout(() => {
+        setShowHint(true);
+        Animated.sequence([
+          Animated.timing(hintOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
+          Animated.delay(HINT_DISPLAY),
+          Animated.timing(hintOpacity, { toValue: 0, duration: 400, useNativeDriver: true }),
+        ]).start(() => setShowHint(false));
+      }, HINT_DELAY);
+    } else {
+      setShowHint(false);
+      if (hintTimer.current) clearTimeout(hintTimer.current);
     }
+    return () => { if (hintTimer.current) clearTimeout(hintTimer.current); };
   }, [state.status, state.currentQuestionIndex]);
 
   useEffect(() => {
@@ -116,30 +129,6 @@ export default function GameScreen({ navigation }: any) {
     );
   }
 
-  if (state.status === "flash" && currentQuestion) {
-    const wd = currentQuestion.wordData;
-    return (
-      <View style={styles.container}>
-        <Animated.View style={[styles.flashCard, { opacity: flashOpacity }]}>
-          <View style={styles.flashBadge}>
-            <Text style={styles.flashBadgeText}>İPUCU KARTI</Text>
-          </View>
-          <View style={styles.flashRow}>
-            <View style={styles.flashItem}>
-              <Text style={styles.flashLabel}>KÖKEN</Text>
-              <Text style={styles.flashValue}>{wd.origin || "Türkçe"}</Text>
-            </View>
-            <View style={styles.flashItem}>
-              <Text style={styles.flashLabel}>TÜR</Text>
-              <Text style={styles.flashValue}>{wd.category || "Genel"}</Text>
-            </View>
-          </View>
-          <Text style={styles.flashText}>{state.currentFlashHint}</Text>
-        </Animated.View>
-      </View>
-    );
-  }
-
   if (state.status === "result" && currentQuestion) {
     const isCorrect = currentQuestion.correct;
     const isSkipped = currentQuestion.skipped;
@@ -174,6 +163,13 @@ export default function GameScreen({ navigation }: any) {
 
   return (
     <View style={styles.container}>
+      {/* Delayed hint banner */}
+      {showHint && state.currentFlashHint ? (
+        <Animated.View style={[styles.hintBanner, { opacity: hintOpacity }]}>
+          <Text style={styles.hintBannerText}>{state.currentFlashHint}</Text>
+        </Animated.View>
+      ) : null}
+
       <View style={styles.topBar}>
         <View style={styles.timerBox}>
           <Text style={[styles.timerText, { color: timeColor }]}>{formatTime(state.totalTimeLeft)}</Text>
@@ -246,6 +242,8 @@ export default function GameScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.bgMain, padding: 20, justifyContent: "center" },
   bigTitle: { fontSize: 48, fontWeight: "bold", color: COLORS.white, textAlign: "center", marginBottom: 12, letterSpacing: 1 },
+  hintBanner: { position: "absolute", top: 50, left: 20, right: 20, backgroundColor: COLORS.primary, borderRadius: 14, paddingVertical: 10, paddingHorizontal: 16, zIndex: 10, alignItems: "center" },
+  hintBannerText: { fontSize: 15, fontWeight: "600", color: COLORS.white, textAlign: "center", fontStyle: "italic" },
   topBar: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 24, paddingTop: 20 },
   timerBox: { backgroundColor: COLORS.bgDark, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 12 },
   timerText: { fontSize: 28, fontWeight: "bold", color: COLORS.primary },
@@ -278,14 +276,6 @@ const styles = StyleSheet.create({
   answerInput: { width: "100%", backgroundColor: COLORS.bgDark, borderWidth: 2, borderColor: COLORS.primary, borderRadius: 14, padding: 16, fontSize: 20, color: COLORS.white, textAlign: "center" },
   submitButton: { width: "100%", backgroundColor: COLORS.buttonSuccess, paddingVertical: 16, borderRadius: 14, alignItems: "center" },
   submitButtonText: { fontSize: 18, fontWeight: "bold", color: COLORS.white, letterSpacing: 1 },
-  flashCard: { backgroundColor: COLORS.bgDark, borderRadius: 20, padding: 28, borderWidth: 2, borderColor: COLORS.primary, alignItems: "center" },
-  flashBadge: { backgroundColor: COLORS.primary, paddingHorizontal: 16, paddingVertical: 6, borderRadius: 20, marginBottom: 20 },
-  flashBadgeText: { fontSize: 12, fontWeight: "bold", color: COLORS.white, letterSpacing: 2 },
-  flashRow: { flexDirection: "row", justifyContent: "space-around", width: "100%", marginBottom: 20 },
-  flashItem: { alignItems: "center" },
-  flashLabel: { fontSize: 11, color: COLORS.textMuted, letterSpacing: 1, marginBottom: 4 },
-  flashValue: { fontSize: 18, fontWeight: "bold", color: COLORS.primaryLight },
-  flashText: { fontSize: 20, fontWeight: "600", color: COLORS.white, textAlign: "center", fontStyle: "italic" },
   resultCard: { alignItems: "center", padding: 32, borderRadius: 20, marginBottom: 24 },
   resultCorrect: { backgroundColor: "#0A2E1A" },
   resultWrong: { backgroundColor: "#2E0A0E" },

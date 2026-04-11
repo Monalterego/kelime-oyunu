@@ -19,7 +19,7 @@ export interface Question {
 }
 
 export interface GameState {
-  status: "idle" | "flash" | "playing" | "answering" | "result" | "gameover";
+  status: "idle" | "playing" | "answering" | "result" | "gameover";
   questions: Question[];
   currentQuestionIndex: number;
   totalScore: number;
