@@ -1,9 +1,19 @@
 import React, { useReducer, useEffect, useRef, useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Animated } from "react-native";
 import { Question } from "../types";
-import { gameReducer, initialGameState, calculateQuestionPoints, LETTER_PENALTY, SKIP_PENALTY_RATIO, getBasePoints, HINT_DELAY, HINT_DISPLAY } from "../utils/gameReducer";
-import { COLORS } from "../theme/colors";
+import {
+  gameReducer,
+  initialGameState,
+  calculateQuestionPoints,
+  LETTER_PENALTY,
+  SKIP_PENALTY_RATIO,
+  getBasePoints,
+  HINT_DELAY,
+  HINT_DISPLAY,
+} from "../utils/gameReducer";
+import { COLORS, TYPO, SP, RADIUS, SHADOW } from "../theme/tokens";
 import { generateGameQuestions } from "../utils/questionGenerator";
+import { ScreenContainer, AppButton, AppCard, Badge, LetterTile } from "../components/ui";
 
 export default function GameScreen({ navigation, route }: any) {
   const mode = route?.params?.mode || "classic";
@@ -20,12 +30,14 @@ export default function GameScreen({ navigation, route }: any) {
   const startGame = () => {
     try {
       const questions = generateGameQuestions(mode, category);
-      if (questions.length > 0) dispatch({ type: "START_GAME", questions, totalTime: mode === "category" ? 90 : 150 });
+      if (questions.length > 0)
+        dispatch({ type: "START_GAME", questions, totalTime: mode === "category" ? 90 : 150 });
     } catch (error) {
       console.error("Oyun baslatma hatasi:", error);
     }
   };
 
+  // Delayed hint
   useEffect(() => {
     if (state.status === "playing") {
       setShowHint(false);
@@ -46,27 +58,30 @@ export default function GameScreen({ navigation, route }: any) {
     return () => { if (hintTimer.current) clearTimeout(hintTimer.current); };
   }, [state.status, state.currentQuestionIndex]);
 
+  // Total timer
   useEffect(() => {
     if (state.status === "playing") {
-      totalTimerRef.current = setInterval(() => { dispatch({ type: "TICK_TOTAL" }); }, 1000);
+      totalTimerRef.current = setInterval(() => dispatch({ type: "TICK_TOTAL" }), 1000);
     } else {
       if (totalTimerRef.current) clearInterval(totalTimerRef.current);
     }
     return () => { if (totalTimerRef.current) clearInterval(totalTimerRef.current); };
   }, [state.status]);
 
+  // Auto-advance from result
   useEffect(() => {
     if (state.status === "result") {
       const q = state.questions[state.currentQuestionIndex];
       const delay = q?.correct ? 1500 : 2500;
-      const timer = setTimeout(() => { dispatch({ type: "NEXT_QUESTION" }); }, delay);
+      const timer = setTimeout(() => dispatch({ type: "NEXT_QUESTION" }), delay);
       return () => clearTimeout(timer);
     }
   }, [state.status, state.currentQuestionIndex]);
 
+  // Answer timer
   useEffect(() => {
     if (state.status === "answering") {
-      answerTimerRef.current = setInterval(() => { dispatch({ type: "TICK_ANSWER" }); }, 1000);
+      answerTimerRef.current = setInterval(() => dispatch({ type: "TICK_ANSWER" }), 1000);
     } else {
       if (answerTimerRef.current) clearInterval(answerTimerRef.current);
     }
@@ -75,134 +90,171 @@ export default function GameScreen({ navigation, route }: any) {
 
   const currentQuestion = state.questions[state.currentQuestionIndex];
 
-  const renderLetterBoxes = (question: Question) => {
-    const word = question.wordData.word;
-    return (
-      <View style={styles.letterRow}>
-        {word.split("").map((letter, i) => {
-          const isRevealed = question.revealedLetters.includes(i);
-          return (
-            <View key={i} style={[styles.letterBox, isRevealed && styles.letterBoxRevealed]}>
-              <Text style={[styles.letterText, isRevealed && styles.letterTextRevealed]}>
-                {isRevealed ? letter.toLocaleUpperCase("tr-TR") : ""}
-              </Text>
-            </View>
-          );
-        })}
-      </View>
-    );
-  };
-
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
     return m + ":" + s.toString().padStart(2, "0");
   };
 
+  // ── IDLE ──────────────────────────────────────────────
   if (state.status === "idle") {
     return (
-      <View style={styles.container}>
-        <Text style={styles.bigTitle}>Dağarcık</Text>
-        <Text style={styles.statsText}>{mode === "category" ? "Kategori Modu" : "Klasik Mod"}</Text>
-        <TouchableOpacity style={styles.replayButton} onPress={startGame}>
-          <Text style={styles.replayButtonText}>OYNA</Text>
-        </TouchableOpacity>
-      </View>
+      <ScreenContainer>
+        <Text style={[TYPO.hero, { color: COLORS.textBright }]}>Dağarcık</Text>
+        <Text style={[TYPO.body, { color: COLORS.textSecondary, marginTop: SP.sm, marginBottom: SP["3xl"] }]}>
+          {mode === "category" ? "Kategori Modu" : "Klasik Mod"}
+        </Text>
+        <AppButton title="OYNA" onPress={startGame} size="lg" />
+      </ScreenContainer>
     );
   }
 
+  // ── GAME OVER ─────────────────────────────────────────
   if (state.status === "gameover") {
     const answered = state.questions.filter((q) => q.answered);
     const correct = answered.filter((q) => q.correct);
     const skipped = answered.filter((q) => q.skipped);
+    const isPositive = state.totalScore >= 0;
+
     return (
-      <View style={styles.container}>
-        <Text style={styles.gameOverTitle}>Oyun Bitti!</Text>
-        <View style={styles.scoreCircle}>
-          <Text style={styles.scoreNumber}>{state.totalScore}</Text>
-          <Text style={styles.scoreLabel}>PUAN</Text>
+      <ScreenContainer>
+        <Text style={[TYPO.title, { color: COLORS.textBright, marginBottom: SP["2xl"] }]}>
+          Oyun Bitti!
+        </Text>
+
+        {/* Score circle */}
+        <View style={[styles.scoreRing, isPositive ? styles.scoreRingPositive : styles.scoreRingNegative]}>
+          <Text style={[TYPO.score, { color: isPositive ? COLORS.correct : COLORS.wrong }]}>
+            {state.totalScore}
+          </Text>
+          <Text style={[TYPO.label, { color: COLORS.textMuted }]}>PUAN</Text>
         </View>
-        <Text style={styles.statsText}>{correct.length}/{state.questions.length} Doğru Cevap</Text>
-        {skipped.length > 0 && <Text style={styles.subStatsText}>Pas Geçilen: {skipped.length}</Text>}
-        <View style={styles.endButtons}>
-          <TouchableOpacity style={styles.replayButton} onPress={startGame}>
-            <Text style={styles.replayButtonText}>Tekrar Oyna</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.homeButton} onPress={() => navigation.navigate("Home")}>
-            <Text style={styles.homeButtonText}>Ana Sayfa</Text>
-          </TouchableOpacity>
+
+        {/* Stats */}
+        <View style={styles.statsRow}>
+          <Badge text={correct.length + "/" + state.questions.length + " doğru"} variant={correct.length > state.questions.length / 2 ? "correct" : "wrong"} />
+          {skipped.length > 0 && <Badge text={skipped.length + " pas"} variant="skip" />}
         </View>
-      </View>
+
+        {/* Actions */}
+        <View style={styles.endActions}>
+          <AppButton title="Tekrar Oyna" onPress={startGame} />
+          <AppButton title="Ana Sayfa" onPress={() => navigation.navigate("Home")} variant="ghost" />
+        </View>
+      </ScreenContainer>
     );
   }
 
+  // ── RESULT ────────────────────────────────────────────
   if (state.status === "result" && currentQuestion) {
     const isCorrect = currentQuestion.correct;
     const isSkipped = currentQuestion.skipped;
+
     return (
-      <View style={styles.container}>
+      <ScreenContainer>
+        {/* Timer still visible */}
         <View style={styles.topBar}>
-          <Text style={styles.timerText}>{formatTime(state.totalTimeLeft)}</Text>
-          <Text style={styles.topScore}>{state.totalScore} P</Text>
+          <Text style={[TYPO.timer, { color: COLORS.textMuted }]}>{formatTime(state.totalTimeLeft)}</Text>
+          <Text style={[TYPO.points, { color: COLORS.textSecondary }]}>{state.totalScore} P</Text>
         </View>
-        <View style={[styles.resultCard, isCorrect ? styles.resultCorrect : styles.resultWrong]}>
-          <Text style={styles.resultIcon}>{isCorrect ? "✓" : isSkipped ? "⊘" : "✗"}</Text>
-          <Text style={styles.resultWord}>{currentQuestion.wordData.word.toLocaleUpperCase("tr-TR")}</Text>
-          <Text style={styles.resultDef}>{currentQuestion.wordData.definition}</Text>
-          <Text style={styles.resultPoints}>
+
+        {/* Result card */}
+        <AppCard style={[
+          styles.resultCardWrapper,
+          { backgroundColor: isCorrect ? COLORS.correctBg : COLORS.wrongBg },
+          { borderWidth: 1, borderColor: isCorrect ? COLORS.correct + "30" : COLORS.wrong + "30" },
+        ]}>
+          <Text style={styles.resultIcon}>
+            {isCorrect ? "✓" : isSkipped ? "⊘" : "✗"}
+          </Text>
+          <Text style={[TYPO.title, { color: COLORS.textBright, marginBottom: SP.sm }]}>
+            {currentQuestion.wordData.word.toLocaleUpperCase("tr-TR")}
+          </Text>
+          <Text style={[TYPO.bodySm, { color: COLORS.textSecondary, textAlign: "center", marginBottom: SP.md }]}>
+            {currentQuestion.wordData.definition}
+          </Text>
+          <Text style={[TYPO.subtitle, { color: isCorrect ? COLORS.correct : COLORS.wrong }]}>
             {currentQuestion.earnedPoints > 0 ? "+" : ""}{currentQuestion.earnedPoints} puan
           </Text>
-        </View>
-        <TouchableOpacity style={styles.nextButton} onPress={() => dispatch({ type: "NEXT_QUESTION" })}>
-          <Text style={styles.nextButtonText}>Sonraki Soru</Text>
-        </TouchableOpacity>
-      </View>
+        </AppCard>
+
+        <AppButton
+          title="Sonraki Soru"
+          onPress={() => dispatch({ type: "NEXT_QUESTION" })}
+          variant="secondary"
+        />
+      </ScreenContainer>
     );
   }
 
+  // ── PLAYING / ANSWERING ───────────────────────────────
   if (!currentQuestion) return null;
+
   const questionNumber = state.currentQuestionIndex + 1;
   const totalQuestions = state.questions.length;
   const remainingPoints = calculateQuestionPoints(currentQuestion);
-  const timeColor = state.totalTimeLeft < 30 ? COLORS.timerDanger : COLORS.primary;
+  const isTimeLow = state.totalTimeLeft < 30;
+  const isTimeCritical = state.totalTimeLeft < 15;
+  const timeColor = isTimeCritical ? COLORS.wrong : isTimeLow ? COLORS.timerWarning : COLORS.primary;
   const skipPenalty = Math.round(getBasePoints(currentQuestion) * SKIP_PENALTY_RATIO);
   const canTakeLetter = currentQuestion.revealedLetters.length < currentQuestion.wordData.length - 1;
 
   return (
-    <View style={styles.container}>
+    <View style={styles.gameContainer}>
+      {/* Hint banner */}
       {showHint && state.currentFlashHint ? (
         <Animated.View style={[styles.hintBanner, { opacity: hintOpacity }]}>
-          <Text style={styles.hintBannerText}>
-  {currentQuestion?.wordData.origin ? currentQuestion.wordData.origin + " kökenli — " : "Öz Türkçe — "}{state.currentFlashHint}
-</Text>
+          <Text style={styles.hintText}>
+            {currentQuestion.wordData.origin
+              ? currentQuestion.wordData.origin + " kökenli — "
+              : "Öz Türkçe — "}
+            {state.currentFlashHint}
+          </Text>
         </Animated.View>
       ) : null}
 
+      {/* ── TOP BAR ── */}
       <View style={styles.topBar}>
-        <View style={styles.timerBox}>
-          <Text style={[styles.timerText, { color: timeColor }]}>{formatTime(state.totalTimeLeft)}</Text>
+        <View style={[styles.timerPill, isTimeLow && { backgroundColor: timeColor + "20" }]}>
+          <Text style={[TYPO.timer, { color: timeColor }]}>{formatTime(state.totalTimeLeft)}</Text>
         </View>
-        <Text style={styles.questionNum}>Soru {questionNumber}/{totalQuestions}</Text>
-        <Text style={styles.topScore}>{state.totalScore} P</Text>
+        <Text style={[TYPO.caption, { color: COLORS.textMuted }]}>
+          {questionNumber}/{totalQuestions}
+        </Text>
+        <Text style={[TYPO.points, { color: COLORS.textPrimary }]}>{state.totalScore} P</Text>
       </View>
 
+      {/* ── INFO ROW ── */}
       <View style={styles.infoRow}>
-        <View style={styles.pointsBadge}>
-          <Text style={styles.pointsBadgeText}>{remainingPoints} Puan</Text>
-        </View>
-        <Text style={styles.lengthInfo}>{currentQuestion.wordData.length} Harfli</Text>
+        <Badge text={remainingPoints + " puan"} variant="accent" />
+        <Text style={[TYPO.caption, { color: COLORS.textMuted }]}>
+          {currentQuestion.wordData.length} harfli
+        </Text>
       </View>
 
-      <View style={styles.definitionBox}>
-        <Text style={styles.definitionText}>{currentQuestion.wordData.definition}</Text>
+      {/* ── DEFINITION CARD ── */}
+      <AppCard variant="outlined" style={styles.defCard}>
+        <Text style={[TYPO.bodyLg, { color: COLORS.textPrimary, textAlign: "center" }]}>
+          {currentQuestion.wordData.definition}
+        </Text>
+      </AppCard>
+
+      {/* ── LETTER TILES ── */}
+      <View style={styles.letterRow}>
+        {currentQuestion.wordData.word.split("").map((letter, i) => (
+          <LetterTile
+            key={i}
+            letter={letter}
+            revealed={currentQuestion.revealedLetters.includes(i)}
+          />
+        ))}
       </View>
 
-      {renderLetterBoxes(currentQuestion)}
-
+      {/* ── ACTION AREA ── */}
       {state.status === "answering" ? (
-        <View style={styles.answerSection}>
-          <View style={styles.answerTimerCircle}>
-            <Text style={styles.answerTimerText}>{state.answerTimeLeft}</Text>
+        <View style={styles.answerArea}>
+          <View style={[styles.answerTimerCircle, { backgroundColor: COLORS.wrongBg, borderColor: COLORS.wrong + "40" }]}>
+            <Text style={[TYPO.timer, { color: COLORS.wrong }]}>{state.answerTimeLeft}</Text>
           </View>
           <TextInput
             style={styles.answerInput}
@@ -214,87 +266,212 @@ export default function GameScreen({ navigation, route }: any) {
             placeholderTextColor={COLORS.textMuted}
             onSubmitEditing={() => { dispatch({ type: "SUBMIT_ANSWER", answer }); setAnswer(""); }}
           />
-          <TouchableOpacity style={styles.submitButton} onPress={() => { dispatch({ type: "SUBMIT_ANSWER", answer }); setAnswer(""); }}>
-            <Text style={styles.submitButtonText}>CEVAPLA</Text>
-          </TouchableOpacity>
+          <AppButton
+            title="CEVAPLA"
+            onPress={() => { dispatch({ type: "SUBMIT_ANSWER", answer }); setAnswer(""); }}
+            variant="primary"
+          />
         </View>
       ) : (
-        <>
-          <View style={styles.actionRow}>
+        <View style={styles.playActions}>
+          <View style={styles.mainButtons}>
             <TouchableOpacity
-              style={[styles.hintButton, !canTakeLetter && { opacity: 0.5 }]}
+              style={[styles.hintBtn, !canTakeLetter && { opacity: 0.35 }]}
               onPress={() => dispatch({ type: "REQUEST_LETTER" })}
               disabled={!canTakeLetter}
+              activeOpacity={0.7}
             >
-              <Text style={styles.hintButtonText}>HARF AL</Text>
-              <Text style={styles.hintCost}>-{LETTER_PENALTY}P</Text>
+              <Text style={[TYPO.buttonSm, { color: COLORS.textSecondary }]}>HARF AL</Text>
+              <Text style={[TYPO.caption, { color: COLORS.textMuted }]}>-{LETTER_PENALTY}P</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.answerButton} onPress={() => { setAnswer(""); dispatch({ type: "PRESS_BUTTON" }); }}>
-              <Text style={styles.answerButtonText}>CEVAPLA</Text>
+
+            <TouchableOpacity
+              style={styles.answerBtn}
+              onPress={() => { setAnswer(""); dispatch({ type: "PRESS_BUTTON" }); }}
+              activeOpacity={0.7}
+            >
+              <Text style={[TYPO.button, { color: COLORS.textOnPrimary }]}>CEVAPLA</Text>
             </TouchableOpacity>
           </View>
-          <TouchableOpacity style={styles.skipButton} onPress={() => dispatch({ type: "SKIP_QUESTION" })}>
-            <Text style={styles.skipButtonText}>PAS GEÇ (-{skipPenalty}P)</Text>
+
+          <TouchableOpacity
+            style={styles.skipBtn}
+            onPress={() => dispatch({ type: "SKIP_QUESTION" })}
+            activeOpacity={0.6}
+          >
+            <Text style={[TYPO.caption, { color: COLORS.textMuted }]}>
+              PAS GEÇ (-{skipPenalty}P)
+            </Text>
           </TouchableOpacity>
-        </>
+        </View>
       )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.bgMain, padding: 20, justifyContent: "center" },
-  bigTitle: { fontSize: 48, fontWeight: "bold", color: COLORS.white, textAlign: "center", marginBottom: 12, letterSpacing: 1 },
-  hintBanner: { position: "absolute", top: 50, left: 20, right: 20, backgroundColor: COLORS.primary, borderRadius: 14, paddingVertical: 10, paddingHorizontal: 16, zIndex: 10, alignItems: "center" },
-  hintBannerText: { fontSize: 15, fontWeight: "600", color: COLORS.white, textAlign: "center", fontStyle: "italic" },
-  topBar: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 24, paddingTop: 20 },
-  timerBox: { backgroundColor: COLORS.bgDark, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 12 },
-  timerText: { fontSize: 28, fontWeight: "bold", color: COLORS.primary },
-  questionNum: { fontSize: 14, color: COLORS.textMuted },
-  topScore: { fontSize: 18, fontWeight: "700", color: COLORS.white },
-  infoRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
-  pointsBadge: { backgroundColor: COLORS.primary, paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20 },
-  pointsBadgeText: { fontSize: 14, fontWeight: "bold", color: COLORS.white },
-  lengthInfo: { fontSize: 14, color: COLORS.textMuted },
-  definitionBox: { backgroundColor: COLORS.bgDark, borderRadius: 16, padding: 20, marginBottom: 28, borderWidth: 1, borderColor: COLORS.primaryDark },
-  definitionText: { fontSize: 18, color: COLORS.white, lineHeight: 28, textAlign: "center" },
-  letterRow: { flexDirection: "row", justifyContent: "center", gap: 8, marginBottom: 28, flexWrap: "wrap" },
-  letterBox: { width: 42, height: 52, backgroundColor: COLORS.letterBox, borderRadius: 10, borderWidth: 2, borderColor: COLORS.letterBoxBorder, justifyContent: "center", alignItems: "center" },
-  letterBoxRevealed: { borderColor: COLORS.letterBoxRevealed, backgroundColor: COLORS.bgDark },
-  letterText: { fontSize: 24, fontWeight: "bold", color: COLORS.textMuted },
-  letterTextRevealed: { color: COLORS.primaryLight },
-  actionRow: { flexDirection: "row", gap: 12, marginBottom: 12 },
-  hintButton: { flex: 1, backgroundColor: COLORS.bgDark, borderWidth: 1, borderColor: COLORS.primaryDark, paddingVertical: 16, borderRadius: 14, alignItems: "center" },
-  hintButtonText: { fontSize: 15, fontWeight: "700", color: COLORS.textSecondary },
-  hintCost: { fontSize: 11, color: COLORS.textMuted, marginTop: 2 },
-  answerButton: { flex: 1, backgroundColor: COLORS.primary, paddingVertical: 16, borderRadius: 14, alignItems: "center", justifyContent: "center" },
-  answerButtonText: { fontSize: 18, fontWeight: "bold", color: COLORS.white, letterSpacing: 1 },
-  skipButton: { backgroundColor: "transparent", paddingVertical: 12, borderRadius: 10, alignItems: "center", borderWidth: 1, borderColor: COLORS.textMuted },
-  skipButtonText: { fontSize: 13, fontWeight: "600", color: COLORS.textMuted, letterSpacing: 1 },
-  answerSection: { alignItems: "center", gap: 14 },
-  answerTimerCircle: { width: 72, height: 72, borderRadius: 36, backgroundColor: COLORS.wrong, justifyContent: "center", alignItems: "center" },
-  answerTimerText: { fontSize: 36, fontWeight: "bold", color: COLORS.white },
-  answerInput: { width: "100%", backgroundColor: COLORS.bgDark, borderWidth: 2, borderColor: COLORS.primary, borderRadius: 14, padding: 16, fontSize: 20, color: COLORS.white, textAlign: "center" },
-  submitButton: { width: "100%", backgroundColor: COLORS.buttonSuccess, paddingVertical: 16, borderRadius: 14, alignItems: "center" },
-  submitButtonText: { fontSize: 18, fontWeight: "bold", color: COLORS.white, letterSpacing: 1 },
-  resultCard: { alignItems: "center", padding: 32, borderRadius: 20, marginBottom: 24 },
-  resultCorrect: { backgroundColor: "#0A2E1A" },
-  resultWrong: { backgroundColor: "#2E0A0E" },
-  resultIcon: { fontSize: 52, color: COLORS.white, marginBottom: 12 },
-  resultWord: { fontSize: 30, fontWeight: "bold", color: COLORS.white, marginBottom: 8 },
-  resultDef: { fontSize: 14, color: COLORS.textSecondary, textAlign: "center", marginBottom: 12 },
-  resultPoints: { fontSize: 20, fontWeight: "600", color: COLORS.textMuted },
-  nextButton: { backgroundColor: COLORS.bgDark, paddingVertical: 16, borderRadius: 14, alignItems: "center", borderWidth: 1, borderColor: COLORS.primaryDark },
-  nextButtonText: { fontSize: 16, fontWeight: "700", color: COLORS.textSecondary },
-  gameOverTitle: { fontSize: 32, fontWeight: "bold", color: COLORS.white, textAlign: "center", marginBottom: 24 },
-  scoreCircle: { width: 160, height: 160, borderRadius: 80, backgroundColor: COLORS.bgDark, borderWidth: 3, borderColor: COLORS.primary, justifyContent: "center", alignItems: "center", alignSelf: "center", marginBottom: 20 },
-  scoreNumber: { fontSize: 48, fontWeight: "bold", color: COLORS.primary },
-  scoreLabel: { fontSize: 14, color: COLORS.textMuted, letterSpacing: 2 },
-  statsText: { fontSize: 16, color: COLORS.textSecondary, textAlign: "center", marginBottom: 12 },
-  subStatsText: { fontSize: 14, color: COLORS.textMuted, textAlign: "center", marginBottom: 6 },
-  endButtons: { width: "100%", gap: 12, marginTop: 24 },
-  replayButton: { backgroundColor: COLORS.primary, paddingVertical: 16, borderRadius: 14, alignItems: "center" },
-  replayButtonText: { fontSize: 18, fontWeight: "bold", color: COLORS.white },
-  homeButton: { backgroundColor: COLORS.bgDark, paddingVertical: 16, borderRadius: 14, alignItems: "center", borderWidth: 1, borderColor: COLORS.primaryDark },
-  homeButtonText: { fontSize: 16, fontWeight: "600", color: COLORS.textSecondary },
+  gameContainer: {
+    flex: 1,
+    backgroundColor: COLORS.bgBase,
+    paddingHorizontal: SP.screen,
+    paddingTop: 50,
+    paddingBottom: SP["2xl"],
+    justifyContent: "space-between",
+  },
+
+  // Hint
+  hintBanner: {
+    position: "absolute",
+    top: 44,
+    left: SP.screen,
+    right: SP.screen,
+    backgroundColor: COLORS.bgCard,
+    borderRadius: RADIUS.md,
+    paddingVertical: SP.md,
+    paddingHorizontal: SP.lg,
+    zIndex: 10,
+    borderWidth: 1,
+    borderColor: COLORS.primaryBorder,
+    ...SHADOW.md,
+  },
+  hintText: {
+    ...TYPO.bodySm,
+    color: COLORS.primary,
+    textAlign: "center",
+    fontStyle: "italic",
+  },
+
+  // Top bar
+  topBar: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: SP.lg,
+  },
+  timerPill: {
+    backgroundColor: COLORS.bgCard,
+    paddingHorizontal: SP.lg,
+    paddingVertical: SP.sm,
+    borderRadius: RADIUS.md,
+  },
+
+  // Info row
+  infoRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: SP.lg,
+  },
+
+  // Definition
+  defCard: {
+    marginBottom: SP["2xl"],
+    paddingVertical: SP["2xl"],
+  },
+
+  // Letters
+  letterRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: SP.sm,
+    marginBottom: SP["2xl"],
+    flexWrap: "wrap",
+  },
+
+  // Answer area
+  answerArea: {
+    alignItems: "center",
+    gap: SP.md,
+  },
+  answerTimerCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 2,
+  },
+  answerInput: {
+    width: "100%",
+    backgroundColor: COLORS.bgInput,
+    borderWidth: 2,
+    borderColor: COLORS.primary,
+    borderRadius: RADIUS.md,
+    padding: SP.lg,
+    ...TYPO.bodyLg,
+    color: COLORS.textBright,
+    textAlign: "center",
+  },
+
+  // Play actions
+  playActions: {
+    gap: SP.md,
+  },
+  mainButtons: {
+    flexDirection: "row",
+    gap: SP.md,
+  },
+  hintBtn: {
+    flex: 1,
+    backgroundColor: COLORS.bgCard,
+    borderRadius: RADIUS.md,
+    paddingVertical: SP.lg,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: COLORS.divider,
+  },
+  answerBtn: {
+    flex: 1.5,
+    backgroundColor: COLORS.primary,
+    borderRadius: RADIUS.md,
+    paddingVertical: SP.lg,
+    alignItems: "center",
+    justifyContent: "center",
+    ...SHADOW.glow(COLORS.primary),
+  },
+  skipBtn: {
+    paddingVertical: SP.md,
+    alignItems: "center",
+  },
+
+  // Result
+  resultCardWrapper: {
+    alignItems: "center",
+    marginBottom: SP["2xl"],
+    paddingVertical: SP["3xl"],
+  },
+  resultIcon: {
+    fontSize: 48,
+    color: COLORS.textBright,
+    marginBottom: SP.md,
+  },
+
+  // Score
+  scoreRing: {
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    borderWidth: 3,
+    backgroundColor: COLORS.bgCard,
+    justifyContent: "center",
+    alignItems: "center",
+    alignSelf: "center",
+    marginBottom: SP["2xl"],
+  },
+  scoreRingPositive: {
+    borderColor: COLORS.correct + "50",
+  },
+  scoreRingNegative: {
+    borderColor: COLORS.wrong + "50",
+  },
+  statsRow: {
+    flexDirection: "row",
+    gap: SP.sm,
+    justifyContent: "center",
+    marginBottom: SP["3xl"],
+  },
+  endActions: {
+    width: "100%",
+    gap: SP.md,
+  },
 });
