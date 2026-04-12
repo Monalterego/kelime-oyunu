@@ -19,7 +19,7 @@ export default function HomeScreen({ navigation }: any) {
           onPress={() => navigation.navigate("Game", { mode: "classic" })}
         >
           <Text style={styles.playButtonText}>KLASİK MOD</Text>
-          <Text style={styles.playButtonSub}>14 soru, 3 dakika, karışık</Text>
+          <Text style={styles.playButtonSub}>14 soru, 2.5 dakika, karışık</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -27,7 +27,7 @@ export default function HomeScreen({ navigation }: any) {
           onPress={() => navigation.navigate("Category")}
         >
           <Text style={styles.categoryButtonText}>KATEGORİ MODU</Text>
-          <Text style={styles.categoryButtonSub}>10 soru, 2 dakika, seçtiğin konu</Text>
+          <Text style={styles.categoryButtonSub}>10 soru, 90 saniye, seçtiğin konu</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.secondaryButton} onPress={() => {}}>

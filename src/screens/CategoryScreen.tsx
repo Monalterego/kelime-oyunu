@@ -3,21 +3,21 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-nati
 import { COLORS } from "../theme/colors";
 
 const CATEGORIES = [
-  { id: "Gunluk Hayat", label: "Günlük Hayat", icon: "🏠", count: 763 },
-  { id: "Tarih ve Toplum", label: "Tarih ve Toplum", icon: "📜", count: 301 },
-  { id: "Bilim ve Teknoloji", label: "Bilim ve Teknoloji", icon: "🔬", count: 230 },
-  { id: "Meslekler", label: "Meslekler", icon: "👷", count: 199 },
-  { id: "Sanat ve Kultur", label: "Sanat ve Kültür", icon: "🎨", count: 198 },
-  { id: "Doga ve Hayvanlar", label: "Doğa ve Hayvanlar", icon: "🌿", count: 192 },
-  { id: "Spor ve Saglik", label: "Spor ve Sağlık", icon: "⚽", count: 148 },
-  { id: "Yemek ve Mutfak", label: "Yemek ve Mutfak", icon: "🍳", count: 104 },
+  { id: "Gunluk Hayat", label: "Günlük Hayat", icon: "🏠" },
+  { id: "Tarih ve Toplum", label: "Tarih ve Toplum", icon: "📜" },
+  { id: "Bilim ve Teknoloji", label: "Bilim ve Teknoloji", icon: "🔬" },
+  { id: "Meslekler", label: "Meslekler", icon: "👷" },
+  { id: "Sanat ve Kultur", label: "Sanat ve Kültür", icon: "🎨" },
+  { id: "Doga ve Hayvanlar", label: "Doğa ve Hayvanlar", icon: "🌿" },
+  { id: "Spor ve Saglik", label: "Spor ve Sağlık", icon: "⚽" },
+  { id: "Yemek ve Mutfak", label: "Yemek ve Mutfak", icon: "🍳" },
 ];
 
 export default function CategoryScreen({ navigation }: any) {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Kategori Seç</Text>
-      <Text style={styles.subtitle}>10 soru, 2 dakika</Text>
+      <Text style={styles.subtitle}>10 soru, 90 saniye</Text>
       <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>
         {CATEGORIES.map((cat) => (
           <TouchableOpacity
@@ -26,10 +26,7 @@ export default function CategoryScreen({ navigation }: any) {
             onPress={() => navigation.navigate("Game", { mode: "category", category: cat.id })}
           >
             <Text style={styles.categoryIcon}>{cat.icon}</Text>
-            <View style={styles.categoryInfo}>
-              <Text style={styles.categoryLabel}>{cat.label}</Text>
-              <Text style={styles.categoryCount}>{cat.count} kelime</Text>
-            </View>
+            <Text style={styles.categoryLabel}>{cat.label}</Text>
           </TouchableOpacity>
         ))}
       </ScrollView>
@@ -46,11 +43,9 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 14, color: COLORS.textMuted, textAlign: "center", marginBottom: 24 },
   list: { flex: 1 },
   listContent: { gap: 10 },
-  categoryCard: { flexDirection: "row", alignItems: "center", backgroundColor: COLORS.bgDark, borderRadius: 14, padding: 16, borderWidth: 1, borderColor: COLORS.primaryDark },
+  categoryCard: { flexDirection: "row", alignItems: "center", backgroundColor: COLORS.bgDark, borderRadius: 14, padding: 18, borderWidth: 1, borderColor: COLORS.primaryDark },
   categoryIcon: { fontSize: 28, marginRight: 16 },
-  categoryInfo: { flex: 1 },
   categoryLabel: { fontSize: 17, fontWeight: "600", color: COLORS.white },
-  categoryCount: { fontSize: 12, color: COLORS.textMuted, marginTop: 2 },
   backButton: { backgroundColor: COLORS.bgDark, paddingVertical: 14, borderRadius: 12, alignItems: "center", marginTop: 16, borderWidth: 1, borderColor: COLORS.primaryDark },
   backButtonText: { fontSize: 16, fontWeight: "600", color: COLORS.textSecondary },
 });

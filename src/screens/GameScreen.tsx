@@ -20,7 +20,7 @@ export default function GameScreen({ navigation, route }: any) {
   const startGame = () => {
     try {
       const questions = generateGameQuestions(mode, category);
-      if (questions.length > 0) dispatch({ type: "START_GAME", questions, totalTime: mode === "category" ? 120 : 180 });
+      if (questions.length > 0) dispatch({ type: "START_GAME", questions, totalTime: mode === "category" ? 90 : 150 });
     } catch (error) {
       console.error("Oyun baslatma hatasi:", error);
     }
@@ -163,7 +163,9 @@ export default function GameScreen({ navigation, route }: any) {
     <View style={styles.container}>
       {showHint && state.currentFlashHint ? (
         <Animated.View style={[styles.hintBanner, { opacity: hintOpacity }]}>
-          <Text style={styles.hintBannerText}>{state.currentFlashHint}</Text>
+          <Text style={styles.hintBannerText}>
+  {currentQuestion?.wordData.origin ? currentQuestion.wordData.origin + " kökenli — " : ""}{state.currentFlashHint}
+</Text>
         </Animated.View>
       ) : null}
 
