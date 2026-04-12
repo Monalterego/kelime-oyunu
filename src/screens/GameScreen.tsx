@@ -2,18 +2,13 @@ import React, { useReducer, useEffect, useRef, useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Animated } from "react-native";
 import { Question } from "../types";
 import {
-  gameReducer,
-  initialGameState,
-  calculateQuestionPoints,
-  LETTER_PENALTY,
-  SKIP_PENALTY_RATIO,
-  getBasePoints,
-  HINT_DELAY,
-  HINT_DISPLAY,
+  gameReducer, initialGameState, calculateQuestionPoints,
+  LETTER_PENALTY, SKIP_PENALTY_RATIO, getBasePoints,
+  HINT_DELAY, HINT_DISPLAY,
 } from "../utils/gameReducer";
-import { COLORS, TYPO, SP, RADIUS, SHADOW } from "../theme/tokens";
+import { C, T, S, R, SHADOW } from "../theme/tokens";
 import { generateGameQuestions } from "../utils/questionGenerator";
-import { ScreenContainer, AppButton, AppCard, Badge, LetterTile } from "../components/ui";
+import { Screen, Btn, Chip, Card, Tile, ProgressDots } from "../components/ui";
 
 export default function GameScreen({ navigation, route }: any) {
   const mode = route?.params?.mode || "classic";
@@ -22,34 +17,39 @@ export default function GameScreen({ navigation, route }: any) {
   const [state, dispatch] = useReducer(gameReducer, initialGameState);
   const [answer, setAnswer] = useState("");
   const [showHint, setShowHint] = useState(false);
+  const hintSlide = useRef(new Animated.Value(-80)).current;
   const hintOpacity = useRef(new Animated.Value(0)).current;
-  const hintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const totalTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const answerTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const hintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const startGame = () => {
     try {
       const questions = generateGameQuestions(mode, category);
       if (questions.length > 0)
         dispatch({ type: "START_GAME", questions, totalTime: mode === "category" ? 90 : 150 });
-    } catch (error) {
-      console.error("Oyun baslatma hatasi:", error);
-    }
+    } catch (e) { console.error(e); }
   };
 
-  // Delayed hint
+  // Hint: slides in from top after delay
   useEffect(() => {
     if (state.status === "playing") {
       setShowHint(false);
+      hintSlide.setValue(-80);
       hintOpacity.setValue(0);
       if (hintTimer.current) clearTimeout(hintTimer.current);
       hintTimer.current = setTimeout(() => {
         setShowHint(true);
-        Animated.sequence([
-          Animated.timing(hintOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
-          Animated.delay(HINT_DISPLAY),
-          Animated.timing(hintOpacity, { toValue: 0, duration: 400, useNativeDriver: true }),
-        ]).start(() => setShowHint(false));
+        Animated.parallel([
+          Animated.spring(hintSlide, { toValue: 0, useNativeDriver: true, tension: 60, friction: 10 }),
+          Animated.timing(hintOpacity, { toValue: 1, duration: 300, useNativeDriver: true }),
+        ]).start();
+        setTimeout(() => {
+          Animated.parallel([
+            Animated.timing(hintSlide, { toValue: -80, duration: 400, useNativeDriver: true }),
+            Animated.timing(hintOpacity, { toValue: 0, duration: 400, useNativeDriver: true }),
+          ]).start(() => setShowHint(false));
+        }, HINT_DISPLAY);
       }, HINT_DELAY);
     } else {
       setShowHint(false);
@@ -58,250 +58,195 @@ export default function GameScreen({ navigation, route }: any) {
     return () => { if (hintTimer.current) clearTimeout(hintTimer.current); };
   }, [state.status, state.currentQuestionIndex]);
 
-  // Total timer
   useEffect(() => {
     if (state.status === "playing") {
       totalTimerRef.current = setInterval(() => dispatch({ type: "TICK_TOTAL" }), 1000);
-    } else {
-      if (totalTimerRef.current) clearInterval(totalTimerRef.current);
-    }
+    } else { if (totalTimerRef.current) clearInterval(totalTimerRef.current); }
     return () => { if (totalTimerRef.current) clearInterval(totalTimerRef.current); };
   }, [state.status]);
 
-  // Auto-advance from result
   useEffect(() => {
     if (state.status === "result") {
       const q = state.questions[state.currentQuestionIndex];
-      const delay = q?.correct ? 1500 : 2500;
-      const timer = setTimeout(() => dispatch({ type: "NEXT_QUESTION" }), delay);
-      return () => clearTimeout(timer);
+      const d = q?.correct ? 1500 : 2500;
+      const t = setTimeout(() => dispatch({ type: "NEXT_QUESTION" }), d);
+      return () => clearTimeout(t);
     }
   }, [state.status, state.currentQuestionIndex]);
 
-  // Answer timer
   useEffect(() => {
     if (state.status === "answering") {
       answerTimerRef.current = setInterval(() => dispatch({ type: "TICK_ANSWER" }), 1000);
-    } else {
-      if (answerTimerRef.current) clearInterval(answerTimerRef.current);
-    }
+    } else { if (answerTimerRef.current) clearInterval(answerTimerRef.current); }
     return () => { if (answerTimerRef.current) clearInterval(answerTimerRef.current); };
   }, [state.status]);
 
-  const currentQuestion = state.questions[state.currentQuestionIndex];
+  const cur = state.questions[state.currentQuestionIndex];
+  const fmt = (sec: number) => Math.floor(sec / 60) + ":" + (sec % 60).toString().padStart(2, "0");
 
-  const formatTime = (seconds: number) => {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return m + ":" + s.toString().padStart(2, "0");
-  };
+  // Build progress array for dots
+  const correctArr = state.questions.slice(0, state.currentQuestionIndex).map(q => q.correct);
 
-  // ── IDLE ──────────────────────────────────────────────
+  // ── IDLE ─────────────────────────────────────────────
   if (state.status === "idle") {
     return (
-      <ScreenContainer>
-        <Text style={[TYPO.hero, { color: COLORS.textBright }]}>Dağarcık</Text>
-        <Text style={[TYPO.body, { color: COLORS.textSecondary, marginTop: SP.sm, marginBottom: SP["3xl"] }]}>
+      <Screen>
+        <Text style={[T.display, { color: C.white }]}>Dağarcık</Text>
+        <Text style={[T.body, { color: C.textSoft, marginTop: S.sm, marginBottom: S.xxl }]}>
           {mode === "category" ? "Kategori Modu" : "Klasik Mod"}
         </Text>
-        <AppButton title="OYNA" onPress={startGame} size="lg" />
-      </ScreenContainer>
+        <Btn label="BAŞLA" onPress={startGame} />
+      </Screen>
     );
   }
 
-  // ── GAME OVER ─────────────────────────────────────────
+  // ── GAME OVER ────────────────────────────────────────
   if (state.status === "gameover") {
-    const answered = state.questions.filter((q) => q.answered);
-    const correct = answered.filter((q) => q.correct);
-    const skipped = answered.filter((q) => q.skipped);
-    const isPositive = state.totalScore >= 0;
+    const correct = state.questions.filter(q => q.correct);
+    const skipped = state.questions.filter(q => q.skipped);
+    const pos = state.totalScore >= 0;
 
     return (
-      <ScreenContainer>
-        <Text style={[TYPO.title, { color: COLORS.textBright, marginBottom: SP["2xl"] }]}>
-          Oyun Bitti!
-        </Text>
+      <Screen>
+        <Text style={[T.h2, { color: C.textSoft, marginBottom: S.lg }]}>Oyun Bitti</Text>
 
-        {/* Score circle */}
-        <View style={[styles.scoreRing, isPositive ? styles.scoreRingPositive : styles.scoreRingNegative]}>
-          <Text style={[TYPO.score, { color: isPositive ? COLORS.correct : COLORS.wrong }]}>
-            {state.totalScore}
-          </Text>
-          <Text style={[TYPO.label, { color: COLORS.textMuted }]}>PUAN</Text>
+        <View style={[gs.scoreRing, { borderColor: pos ? C.green + "60" : C.red + "60" }]}>
+          <Text style={[T.score, { color: pos ? C.gold : C.red }]}>{state.totalScore}</Text>
+          <Text style={[T.scoreLabel, { color: C.textFaint }]}>PUAN</Text>
         </View>
 
-        {/* Stats */}
-        <View style={styles.statsRow}>
-          <Badge text={correct.length + "/" + state.questions.length + " doğru"} variant={correct.length > state.questions.length / 2 ? "correct" : "wrong"} />
-          {skipped.length > 0 && <Badge text={skipped.length + " pas"} variant="skip" />}
+        <View style={gs.statsRow}>
+          <Chip text={correct.length + "/" + state.questions.length + " doğru"} color={correct.length > state.questions.length / 2 ? "green" : "red"} />
+          {skipped.length > 0 && <Chip text={skipped.length + " pas"} color="purple" />}
         </View>
 
-        {/* Actions */}
-        <View style={styles.endActions}>
-          <AppButton title="Tekrar Oyna" onPress={startGame} />
-          <AppButton title="Ana Sayfa" onPress={() => navigation.navigate("Home")} variant="ghost" />
+        {/* Progress dots showing the whole game */}
+        <ProgressDots current={state.questions.length} total={state.questions.length} correct={state.questions.map(q => q.correct)} />
+
+        <View style={gs.endBtns}>
+          <Btn label="Tekrar Oyna" onPress={startGame} variant="cta" />
+          <Btn label="Ana Sayfa" onPress={() => navigation.navigate("Home")} variant="ghost" />
         </View>
-      </ScreenContainer>
+      </Screen>
     );
   }
 
-  // ── RESULT ────────────────────────────────────────────
-  if (state.status === "result" && currentQuestion) {
-    const isCorrect = currentQuestion.correct;
-    const isSkipped = currentQuestion.skipped;
-
+  // ── RESULT ───────────────────────────────────────────
+  if (state.status === "result" && cur) {
+    const ok = cur.correct;
+    const skip = cur.skipped;
     return (
-      <ScreenContainer>
-        {/* Timer still visible */}
-        <View style={styles.topBar}>
-          <Text style={[TYPO.timer, { color: COLORS.textMuted }]}>{formatTime(state.totalTimeLeft)}</Text>
-          <Text style={[TYPO.points, { color: COLORS.textSecondary }]}>{state.totalScore} P</Text>
+      <Screen style={{ justifyContent: "flex-start", paddingTop: 56 }}>
+        <View style={gs.topBar}>
+          <Text style={[T.timer, { color: C.textFaint }]}>{fmt(state.totalTimeLeft)}</Text>
+          <Text style={[T.badge, { color: C.textSoft }]}>{state.totalScore} P</Text>
         </View>
 
-        {/* Result card */}
-        <AppCard style={[
-          styles.resultCardWrapper,
-          { backgroundColor: isCorrect ? COLORS.correctBg : COLORS.wrongBg },
-          { borderWidth: 1, borderColor: isCorrect ? COLORS.correct + "30" : COLORS.wrong + "30" },
-        ]}>
-          <Text style={styles.resultIcon}>
-            {isCorrect ? "✓" : isSkipped ? "⊘" : "✗"}
+        <View style={[gs.resultBox, { backgroundColor: ok ? C.greenSoft : C.redSoft, borderColor: ok ? C.greenBorder : C.redBorder }]}>
+          <Text style={{ fontSize: 44, marginBottom: S.md }}>{ok ? "✓" : skip ? "⊘" : "✗"}</Text>
+          <Text style={[T.h1, { color: C.white }]}>{cur.wordData.word.toLocaleUpperCase("tr-TR")}</Text>
+          <Text style={[T.bodySm, { color: C.textSoft, textAlign: "center", marginTop: S.sm }]}>{cur.wordData.definition}</Text>
+          <Text style={[T.h2, { color: ok ? C.green : C.red, marginTop: S.lg }]}>
+            {cur.earnedPoints > 0 ? "+" : ""}{cur.earnedPoints}
           </Text>
-          <Text style={[TYPO.title, { color: COLORS.textBright, marginBottom: SP.sm }]}>
-            {currentQuestion.wordData.word.toLocaleUpperCase("tr-TR")}
-          </Text>
-          <Text style={[TYPO.bodySm, { color: COLORS.textSecondary, textAlign: "center", marginBottom: SP.md }]}>
-            {currentQuestion.wordData.definition}
-          </Text>
-          <Text style={[TYPO.subtitle, { color: isCorrect ? COLORS.correct : COLORS.wrong }]}>
-            {currentQuestion.earnedPoints > 0 ? "+" : ""}{currentQuestion.earnedPoints} puan
-          </Text>
-        </AppCard>
+        </View>
 
-        <AppButton
-          title="Sonraki Soru"
-          onPress={() => dispatch({ type: "NEXT_QUESTION" })}
-          variant="secondary"
-        />
-      </ScreenContainer>
+        <ProgressDots current={state.currentQuestionIndex + 1} total={state.questions.length} correct={correctArr.concat([ok])} />
+      </Screen>
     );
   }
 
-  // ── PLAYING / ANSWERING ───────────────────────────────
-  if (!currentQuestion) return null;
+  // ── PLAYING / ANSWERING ──────────────────────────────
+  if (!cur) return null;
 
-  const questionNumber = state.currentQuestionIndex + 1;
-  const totalQuestions = state.questions.length;
-  const remainingPoints = calculateQuestionPoints(currentQuestion);
-  const isTimeLow = state.totalTimeLeft < 30;
-  const isTimeCritical = state.totalTimeLeft < 15;
-  const timeColor = isTimeCritical ? COLORS.wrong : isTimeLow ? COLORS.timerWarning : COLORS.primary;
-  const skipPenalty = Math.round(getBasePoints(currentQuestion) * SKIP_PENALTY_RATIO);
-  const canTakeLetter = currentQuestion.revealedLetters.length < currentQuestion.wordData.length - 1;
+  const qNum = state.currentQuestionIndex + 1;
+  const qTotal = state.questions.length;
+  const pts = calculateQuestionPoints(cur);
+  const lowTime = state.totalTimeLeft < 30;
+  const critTime = state.totalTimeLeft < 15;
+  const tColor = critTime ? C.red : lowTime ? C.gold : C.brand;
+  const skipCost = Math.round(getBasePoints(cur) * SKIP_PENALTY_RATIO);
+  const canHint = cur.revealedLetters.length < cur.wordData.length - 1;
 
   return (
-    <View style={styles.gameContainer}>
-      {/* Hint banner */}
+    <View style={gs.game}>
+      {/* Sliding hint banner */}
       {showHint && state.currentFlashHint ? (
-        <Animated.View style={[styles.hintBanner, { opacity: hintOpacity }]}>
-          <Text style={styles.hintText}>
-            {currentQuestion.wordData.origin
-              ? currentQuestion.wordData.origin + " kökenli — "
-              : "Öz Türkçe — "}
+        <Animated.View style={[gs.hint, { transform: [{ translateY: hintSlide }], opacity: hintOpacity }]}>
+          <Text style={[T.bodySm, { color: C.gold, textAlign: "center", fontStyle: "italic" }]}>
+            {cur.wordData.origin ? cur.wordData.origin + " kökenli — " : "Öz Türkçe — "}
             {state.currentFlashHint}
           </Text>
         </Animated.View>
       ) : null}
 
-      {/* ── TOP BAR ── */}
-      <View style={styles.topBar}>
-        <View style={[styles.timerPill, isTimeLow && { backgroundColor: timeColor + "20" }]}>
-          <Text style={[TYPO.timer, { color: timeColor }]}>{formatTime(state.totalTimeLeft)}</Text>
+      {/* TOP BAR */}
+      <View style={gs.topBar}>
+        <View style={[gs.timerPill, lowTime && { backgroundColor: tColor + "15" }]}>
+          <Text style={[T.timer, { color: tColor }]}>{fmt(state.totalTimeLeft)}</Text>
         </View>
-        <Text style={[TYPO.caption, { color: COLORS.textMuted }]}>
-          {questionNumber}/{totalQuestions}
-        </Text>
-        <Text style={[TYPO.points, { color: COLORS.textPrimary }]}>{state.totalScore} P</Text>
+        <ProgressDots current={state.currentQuestionIndex} total={qTotal} correct={correctArr} />
+        <Text style={[T.badge, { color: C.text }]}>{state.totalScore} P</Text>
       </View>
 
-      {/* ── INFO ROW ── */}
-      <View style={styles.infoRow}>
-        <Badge text={remainingPoints + " puan"} variant="accent" />
-        <Text style={[TYPO.caption, { color: COLORS.textMuted }]}>
-          {currentQuestion.wordData.length} harfli
-        </Text>
+      {/* POINTS + LENGTH */}
+      <View style={gs.metaRow}>
+        <Chip text={pts + " puan"} color="gold" />
+        <Text style={[T.cap, { color: C.textFaint }]}>{cur.wordData.length} harfli</Text>
       </View>
 
-      {/* ── DEFINITION CARD ── */}
-      <AppCard variant="outlined" style={styles.defCard}>
-        <Text style={[TYPO.bodyLg, { color: COLORS.textPrimary, textAlign: "center" }]}>
-          {currentQuestion.wordData.definition}
-        </Text>
-      </AppCard>
+      {/* DEFINITION */}
+      <View style={gs.defBox}>
+        <Text style={[T.game, { color: C.text, textAlign: "center" }]}>{cur.wordData.definition}</Text>
+      </View>
 
-      {/* ── LETTER TILES ── */}
-      <View style={styles.letterRow}>
-        {currentQuestion.wordData.word.split("").map((letter, i) => (
-          <LetterTile
-            key={i}
-            letter={letter}
-            revealed={currentQuestion.revealedLetters.includes(i)}
-          />
+      {/* TILES */}
+      <View style={gs.tiles}>
+        {cur.wordData.word.split("").map((ch, i) => (
+          <Tile key={i} letter={ch} revealed={cur.revealedLetters.includes(i)} />
         ))}
       </View>
 
-      {/* ── ACTION AREA ── */}
+      {/* ACTIONS */}
       {state.status === "answering" ? (
-        <View style={styles.answerArea}>
-          <View style={[styles.answerTimerCircle, { backgroundColor: COLORS.wrongBg, borderColor: COLORS.wrong + "40" }]}>
-            <Text style={[TYPO.timer, { color: COLORS.wrong }]}>{state.answerTimeLeft}</Text>
+        <View style={gs.answerZone}>
+          <View style={gs.answerTimer}>
+            <Text style={[T.timerBig, { color: C.red }]}>{state.answerTimeLeft}</Text>
           </View>
           <TextInput
-            style={styles.answerInput}
+            style={gs.input}
             value={answer}
             onChangeText={setAnswer}
             autoFocus
             autoCapitalize="none"
             placeholder="Cevabınızı yazın..."
-            placeholderTextColor={COLORS.textMuted}
+            placeholderTextColor={C.textFaint}
             onSubmitEditing={() => { dispatch({ type: "SUBMIT_ANSWER", answer }); setAnswer(""); }}
           />
-          <AppButton
-            title="CEVAPLA"
-            onPress={() => { dispatch({ type: "SUBMIT_ANSWER", answer }); setAnswer(""); }}
-            variant="primary"
-          />
+          <Btn label="CEVAPLA" onPress={() => { dispatch({ type: "SUBMIT_ANSWER", answer }); setAnswer(""); }} variant="primary" />
         </View>
       ) : (
-        <View style={styles.playActions}>
-          <View style={styles.mainButtons}>
+        <View style={gs.playZone}>
+          <View style={gs.mainBtns}>
             <TouchableOpacity
-              style={[styles.hintBtn, !canTakeLetter && { opacity: 0.35 }]}
+              style={[gs.hintBtn, !canHint && { opacity: 0.3 }]}
               onPress={() => dispatch({ type: "REQUEST_LETTER" })}
-              disabled={!canTakeLetter}
+              disabled={!canHint}
               activeOpacity={0.7}
             >
-              <Text style={[TYPO.buttonSm, { color: COLORS.textSecondary }]}>HARF AL</Text>
-              <Text style={[TYPO.caption, { color: COLORS.textMuted }]}>-{LETTER_PENALTY}P</Text>
+              <Text style={[T.btnSm, { color: C.textSoft }]}>HARF AL</Text>
+              <Text style={[T.cap, { color: C.textFaint }]}>-{LETTER_PENALTY}P</Text>
             </TouchableOpacity>
-
             <TouchableOpacity
-              style={styles.answerBtn}
+              style={gs.ctaBtn}
               onPress={() => { setAnswer(""); dispatch({ type: "PRESS_BUTTON" }); }}
-              activeOpacity={0.7}
+              activeOpacity={0.75}
             >
-              <Text style={[TYPO.button, { color: COLORS.textOnPrimary }]}>CEVAPLA</Text>
+              <Text style={[T.btn, { color: C.white }]}>CEVAPLA</Text>
             </TouchableOpacity>
           </View>
-
-          <TouchableOpacity
-            style={styles.skipBtn}
-            onPress={() => dispatch({ type: "SKIP_QUESTION" })}
-            activeOpacity={0.6}
-          >
-            <Text style={[TYPO.caption, { color: COLORS.textMuted }]}>
-              PAS GEÇ (-{skipPenalty}P)
-            </Text>
+          <TouchableOpacity style={gs.skipBtn} onPress={() => dispatch({ type: "SKIP_QUESTION" })} activeOpacity={0.5}>
+            <Text style={[T.cap, { color: C.textFaint }]}>PAS GEÇ (-{skipCost}P)</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -309,36 +254,30 @@ export default function GameScreen({ navigation, route }: any) {
   );
 }
 
-const styles = StyleSheet.create({
-  gameContainer: {
+const gs = StyleSheet.create({
+  game: {
     flex: 1,
-    backgroundColor: COLORS.bgBase,
-    paddingHorizontal: SP.screen,
-    paddingTop: 50,
-    paddingBottom: SP["2xl"],
+    backgroundColor: C.bg,
+    paddingHorizontal: S.page,
+    paddingTop: 52,
+    paddingBottom: S.xl,
     justifyContent: "space-between",
   },
 
   // Hint
-  hintBanner: {
+  hint: {
     position: "absolute",
-    top: 44,
-    left: SP.screen,
-    right: SP.screen,
-    backgroundColor: COLORS.bgCard,
-    borderRadius: RADIUS.md,
-    paddingVertical: SP.md,
-    paddingHorizontal: SP.lg,
-    zIndex: 10,
+    top: 48,
+    left: S.page,
+    right: S.page,
+    backgroundColor: C.surface,
+    borderRadius: R.md,
+    paddingVertical: S.md,
+    paddingHorizontal: S.lg,
+    zIndex: 20,
     borderWidth: 1,
-    borderColor: COLORS.primaryBorder,
-    ...SHADOW.md,
-  },
-  hintText: {
-    ...TYPO.bodySm,
-    color: COLORS.primary,
-    textAlign: "center",
-    fontStyle: "italic",
+    borderColor: C.goldBorder,
+    ...SHADOW.soft,
   },
 
   // Top bar
@@ -346,132 +285,123 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: SP.lg,
+    marginBottom: S.lg,
   },
   timerPill: {
-    backgroundColor: COLORS.bgCard,
-    paddingHorizontal: SP.lg,
-    paddingVertical: SP.sm,
-    borderRadius: RADIUS.md,
+    backgroundColor: C.surface,
+    paddingHorizontal: S.lg,
+    paddingVertical: S.sm,
+    borderRadius: R.md,
   },
 
-  // Info row
-  infoRow: {
+  // Meta
+  metaRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: SP.lg,
+    marginBottom: S.md,
   },
 
   // Definition
-  defCard: {
-    marginBottom: SP["2xl"],
-    paddingVertical: SP["2xl"],
+  defBox: {
+    backgroundColor: C.surface,
+    borderRadius: R.xl,
+    paddingVertical: S.xl,
+    paddingHorizontal: S.lg,
+    marginBottom: S.xl,
+    borderWidth: 1,
+    borderColor: C.brandBorder,
   },
 
-  // Letters
-  letterRow: {
+  // Tiles
+  tiles: {
     flexDirection: "row",
     justifyContent: "center",
-    gap: SP.sm,
-    marginBottom: SP["2xl"],
+    gap: 6,
+    marginBottom: S.xl,
     flexWrap: "wrap",
   },
 
-  // Answer area
-  answerArea: {
-    alignItems: "center",
-    gap: SP.md,
-  },
-  answerTimerCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+  // Answer
+  answerZone: { alignItems: "center", gap: S.md },
+  answerTimer: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: C.redSoft,
+    borderWidth: 2,
+    borderColor: C.redBorder,
     justifyContent: "center",
     alignItems: "center",
-    borderWidth: 2,
   },
-  answerInput: {
+  input: {
     width: "100%",
-    backgroundColor: COLORS.bgInput,
+    backgroundColor: C.surface,
     borderWidth: 2,
-    borderColor: COLORS.primary,
-    borderRadius: RADIUS.md,
-    padding: SP.lg,
-    ...TYPO.bodyLg,
-    color: COLORS.textBright,
+    borderColor: C.brand,
+    borderRadius: R.lg,
+    padding: S.lg,
+    ...T.game,
+    color: C.white,
     textAlign: "center",
   },
 
-  // Play actions
-  playActions: {
-    gap: SP.md,
-  },
-  mainButtons: {
-    flexDirection: "row",
-    gap: SP.md,
-  },
+  // Play
+  playZone: { gap: S.md },
+  mainBtns: { flexDirection: "row", gap: S.md },
   hintBtn: {
     flex: 1,
-    backgroundColor: COLORS.bgCard,
-    borderRadius: RADIUS.md,
-    paddingVertical: SP.lg,
+    backgroundColor: C.surface,
+    borderRadius: R.lg,
+    paddingVertical: S.lg,
     alignItems: "center",
     borderWidth: 1,
-    borderColor: COLORS.divider,
+    borderColor: C.surfaceLight,
   },
-  answerBtn: {
-    flex: 1.5,
-    backgroundColor: COLORS.primary,
-    borderRadius: RADIUS.md,
-    paddingVertical: SP.lg,
+  ctaBtn: {
+    flex: 1.6,
+    backgroundColor: C.orange,
+    borderRadius: R.lg,
+    paddingVertical: S.lg,
     alignItems: "center",
     justifyContent: "center",
-    ...SHADOW.glow(COLORS.primary),
+    ...SHADOW.soft,
   },
   skipBtn: {
-    paddingVertical: SP.md,
+    paddingVertical: S.sm,
     alignItems: "center",
   },
 
   // Result
-  resultCardWrapper: {
+  resultBox: {
+    borderRadius: R.xxl,
+    padding: S.xxl,
     alignItems: "center",
-    marginBottom: SP["2xl"],
-    paddingVertical: SP["3xl"],
-  },
-  resultIcon: {
-    fontSize: 48,
-    color: COLORS.textBright,
-    marginBottom: SP.md,
+    marginVertical: S.xxl,
+    borderWidth: 1,
   },
 
   // Score
   scoreRing: {
-    width: 160,
-    height: 160,
-    borderRadius: 80,
+    width: 170,
+    height: 170,
+    borderRadius: 85,
     borderWidth: 3,
-    backgroundColor: COLORS.bgCard,
+    backgroundColor: C.surface,
     justifyContent: "center",
     alignItems: "center",
     alignSelf: "center",
-    marginBottom: SP["2xl"],
-  },
-  scoreRingPositive: {
-    borderColor: COLORS.correct + "50",
-  },
-  scoreRingNegative: {
-    borderColor: COLORS.wrong + "50",
+    marginBottom: S.xl,
   },
   statsRow: {
     flexDirection: "row",
-    gap: SP.sm,
+    gap: S.sm,
     justifyContent: "center",
-    marginBottom: SP["3xl"],
+    marginBottom: S.xl,
   },
-  endActions: {
+  endBtns: {
     width: "100%",
-    gap: SP.md,
+    gap: S.md,
+    marginTop: S.xxl,
   },
 });

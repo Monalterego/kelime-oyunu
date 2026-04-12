@@ -1,105 +1,107 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { COLORS, TYPO, SP, RADIUS, SHADOW } from "../theme/tokens";
-import { ScreenContainer, AppButton } from "../components/ui";
+import { C, T, S, R, SHADOW } from "../theme/tokens";
+import { Screen, Btn } from "../components/ui";
 
 export default function HomeScreen({ navigation }: any) {
   return (
-    <ScreenContainer>
-      {/* Ambient glow */}
-      <View style={styles.glowOrb} />
+    <Screen>
+      {/* Background glow */}
+      <View style={s.glowTop} />
+      <View style={s.glowBottom} />
 
-      {/* Logo section */}
-      <View style={styles.logoSection}>
-        <View style={styles.logoOuter}>
-          <View style={styles.logoInner}>
-            <Text style={styles.logoText}>D</Text>
+      {/* Logo */}
+      <View style={s.logo}>
+        <View style={s.logoRing}>
+          <View style={s.logoCore}>
+            <Text style={s.logoChar}>D</Text>
           </View>
         </View>
-        <Text style={[TYPO.hero, { color: COLORS.textBright, marginTop: SP["2xl"] }]}>
-          Dağarcık
-        </Text>
-        <Text style={[TYPO.body, { color: COLORS.textSecondary, marginTop: SP.sm }]}>
-          Kelime hazinenizi test edin
-        </Text>
       </View>
 
-      {/* Actions */}
-      <View style={styles.actions}>
-        <AppButton
-          title="KLASİK MOD"
-          subtitle="14 soru · 2.5 dakika · karışık"
+      {/* Title */}
+      <Text style={[T.display, { color: C.white, marginTop: S.xl }]}>Dağarcık</Text>
+      <Text style={[T.body, { color: C.textSoft, marginTop: S.sm, marginBottom: S.xxxl }]}>
+        Kelime hazinenizi sınayın
+      </Text>
+
+      {/* Main CTA — the thing you want people to tap */}
+      <View style={s.actions}>
+        <Btn
+          label="OYNA"
+          sub="14 soru · 2.5 dakika"
           onPress={() => navigation.navigate("Game", { mode: "classic" })}
-          size="lg"
+          variant="cta"
         />
 
-        <AppButton
-          title="KATEGORİ MODU"
-          subtitle="10 soru · 90 saniye · seçtiğin konu"
+        <Btn
+          label="KATEGORİ SEÇ"
+          sub="10 soru · 90 saniye · konulu"
           onPress={() => navigation.navigate("Category")}
-          variant="secondary"
-          size="lg"
+          variant="outline"
         />
 
-        <AppButton
-          title="Nasıl Oynanır?"
+        <Btn
+          label="Nasıl Oynanır?"
           onPress={() => {}}
           variant="ghost"
-          size="sm"
         />
       </View>
 
       {/* Footer */}
-      <Text style={styles.footer}>7.000+ kelime ile sınırsız eğlence</Text>
-    </ScreenContainer>
+      <Text style={[T.cap, { color: C.textFaint, position: "absolute", bottom: 36 }]}>
+        7.000+ kelime · TDK sözlük veritabanı
+      </Text>
+    </Screen>
   );
 }
 
-const styles = StyleSheet.create({
-  glowOrb: {
+const s = StyleSheet.create({
+  glowTop: {
     position: "absolute",
-    top: -120,
-    alignSelf: "center",
-    width: 300,
-    height: 300,
-    borderRadius: 150,
-    backgroundColor: COLORS.primaryGlow,
-    opacity: 0.5,
+    top: -100,
+    width: 280,
+    height: 280,
+    borderRadius: 140,
+    backgroundColor: "rgba(255, 107, 53, 0.08)",
   },
-  logoSection: {
+  glowBottom: {
+    position: "absolute",
+    bottom: -60,
+    right: -40,
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    backgroundColor: "rgba(79, 142, 255, 0.06)",
+  },
+  logo: {
     alignItems: "center",
-    marginBottom: SP["5xl"],
   },
-  logoOuter: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: COLORS.primaryGlow,
+  logoRing: {
+    width: 110,
+    height: 110,
+    borderRadius: 55,
+    backgroundColor: "rgba(255, 107, 53, 0.1)",
     justifyContent: "center",
     alignItems: "center",
-    ...SHADOW.glow(COLORS.primary),
+    ...SHADOW.glow(C.orange),
   },
-  logoInner: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: COLORS.primary,
+  logoCore: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    backgroundColor: C.orange,
     justifyContent: "center",
     alignItems: "center",
   },
-  logoText: {
-    fontSize: 40,
-    fontWeight: "800",
-    color: COLORS.textOnPrimary,
+  logoChar: {
+    fontSize: 44,
+    fontWeight: "900",
+    color: C.white,
+    marginTop: -2,
   },
   actions: {
     width: "100%",
-    gap: SP.md,
-  },
-  footer: {
-    position: "absolute",
-    bottom: SP["4xl"],
-    ...TYPO.caption,
-    color: COLORS.textMuted,
+    gap: S.md,
   },
 });

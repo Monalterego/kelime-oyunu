@@ -1,229 +1,162 @@
 import React from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  ViewStyle,
-  TextStyle,
-} from "react-native";
-import { COLORS, TYPO, SP, RADIUS, SHADOW } from "../theme/tokens";
+import { View, Text, TouchableOpacity, StyleSheet, ViewStyle } from "react-native";
+import { C, T, S, R, SHADOW, TILE_SIZE } from "../theme/tokens";
 
-// ─── SCREEN CONTAINER ─────────────────────────────────────
-interface ScreenContainerProps {
-  children: React.ReactNode;
-  centered?: boolean;
-  padded?: boolean;
+// ─── SCREEN ────────────────────────────────────────────────
+export function Screen({ children, style }: { children: React.ReactNode; style?: ViewStyle }) {
+  return <View style={[s.screen, style]}>{children}</View>;
 }
 
-export function ScreenContainer({ children, centered = true, padded = true }: ScreenContainerProps) {
-  return (
-    <View style={[
-      componentStyles.screen,
-      centered && componentStyles.screenCentered,
-      padded && { padding: SP.screen },
-    ]}>
-      {children}
-    </View>
-  );
-}
+// ─── GAME BUTTON ───────────────────────────────────────────
+// The main interactive element. Big, bold, satisfying to tap.
+type BtnVariant = "cta" | "primary" | "outline" | "ghost";
 
-// ─── APP BUTTON ───────────────────────────────────────────
-type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
-
-interface AppButtonProps {
-  title: string;
-  subtitle?: string;
+interface BtnProps {
+  label: string;
+  sub?: string;
   onPress: () => void;
-  variant?: ButtonVariant;
+  variant?: BtnVariant;
   disabled?: boolean;
-  fullWidth?: boolean;
-  size?: "sm" | "md" | "lg";
+  full?: boolean;
 }
 
-const BUTTON_VARIANTS: Record<ButtonVariant, { bg: string; border: string; text: string }> = {
-  primary: { bg: COLORS.primary, border: "transparent", text: COLORS.textOnPrimary },
-  secondary: { bg: COLORS.bgCard, border: COLORS.primaryBorder, text: COLORS.textPrimary },
-  ghost: { bg: "transparent", border: COLORS.divider, text: COLORS.textSecondary },
-  danger: { bg: COLORS.wrongBg, border: COLORS.wrong, text: COLORS.wrong },
-};
-
-const BUTTON_SIZES = {
-  sm: { paddingVertical: 10, paddingHorizontal: 16 },
-  md: { paddingVertical: 14, paddingHorizontal: 20 },
-  lg: { paddingVertical: 18, paddingHorizontal: 24 },
-};
-
-export function AppButton({ title, subtitle, onPress, variant = "primary", disabled = false, fullWidth = true, size = "md" }: AppButtonProps) {
-  const v = BUTTON_VARIANTS[variant];
-  const s = BUTTON_SIZES[size];
+export function Btn({ label, sub, onPress, variant = "cta", disabled = false, full = true }: BtnProps) {
+  const v = BTN_MAP[variant];
   return (
     <TouchableOpacity
       onPress={onPress}
       disabled={disabled}
-      activeOpacity={0.7}
+      activeOpacity={0.75}
       style={[
-        componentStyles.button,
-        { backgroundColor: v.bg, borderColor: v.border },
-        s,
-        fullWidth && { width: "100%" },
-        variant !== "primary" && variant !== "danger" && { borderWidth: 1 },
-        disabled && { opacity: 0.4 },
-        variant === "primary" && SHADOW.md,
+        s.btn,
+        { backgroundColor: v.bg, borderColor: v.border, borderWidth: v.borderW },
+        full && { width: "100%" },
+        disabled && { opacity: 0.35 },
+        variant === "cta" && SHADOW.soft,
       ]}
     >
-      <Text style={[TYPO.button, { color: v.text }]}>{title}</Text>
-      {subtitle && <Text style={[TYPO.caption, { color: v.text, opacity: 0.7, marginTop: 2 }]}>{subtitle}</Text>}
+      <Text style={[T.btn, { color: v.text }]}>{label}</Text>
+      {sub ? <Text style={[T.cap, { color: v.sub, marginTop: 2 }]}>{sub}</Text> : null}
     </TouchableOpacity>
   );
 }
 
-// ─── APP CARD ─────────────────────────────────────────────
-interface AppCardProps {
-  children: React.ReactNode;
-  style?: ViewStyle;
-  variant?: "default" | "elevated" | "outlined";
-}
-
-export function AppCard({ children, style, variant = "default" }: AppCardProps) {
-  return (
-    <View style={[
-      componentStyles.card,
-      variant === "elevated" && [componentStyles.cardElevated, SHADOW.md],
-      variant === "outlined" && componentStyles.cardOutlined,
-      style,
-    ]}>
-      {children}
-    </View>
-  );
-}
-
-// ─── BADGE ────────────────────────────────────────────────
-type BadgeVariant = "primary" | "accent" | "correct" | "wrong" | "skip" | "muted";
-
-interface BadgeProps {
-  text: string;
-  variant?: BadgeVariant;
-}
-
-const BADGE_COLORS: Record<BadgeVariant, { bg: string; text: string }> = {
-  primary: { bg: COLORS.primaryGlow, text: COLORS.primary },
-  accent: { bg: COLORS.accentGlow, text: COLORS.accent },
-  correct: { bg: COLORS.correctBg, text: COLORS.correct },
-  wrong: { bg: COLORS.wrongBg, text: COLORS.wrong },
-  skip: { bg: COLORS.skipBg, text: COLORS.skip },
-  muted: { bg: COLORS.divider, text: COLORS.textSecondary },
+const BTN_MAP: Record<BtnVariant, { bg: string; border: string; borderW: number; text: string; sub: string }> = {
+  cta: { bg: C.orange, border: "transparent", borderW: 0, text: C.white, sub: "rgba(255,255,255,0.7)" },
+  primary: { bg: C.brand, border: "transparent", borderW: 0, text: C.white, sub: "rgba(255,255,255,0.6)" },
+  outline: { bg: "transparent", border: C.brandBorder, borderW: 1.5, text: C.text, sub: C.textSoft },
+  ghost: { bg: "transparent", border: "transparent", borderW: 0, text: C.textSoft, sub: C.textFaint },
 };
 
-export function Badge({ text, variant = "primary" }: BadgeProps) {
-  const c = BADGE_COLORS[variant];
+// ─── CHIP / BADGE ──────────────────────────────────────────
+// Small info nuggets. Points, status, hints.
+type ChipColor = "gold" | "brand" | "green" | "red" | "purple" | "muted";
+
+export function Chip({ text, color = "brand" }: { text: string; color?: ChipColor }) {
+  const m = CHIP_MAP[color];
   return (
-    <View style={[componentStyles.badge, { backgroundColor: c.bg }]}>
-      <Text style={[TYPO.points, { color: c.text }]}>{text}</Text>
+    <View style={[s.chip, { backgroundColor: m.bg }]}>
+      <Text style={[T.badge, { color: m.text }]}>{text}</Text>
     </View>
   );
 }
 
-// ─── LETTER TILE ──────────────────────────────────────────
-interface LetterTileProps {
-  letter: string;
-  revealed: boolean;
-  size?: number;
+const CHIP_MAP: Record<ChipColor, { bg: string; text: string }> = {
+  gold: { bg: C.goldSoft, text: C.gold },
+  brand: { bg: C.brandSoft, text: C.brand },
+  green: { bg: C.greenSoft, text: C.green },
+  red: { bg: C.redSoft, text: C.red },
+  purple: { bg: C.purpleSoft, text: C.purple },
+  muted: { bg: C.surfaceLight, text: C.textSoft },
+};
+
+// ─── CARD ──────────────────────────────────────────────────
+export function Card({ children, style }: { children: React.ReactNode; style?: ViewStyle }) {
+  return <View style={[s.card, style]}>{children}</View>;
 }
 
-export function LetterTile({ letter, revealed, size = 44 }: LetterTileProps) {
+// ─── LETTER TILE ───────────────────────────────────────────
+// The star of the show. Each tile is a mini-reward when revealed.
+export function Tile({ letter, revealed }: { letter: string; revealed: boolean }) {
   return (
     <View style={[
-      componentStyles.letterTile,
-      { width: size, height: size * 1.2 },
-      revealed && componentStyles.letterTileRevealed,
-      revealed && SHADOW.glow(COLORS.primary),
+      s.tile,
+      revealed && s.tileRevealed,
+      revealed && SHADOW.glow(C.brand),
     ]}>
-      <Text style={[
-        TYPO.letterTile,
-        { color: revealed ? COLORS.letterText : "transparent" },
-      ]}>
+      <Text style={[T.tile, { color: revealed ? C.tileLetter : "transparent" }]}>
         {revealed ? letter.toLocaleUpperCase("tr-TR") : " "}
       </Text>
     </View>
   );
 }
 
-// ─── STAT ROW ─────────────────────────────────────────────
-interface StatRowProps {
-  label: string;
-  value: string | number;
-  color?: string;
-}
-
-export function StatRow({ label, value, color = COLORS.textSecondary }: StatRowProps) {
+// ─── PROGRESS DOTS ─────────────────────────────────────────
+// Shows question progress like ●●●○○○○ — satisfying to fill up
+export function ProgressDots({ current, total, correct }: { current: number; total: number; correct: boolean[] }) {
   return (
-    <View style={componentStyles.statRow}>
-      <Text style={[TYPO.bodySm, { color: COLORS.textMuted }]}>{label}</Text>
-      <Text style={[TYPO.bodySm, { color, fontWeight: "600" }]}>{String(value)}</Text>
+    <View style={s.dots}>
+      {Array.from({ length: total }, (_, i) => {
+        let dotColor = C.surfaceLight;
+        if (i < correct.length) {
+          dotColor = correct[i] ? C.green : C.red;
+        } else if (i === current) {
+          dotColor = C.brand;
+        }
+        return <View key={i} style={[s.dot, { backgroundColor: dotColor }]} />;
+      })}
     </View>
   );
 }
 
-// ─── DIVIDER ──────────────────────────────────────────────
-export function Divider() {
-  return <View style={componentStyles.divider} />;
-}
-
-// ─── STYLES ───────────────────────────────────────────────
-const componentStyles = StyleSheet.create({
+// ─── STYLES ────────────────────────────────────────────────
+const s = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: COLORS.bgBase,
-  },
-  screenCentered: {
+    backgroundColor: C.bg,
     justifyContent: "center",
     alignItems: "center",
+    padding: S.page,
   },
-  button: {
-    borderRadius: RADIUS.md,
+  btn: {
+    borderRadius: R.lg,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
     alignItems: "center",
-    justifyContent: "center",
+  },
+  chip: {
+    paddingHorizontal: S.md,
+    paddingVertical: S.xs + 1,
+    borderRadius: R.pill,
   },
   card: {
-    backgroundColor: COLORS.bgCard,
-    borderRadius: RADIUS.lg,
-    padding: SP.xl,
+    backgroundColor: C.surface,
+    borderRadius: R.xl,
+    padding: S.xl,
+    width: "100%",
   },
-  cardElevated: {
-    backgroundColor: COLORS.bgElevated,
-  },
-  cardOutlined: {
-    backgroundColor: "transparent",
-    borderWidth: 1,
-    borderColor: COLORS.primaryBorder,
-  },
-  badge: {
-    paddingHorizontal: SP.md,
-    paddingVertical: SP.xs,
-    borderRadius: RADIUS.pill,
-  },
-  letterTile: {
-    backgroundColor: COLORS.letterEmpty,
-    borderRadius: RADIUS.sm,
+  tile: {
+    width: TILE_SIZE,
+    height: TILE_SIZE * 1.15,
+    backgroundColor: C.tileEmpty,
+    borderRadius: R.sm,
     borderWidth: 1.5,
-    borderColor: COLORS.letterBorder,
+    borderColor: C.tileBorder,
     justifyContent: "center",
     alignItems: "center",
   },
-  letterTileRevealed: {
-    backgroundColor: COLORS.letterRevealed,
-    borderColor: COLORS.letterRevealedBorder,
+  tileRevealed: {
+    backgroundColor: C.tileActive,
+    borderColor: C.tileActiveBorder,
   },
-  statRow: {
+  dots: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: SP.sm,
+    gap: 5,
+    justifyContent: "center",
   },
-  divider: {
-    height: 1,
-    backgroundColor: COLORS.divider,
-    marginVertical: SP.md,
+  dot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
   },
 });
