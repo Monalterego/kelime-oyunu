@@ -32,7 +32,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         ...initialGameState,
         status: "playing",
         questions: action.questions,
-        totalTimeLeft: TOTAL_TIME,
+        totalTimeLeft: action.totalTime || TOTAL_TIME,
         currentFlashHint: action.questions[0]?.wordData.flashHint || "",
       };
 
