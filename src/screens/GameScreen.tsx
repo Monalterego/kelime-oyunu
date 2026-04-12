@@ -56,6 +56,15 @@ export default function GameScreen({ navigation, route }: any) {
   }, [state.status]);
 
   useEffect(() => {
+    if (state.status === "result") {
+      const q = state.questions[state.currentQuestionIndex];
+      const delay = q?.correct ? 1500 : 2500;
+      const timer = setTimeout(() => { dispatch({ type: "NEXT_QUESTION" }); }, delay);
+      return () => clearTimeout(timer);
+    }
+  }, [state.status, state.currentQuestionIndex]);
+
+  useEffect(() => {
     if (state.status === "answering") {
       answerTimerRef.current = setInterval(() => { dispatch({ type: "TICK_ANSWER" }); }, 1000);
     } else {
@@ -164,7 +173,7 @@ export default function GameScreen({ navigation, route }: any) {
       {showHint && state.currentFlashHint ? (
         <Animated.View style={[styles.hintBanner, { opacity: hintOpacity }]}>
           <Text style={styles.hintBannerText}>
-  {currentQuestion?.wordData.origin ? currentQuestion.wordData.origin + " kökenli — " : ""}{state.currentFlashHint}
+  {currentQuestion?.wordData.origin ? currentQuestion.wordData.origin + " kökenli — " : "Öz Türkçe — "}{state.currentFlashHint}
 </Text>
         </Animated.View>
       ) : null}
