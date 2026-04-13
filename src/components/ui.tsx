@@ -42,9 +42,9 @@ export function Btn({ label, sub, onPress, variant = "cta", disabled = false, fu
 }
 
 const BTN_MAP: Record<BtnVariant, { bg: string; border: string; borderW: number; text: string; sub: string }> = {
-  cta: { bg: C.orange, border: "transparent", borderW: 0, text: C.white, sub: "rgba(255,255,255,0.7)" },
-  primary: { bg: C.brand, border: "transparent", borderW: 0, text: C.white, sub: "rgba(255,255,255,0.6)" },
-  outline: { bg: "transparent", border: C.brandBorder, borderW: 1.5, text: C.text, sub: C.textSoft },
+  cta: { bg: C.orange, border: "transparent", borderW: 0, text: C.white, sub: "rgba(255,255,255,0.65)" },
+  primary: { bg: C.brand, border: "transparent", borderW: 0, text: C.white, sub: "rgba(255,255,255,0.75)" },
+  outline: { bg: C.surface, border: C.tileBorder, borderW: 1.5, text: C.text, sub: C.textSoft },
   ghost: { bg: "transparent", border: "transparent", borderW: 0, text: C.textSoft, sub: C.textFaint },
 };
 
@@ -134,6 +134,9 @@ const s = StyleSheet.create({
     borderRadius: R.xl,
     padding: S.xl,
     width: "100%",
+    borderWidth: 1,
+    borderColor: C.surfaceLight,
+    ...SHADOW.soft,
   },
   tile: {
     width: TILE_SIZE,

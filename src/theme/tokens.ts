@@ -3,62 +3,61 @@ import { Platform, Dimensions } from "react-native";
 const { width: SCREEN_W } = Dimensions.get("window");
 
 // ─── DESIGN DIRECTION ──────────────────────────────────────
-// Warm casual game meets premium dark puzzle.
-// Deep navy base + vibrant warm accents (gold for rewards, green for success).
-// High contrast, large touch targets, rewarding feedback.
-// Inspired by: Wordle's clarity + Trivia Crack's energy + 4Pics1Word's simplicity.
+// NYT Games inspired modern style:
+// calm paper background, neutral grays, restrained accents.
+// Clear hierarchy, high readability, tactile letter tiles.
 
 // ─── COLORS ────────────────────────────────────────────────
 export const C = {
   // Canvas
-  bg: "#0B1121",
-  surface: "#131C33",
-  surfaceLight: "#1A2542",
-  surfaceHover: "#213059",
+  bg: "#F7F6F2",
+  surface: "#FFFFFF",
+  surfaceLight: "#ECEAE3",
+  surfaceHover: "#E3E0D8",
 
-  // Brand — vibrant blue, used sparingly
-  brand: "#4F8EFF",
-  brandSoft: "rgba(79, 142, 255, 0.12)",
-  brandBorder: "rgba(79, 142, 255, 0.25)",
+  // Brand — restrained editorial blue
+  brand: "#2E5B8C",
+  brandSoft: "rgba(46, 91, 140, 0.12)",
+  brandBorder: "rgba(46, 91, 140, 0.24)",
 
-  // Reward — warm gold, the dopamine color
-  gold: "#FFB938",
-  goldSoft: "rgba(255, 185, 56, 0.12)",
-  goldBorder: "rgba(255, 185, 56, 0.3)",
+  // Reward
+  gold: "#C5962C",
+  goldSoft: "rgba(197, 150, 44, 0.13)",
+  goldBorder: "rgba(197, 150, 44, 0.3)",
 
-  // Energy — CTA buttons, urgency
-  orange: "#FF6B35",
-  orangeSoft: "rgba(255, 107, 53, 0.12)",
+  // Energy — muted ink
+  orange: "#121212",
+  orangeSoft: "rgba(18, 18, 18, 0.12)",
 
   // Feedback
-  green: "#34D399",
+  green: "#4D8B55",
   greenSoft: "rgba(52, 211, 153, 0.15)",
   greenBorder: "rgba(52, 211, 153, 0.3)",
-  red: "#FF4757",
+  red: "#B44545",
   redSoft: "rgba(255, 71, 87, 0.15)",
   redBorder: "rgba(255, 71, 87, 0.3)",
-  purple: "#A78BFA",
+  purple: "#6B5CA5",
   purpleSoft: "rgba(167, 139, 250, 0.12)",
 
   // Text
   white: "#FFFFFF",
-  text: "#E8ECF4",
-  textSoft: "#8B95A8",
-  textFaint: "#4A5568",
+  text: "#1F1F1F",
+  textSoft: "#5E5A53",
+  textFaint: "#8B867E",
 
   // Game elements
-  tileEmpty: "#151F38",
-  tileBorder: "rgba(79, 142, 255, 0.2)",
-  tileActive: "#1E2E52",
-  tileActiveBorder: "#4F8EFF",
-  tileLetter: "#4F8EFF",
+  tileEmpty: "#E3E0D8",
+  tileBorder: "#CBC6BA",
+  tileActive: "#FFFFFF",
+  tileActiveBorder: "#2E5B8C",
+  tileLetter: "#1A1A1A",
 };
 
 // ─── TYPOGRAPHY ────────────────────────────────────────────
 // Large, bold, confident. Easy to read at a glance during gameplay.
 export const T = {
-  display: { fontSize: 40, fontWeight: "900" as const, letterSpacing: -1 },
-  h1: { fontSize: 28, fontWeight: "800" as const, letterSpacing: -0.5 },
+  display: { fontSize: 40, fontWeight: "900" as const, letterSpacing: -1.2 },
+  h1: { fontSize: 28, fontWeight: "800" as const, letterSpacing: -0.6 },
   h2: { fontSize: 22, fontWeight: "700" as const },
   h3: { fontSize: 18, fontWeight: "600" as const },
 
@@ -72,7 +71,7 @@ export const T = {
   score: { fontSize: 52, fontWeight: "900" as const },
   scoreLabel: { fontSize: 12, fontWeight: "700" as const, letterSpacing: 2 },
 
-  btn: { fontSize: 17, fontWeight: "800" as const, letterSpacing: 0.5 },
+  btn: { fontSize: 17, fontWeight: "800" as const, letterSpacing: 0.4 },
   btnSm: { fontSize: 14, fontWeight: "700" as const },
   badge: { fontSize: 13, fontWeight: "700" as const },
   cap: { fontSize: 11, fontWeight: "600" as const, letterSpacing: 0.5 },
@@ -94,7 +93,7 @@ export const S = {
 export const R = {
   sm: 8,
   md: 12,
-  lg: 16,
+  lg: 14,
   xl: 20,
   xxl: 24,
   pill: 100,
@@ -104,7 +103,7 @@ export const R = {
 export const SHADOW = Platform.select({
   ios: {
     soft: { shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 12 },
-    glow: (color: string) => ({ shadowColor: color, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.5, shadowRadius: 16 }),
+    glow: (color: string) => ({ shadowColor: color, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 10 }),
   },
   android: {
     soft: { elevation: 4 },

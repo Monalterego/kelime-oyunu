@@ -1,42 +1,40 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { C, T, S, R, SHADOW } from "../theme/tokens";
+import { C, T, S } from "../theme/tokens";
 import { Screen, Btn } from "../components/ui";
 
 export default function HomeScreen({ navigation }: any) {
   return (
     <Screen>
-      {/* Background glow */}
-      <View style={s.glowTop} />
-      <View style={s.glowBottom} />
+      <View style={s.gridTexture} />
 
       {/* Logo */}
       <View style={s.logo}>
         <View style={s.logoRing}>
           <View style={s.logoCore}>
-            <Text style={s.logoChar}>D</Text>
+            <Text style={s.logoChar}>Ğ</Text>
           </View>
         </View>
       </View>
 
       {/* Title */}
-      <Text style={[T.display, { color: C.white, marginTop: S.xl }]}>Dağarcık</Text>
+      <Text style={[T.display, { color: C.text, marginTop: S.xl }]}>Dağarcık</Text>
       <Text style={[T.body, { color: C.textSoft, marginTop: S.sm, marginBottom: S.xxxl }]}>
-        Kelime hazinenizi sınayın
+        Her gün yeni bir kelime bulmacası
       </Text>
 
       {/* Main CTA — the thing you want people to tap */}
       <View style={s.actions}>
         <Btn
           label="OYNA"
-          sub="14 soru · 2.5 dakika"
+          sub="Günün oyunu · 14 soru · 2:30"
           onPress={() => navigation.navigate("Game", { mode: "classic" })}
           variant="cta"
         />
 
         <Btn
           label="KATEGORİ SEÇ"
-          sub="10 soru · 90 saniye · konulu"
+          sub="Tematik mod · 10 soru · 1:30"
           onPress={() => navigation.navigate("Category")}
           variant="outline"
         />
@@ -50,29 +48,18 @@ export default function HomeScreen({ navigation }: any) {
 
       {/* Footer */}
       <Text style={[T.cap, { color: C.textFaint, position: "absolute", bottom: 36 }]}>
-        7.000+ kelime · TDK sözlük veritabanı
+        NYT Games tarzı sade arayüz · 7.000+ kelime
       </Text>
     </Screen>
   );
 }
 
 const s = StyleSheet.create({
-  glowTop: {
+  gridTexture: {
     position: "absolute",
-    top: -100,
-    width: 280,
-    height: 280,
-    borderRadius: 140,
-    backgroundColor: "rgba(255, 107, 53, 0.08)",
-  },
-  glowBottom: {
-    position: "absolute",
-    bottom: -60,
-    right: -40,
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    backgroundColor: "rgba(79, 142, 255, 0.06)",
+    inset: 0,
+    borderWidth: 1,
+    borderColor: "rgba(0,0,0,0.02)",
   },
   logo: {
     alignItems: "center",
@@ -81,16 +68,17 @@ const s = StyleSheet.create({
     width: 110,
     height: 110,
     borderRadius: 55,
-    backgroundColor: "rgba(255, 107, 53, 0.1)",
+    backgroundColor: C.surfaceLight,
     justifyContent: "center",
     alignItems: "center",
-    ...SHADOW.glow(C.orange),
+    borderWidth: 1,
+    borderColor: C.tileBorder,
   },
   logoCore: {
     width: 88,
     height: 88,
     borderRadius: 44,
-    backgroundColor: C.orange,
+    backgroundColor: C.text,
     justifyContent: "center",
     alignItems: "center",
   },

@@ -91,7 +91,7 @@ export default function GameScreen({ navigation, route }: any) {
   if (state.status === "idle") {
     return (
       <Screen>
-        <Text style={[T.display, { color: C.white }]}>Dağarcık</Text>
+        <Text style={[T.display, { color: C.text }]}>Dağarcık</Text>
         <Text style={[T.body, { color: C.textSoft, marginTop: S.sm, marginBottom: S.xxl }]}>
           {mode === "category" ? "Kategori Modu" : "Klasik Mod"}
         </Text>
@@ -144,7 +144,7 @@ export default function GameScreen({ navigation, route }: any) {
 
         <View style={[gs.resultBox, { backgroundColor: ok ? C.greenSoft : C.redSoft, borderColor: ok ? C.greenBorder : C.redBorder }]}>
           <Text style={{ fontSize: 44, marginBottom: S.md }}>{ok ? "✓" : skip ? "⊘" : "✗"}</Text>
-          <Text style={[T.h1, { color: C.white }]}>{cur.wordData.word.toLocaleUpperCase("tr-TR")}</Text>
+          <Text style={[T.h1, { color: C.text }]}>{cur.wordData.word.toLocaleUpperCase("tr-TR")}</Text>
           <Text style={[T.bodySm, { color: C.textSoft, textAlign: "center", marginTop: S.sm }]}>{cur.wordData.definition}</Text>
           <Text style={[T.h2, { color: ok ? C.green : C.red, marginTop: S.lg }]}>
             {cur.earnedPoints > 0 ? "+" : ""}{cur.earnedPoints}
