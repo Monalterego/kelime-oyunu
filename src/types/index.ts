@@ -16,6 +16,7 @@ export interface Question {
   correct: boolean;
   earnedPoints: number;
   skipped: boolean;
+  userAnswer?: string;
 }
 
 export interface GameState {

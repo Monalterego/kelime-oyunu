@@ -1,5 +1,5 @@
 import React, { useReducer, useEffect, useRef, useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Animated } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Animated, ScrollView } from "react-native";
 import { Question } from "../types";
 import {
   gameReducer, initialGameState, calculateQuestionPoints,
@@ -108,27 +108,65 @@ export default function GameScreen({ navigation, route }: any) {
     const pos = state.totalScore >= 0;
 
     return (
-      <Screen>
-        <Text style={[T.h2, { color: C.textSoft, marginBottom: S.lg }]}>Oyun Bitti</Text>
+      <View style={gs.summaryScreen}>
+        <ScrollView contentContainerStyle={gs.summaryScroll} showsVerticalScrollIndicator={false}>
+          <Text style={[T.h2, { color: C.textSoft, marginTop: S.xxl, marginBottom: S.md, textAlign: "center" }]}>Oyun Bitti</Text>
 
-        <View style={[gs.scoreRing, { borderColor: pos ? C.green + "60" : C.red + "60" }]}>
-          <Text style={[T.score, { color: pos ? C.gold : C.red }]}>{state.totalScore}</Text>
-          <Text style={[T.scoreLabel, { color: C.textFaint }]}>PUAN</Text>
-        </View>
+          <View style={[gs.scoreRing, { borderColor: pos ? C.green + "60" : C.red + "60" }]}>
+            <Text style={[T.score, { color: pos ? C.gold : C.red }]}>{state.totalScore}</Text>
+            <Text style={[T.scoreLabel, { color: C.textFaint }]}>PUAN</Text>
+          </View>
 
-        <View style={gs.statsRow}>
-          <Chip text={correct.length + "/" + state.questions.length + " doğru"} color={correct.length > state.questions.length / 2 ? "green" : "red"} />
-          {skipped.length > 0 && <Chip text={skipped.length + " pas"} color="purple" />}
-        </View>
+          <View style={gs.statsRow}>
+            <Chip text={correct.length + " doğru"} color="green" />
+            {wrong.length > 0 && <Chip text={wrong.length + " yanlış"} color="red" />}
+            {skipped.length > 0 && <Chip text={skipped.length + " pas"} color="purple" />}
+          </View>
 
-        {/* Progress dots showing the whole game */}
-        <ProgressDots current={state.questions.length} total={state.questions.length} correct={state.questions.map(q => q.correct)} />
+          <View style={{ marginVertical: S.lg }}>
+            <ProgressDots current={state.questions.length} total={state.questions.length} correct={state.questions.map(q => q.correct)} />
+          </View>
 
-        <View style={gs.endBtns}>
-          <Btn label="Tekrar Oyna" onPress={startGame} variant="cta" />
-          <Btn label="Ana Sayfa" onPress={() => navigation.navigate("Home")} variant="ghost" />
-        </View>
-      </Screen>
+          <Text style={[T.h3, { color: C.text, marginTop: S.xl, marginBottom: S.md }]}>Sorular</Text>
+
+          {state.questions.map((q, i) => {
+            const status = q.correct ? "correct" : q.skipped ? "skipped" : "wrong";
+            const statusColor = status === "correct" ? C.green : status === "skipped" ? C.purple : C.red;
+            const statusBg = status === "correct" ? C.greenSoft : status === "skipped" ? C.purpleSoft : C.redSoft;
+            const statusIcon = status === "correct" ? "✓" : status === "skipped" ? "⊘" : "✗";
+            const statusLabel = status === "correct" ? "Doğru" : status === "skipped" ? "Pas" : "Yanlış";
+
+            return (
+              <View key={i} style={[gs.summaryCard, { borderLeftColor: statusColor }]}>
+                <View style={gs.summaryHeader}>
+                  <View style={[gs.summaryIconBox, { backgroundColor: statusBg }]}>
+                    <Text style={[gs.summaryIcon, { color: statusColor }]}>{statusIcon}</Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[T.h3, { color: C.text }]}>{q.wordData.word.toLocaleUpperCase("tr-TR")}</Text>
+                    <Text style={[T.cap, { color: statusColor, marginTop: 2 }]}>{statusLabel} · {q.earnedPoints > 0 ? "+" : ""}{q.earnedPoints}P</Text>
+                  </View>
+                </View>
+                <Text style={[T.bodySm, { color: C.textSoft, marginTop: S.sm }]}>{q.wordData.definition}</Text>
+                {!q.correct && !q.skipped && q.userAnswer ? (
+                  <View style={gs.summaryAnswerRow}>
+                    <Text style={[T.cap, { color: C.textFaint }]}>Senin cevabın: </Text>
+                    <Text style={[T.cap, { color: C.red, textDecorationLine: "line-through" }]}>{q.userAnswer.toLocaleUpperCase("tr-TR")}</Text>
+                  </View>
+                ) : null}
+                {q.skipped ? (
+                  <Text style={[T.cap, { color: C.textFaint, marginTop: S.xs, fontStyle: "italic" }]}>Pas geçildi</Text>
+                ) : null}
+              </View>
+            );
+          })}
+
+          <View style={[gs.endBtns, { marginTop: S.xl }]}>
+            <Btn label="Tekrar Oyna" onPress={startGame} variant="cta" />
+            <Btn label="Ana Sayfa" onPress={() => navigation.navigate("Home")} variant="ghost" />
+          </View>
+        </ScrollView>
+      </View>
     );
   }
 
@@ -410,5 +448,46 @@ const gs = StyleSheet.create({
     width: "100%",
     gap: S.md,
     marginTop: S.xxl,
+  },
+
+  // Summary
+  summaryScreen: {
+    flex: 1,
+    backgroundColor: C.bg,
+  },
+  summaryScroll: {
+    paddingHorizontal: S.page,
+    paddingBottom: S.xxxl,
+  },
+  summaryCard: {
+    backgroundColor: C.surface,
+    borderRadius: R.lg,
+    padding: S.lg,
+    marginBottom: S.sm,
+    borderLeftWidth: 4,
+    borderWidth: 1,
+    borderColor: C.surfaceLight,
+  },
+  summaryHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: S.md,
+  },
+  summaryIconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  summaryIcon: {
+    fontSize: 18,
+    fontWeight: "800",
+  },
+  summaryAnswerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: S.sm,
+    flexWrap: "wrap",
   },
 });

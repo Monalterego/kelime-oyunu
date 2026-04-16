@@ -76,7 +76,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       const earnedPoints = isCorrect ? Math.max(0, basePoints - letterPenalty) : -basePoints;
 
       const newQuestions = [...state.questions];
-      newQuestions[state.currentQuestionIndex] = { ...q, answered: true, correct: isCorrect, earnedPoints };
+      newQuestions[state.currentQuestionIndex] = { ...q, answered: true, correct: isCorrect, earnedPoints, userAnswer: action.answer.trim() };
 
       return {
         ...state,
@@ -91,7 +91,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       if (!q) return state;
       const penalty = -getBasePoints(q);
       const newQuestions = [...state.questions];
-      newQuestions[state.currentQuestionIndex] = { ...q, answered: true, correct: false, earnedPoints: penalty };
+      newQuestions[state.currentQuestionIndex] = { ...q, answered: true, correct: false, earnedPoints: penalty, userAnswer: "" };
       return { ...state, status: "result", questions: newQuestions, totalScore: state.totalScore + penalty, answerTimeLeft: 0 };
     }
 
@@ -100,7 +100,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       if (!q || q.answered) return state;
       const penalty = -Math.round(getBasePoints(q) * SKIP_PENALTY_RATIO);
       const newQuestions = [...state.questions];
-      newQuestions[state.currentQuestionIndex] = { ...q, answered: true, correct: false, skipped: true, earnedPoints: penalty };
+      newQuestions[state.currentQuestionIndex] = { ...q, answered: true, correct: false, skipped: true, earnedPoints: penalty, userAnswer: "" };
       return { ...state, status: "result", questions: newQuestions, totalScore: state.totalScore + penalty };
     }
 
