@@ -14,6 +14,24 @@ const CATEGORIES = [
   { id: "Yemek ve Mutfak", label: "Yemek ve Mutfak", Icon: UtensilsCrossed, accent: "#866D3A" },
 ];
 
+const DIFFICULTY_COLORS: Record<string, string> = {
+  Kolay: C.green,
+  Orta: C.gold,
+  Zor: C.red,
+};
+
+function normalizeSearch(value: string) {
+  return value
+    .toLocaleLowerCase("tr-TR")
+    .replace(/ı/g, "i")
+    .replace(/ğ/g, "g")
+    .replace(/ü/g, "u")
+    .replace(/ş/g, "s")
+    .replace(/ö/g, "o")
+    .replace(/ç/g, "c")
+    .trim();
+}
+
 export default function CategoryScreen({ navigation }: any) {
   return (
     <View style={s.container}>
@@ -63,6 +81,10 @@ const s = StyleSheet.create({
   },
   header: {
     marginBottom: S.xl,
+  },
+  resultsText: {
+    color: C.textFaint,
+    marginBottom: S.sm,
   },
   scroll: { flex: 1 },
   grid: {

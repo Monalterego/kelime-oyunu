@@ -104,6 +104,7 @@ export default function GameScreen({ navigation, route }: any) {
   if (state.status === "gameover") {
     const correct = state.questions.filter(q => q.correct);
     const skipped = state.questions.filter(q => q.skipped);
+    const wrong = state.questions.filter(q => !q.correct && !q.skipped);
     const pos = state.totalScore >= 0;
 
     return (
