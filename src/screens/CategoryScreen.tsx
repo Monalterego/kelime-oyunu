@@ -1,22 +1,22 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
+import { Home, ScrollText, FlaskConical, HardHat, Palette, Leaf, Dumbbell, UtensilsCrossed, ChevronRight, ArrowLeft } from "lucide-react-native";
 import { C, T, S, R } from "../theme/tokens";
 
 const CATEGORIES = [
-  { id: "Gunluk Hayat", label: "Günlük Hayat", icon: "🏠", accent: "#2E5B8C" },
-  { id: "Tarih ve Toplum", label: "Tarih ve Toplum", icon: "📜", accent: "#6B5CA5" },
-  { id: "Bilim ve Teknoloji", label: "Bilim ve Teknoloji", icon: "🔬", accent: "#4D8B55" },
-  { id: "Meslekler", label: "Meslekler", icon: "👷", accent: "#C5962C" },
-  { id: "Sanat ve Kultur", label: "Sanat ve Kültür", icon: "🎨", accent: "#B44545" },
-  { id: "Doga ve Hayvanlar", label: "Doğa ve Hayvanlar", icon: "🌿", accent: "#3D7663" },
-  { id: "Spor ve Saglik", label: "Spor ve Sağlık", icon: "⚽", accent: "#1F1F1F" },
-  { id: "Yemek ve Mutfak", label: "Yemek ve Mutfak", icon: "🍳", accent: "#866D3A" },
+  { id: "Gunluk Hayat", label: "Günlük Hayat", Icon: Home, accent: "#2E5B8C" },
+  { id: "Tarih ve Toplum", label: "Tarih ve Toplum", Icon: ScrollText, accent: "#6B5CA5" },
+  { id: "Bilim ve Teknoloji", label: "Bilim ve Teknoloji", Icon: FlaskConical, accent: "#4D8B55" },
+  { id: "Meslekler", label: "Meslekler", Icon: HardHat, accent: "#C5962C" },
+  { id: "Sanat ve Kultur", label: "Sanat ve Kültür", Icon: Palette, accent: "#B44545" },
+  { id: "Doga ve Hayvanlar", label: "Doğa ve Hayvanlar", Icon: Leaf, accent: "#3D7663" },
+  { id: "Spor ve Saglik", label: "Spor ve Sağlık", Icon: Dumbbell, accent: "#1F1F1F" },
+  { id: "Yemek ve Mutfak", label: "Yemek ve Mutfak", Icon: UtensilsCrossed, accent: "#866D3A" },
 ];
 
 export default function CategoryScreen({ navigation }: any) {
   return (
     <View style={s.container}>
-      {/* Header */}
       <View style={s.header}>
         <Text style={[T.h1, { color: C.text }]}>Kategori Seç</Text>
         <Text style={[T.bodySm, { color: C.textFaint, marginTop: S.xs }]}>
@@ -24,7 +24,6 @@ export default function CategoryScreen({ navigation }: any) {
         </Text>
       </View>
 
-      {/* Grid of categories */}
       <ScrollView
         style={s.scroll}
         contentContainerStyle={s.grid}
@@ -37,17 +36,18 @@ export default function CategoryScreen({ navigation }: any) {
             activeOpacity={0.75}
             onPress={() => navigation.navigate("Game", { mode: "category", category: cat.id })}
           >
-            <View style={[s.iconBadge, { backgroundColor: `${cat.accent}22` }]}>
-              <Text style={s.cardIcon}>{cat.icon}</Text>
+            <View style={[s.iconBadge, { backgroundColor: `${cat.accent}14` }]}>
+              <cat.Icon size={22} color={cat.accent} strokeWidth={2} />
             </View>
-            <Text style={[T.h3, { color: C.text }]}>{cat.label}</Text>
+            <Text style={[T.h3, { color: C.text, flex: 1 }]}>{cat.label}</Text>
+            <ChevronRight size={18} color={C.textFaint} strokeWidth={2} />
           </TouchableOpacity>
         ))}
       </ScrollView>
 
-      {/* Back */}
       <TouchableOpacity style={s.back} onPress={() => navigation.goBack()} activeOpacity={0.6}>
-        <Text style={[T.btnSm, { color: C.textSoft }]}>Geri Dön</Text>
+        <ArrowLeft size={16} color={C.textSoft} strokeWidth={2} />
+        <Text style={[T.btnSm, { color: C.textSoft, marginLeft: 6 }]}>Geri Dön</Text>
       </TouchableOpacity>
     </View>
   );
@@ -76,7 +76,7 @@ const s = StyleSheet.create({
     paddingHorizontal: S.lg,
     flexDirection: "row",
     alignItems: "center",
-    gap: S.lg,
+    gap: S.md,
     borderLeftWidth: 4,
     borderWidth: 1,
     borderColor: C.surfaceLight,
@@ -88,11 +88,10 @@ const s = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  cardIcon: {
-    fontSize: 26,
-  },
   back: {
     paddingVertical: S.md,
+    flexDirection: "row",
+    justifyContent: "center",
     alignItems: "center",
   },
 });

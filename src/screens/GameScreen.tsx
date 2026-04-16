@@ -342,7 +342,7 @@ const gs = StyleSheet.create({
     borderRadius: R.lg,
     padding: S.lg,
     ...T.game,
-    color: C.white,
+    color: C.text,
     textAlign: "center",
   },
 
@@ -368,8 +368,14 @@ const gs = StyleSheet.create({
     ...SHADOW.soft,
   },
   skipBtn: {
+    backgroundColor: C.surface,
+    borderWidth: 1,
+    borderColor: C.surfaceLight,
+    borderRadius: R.md,
+    paddingHorizontal: S.lg,
     paddingVertical: S.sm,
     alignItems: "center",
+    alignSelf: "center",
   },
 
   // Result
