@@ -83,6 +83,13 @@ export default function HomeScreen({ navigation }: any) {
         />
       </View>
 
+      {/* Streak */}
+      {stats.streak > 0 && (
+        <View style={s.streakBanner}>
+          <Text style={s.streakText}>{"🔥 " + stats.streak + " gün üst üste!"}</Text>
+        </View>
+      )}
+
       {/* Stats */}
       {stats.totalGames > 0 && (
         <View style={s.statsCard}>
@@ -153,6 +160,22 @@ const s = StyleSheet.create({
   actions: {
     width: "100%",
     gap: S.md,
+  },
+  streakBanner: {
+    backgroundColor: C.goldSoft,
+    borderRadius: R.lg,
+    paddingVertical: S.md,
+    paddingHorizontal: S.lg,
+    marginTop: S.lg,
+    width: "100%",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: C.goldBorder,
+  },
+  streakText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: C.gold,
   },
   statsCard: {
     flexDirection: "row",
