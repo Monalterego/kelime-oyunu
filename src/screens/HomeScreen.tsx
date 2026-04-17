@@ -76,6 +76,11 @@ export default function HomeScreen({ navigation }: any) {
           onPress={() => navigation.navigate("HowToPlay")}
           variant="ghost"
         />
+        <Btn
+          label="Başarımlar"
+          onPress={() => navigation.navigate("Achievements")}
+          variant="ghost"
+        />
       </View>
 
       {/* Stats */}
