@@ -1,5 +1,5 @@
 import React, { useReducer, useEffect, useRef, useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Animated, ScrollView } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Animated, ScrollView, Share, Platform } from "react-native";
 import { Question } from "../types";
 import {
   gameReducer, initialGameState, calculateQuestionPoints,
@@ -24,6 +24,23 @@ export default function GameScreen({ navigation, route }: any) {
   const totalTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const answerTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const hintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const shareResult = async () => {
+    const dots = state.questions.map(q => q.correct ? "🟩" : q.skipped ? "⬜" : "🟥").join("");
+    const correct = state.questions.filter(q => q.correct).length;
+    const daily = mode === "daily" ? " #" + getDailyNumber() : "";
+    const text = "Dağarcık" + daily + " " + dots + "\n" + correct + "/" + state.questions.length + " · " + state.totalScore + " puan\ndagarcik.app";
+    try {
+      if (Platform.OS === "web") {
+        await navigator.clipboard.writeText(text);
+        alert("Sonuç kopyalandı!");
+      } else {
+        await Share.share({ message: text });
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const startGame = () => {
     try {
@@ -187,7 +204,8 @@ export default function GameScreen({ navigation, route }: any) {
           })}
 
           <View style={[gs.endBtns, { marginTop: S.xl }]}>
-            <Btn label="Tekrar Oyna" onPress={startGame} variant="cta" />
+            <Btn label="Sonucu Paylaş" onPress={shareResult} variant="cta" />
+            <Btn label="Tekrar Oyna" onPress={startGame} variant="outline" />
             <Btn label="Ana Sayfa" onPress={() => navigation.navigate("Home")} variant="ghost" />
           </View>
         </ScrollView>
