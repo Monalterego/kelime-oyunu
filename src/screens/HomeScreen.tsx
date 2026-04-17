@@ -1,147 +1,199 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
 import { C, T, S, R } from "../theme/tokens";
-import { Screen, Btn } from "../components/ui";
+import { Btn } from "../components/ui";
 import { getStats, getDailyStatus } from "../utils/gameHistory";
 import { getDailyNumber } from "../utils/questionGenerator";
-
+import { getLocalProfile } from "../utils/supabase";
 
 export default function HomeScreen({ navigation }: any) {
   const dailyNumber = getDailyNumber();
   const [dailyPlayed, setDailyPlayed] = useState<{score: number; correct: number; total: number} | null>(null);
   const [stats, setStats] = useState({ totalGames: 0, bestScore: 0, avgScore: 0, totalCorrect: 0, streak: 0 });
+  const [profile, setProfile] = useState<{id: string; nickname: string} | null>(null);
 
   useEffect(() => {
-    getStats().then(setStats);
-      getDailyStatus().then(d => { if (d && d.dailyNumber === dailyNumber) setDailyPlayed(d); else setDailyPlayed(null); });
-    const unsub = navigation.addListener("focus", () => {
-      getStats().then(setStats);
-      getDailyStatus().then(d => { if (d && d.dailyNumber === dailyNumber) setDailyPlayed(d); else setDailyPlayed(null); });
-    });
+    loadData();
+    const unsub = navigation.addListener("focus", loadData);
     return unsub;
   }, [navigation]);
+
+  const loadData = () => {
+    getStats().then(setStats);
+    getDailyStatus().then(d => {
+      if (d && d.dailyNumber === dailyNumber) setDailyPlayed(d);
+      else setDailyPlayed(null);
+    });
+    getLocalProfile().then(setProfile);
+  };
+
   return (
-    <Screen>
-      <View style={s.gridTexture} />
-
-      {/* Logo */}
-      <View style={s.logo}>
-        <View style={s.logoRing}>
-          <View style={s.logoCore}>
-            <Text style={s.logoChar}>Ğ</Text>
-          </View>
-        </View>
-      </View>
-
-      {/* Title */}
-      <Text style={[T.display, { color: C.text, marginTop: S.xl }]}>Dağarcık</Text>
-      <Text style={[T.body, { color: C.textSoft, marginTop: S.sm, marginBottom: S.xxxl }]}>
-        Her gün yeni bir kelime bulmacası
-      </Text>
-
-      {/* Main CTA — the thing you want people to tap */}
-      <View style={s.actions}>
-        {dailyPlayed ? (
-          <Btn
-            label={"GÜNLÜK DAĞARCIK #" + dailyNumber + " ✓"}
-            sub={dailyPlayed.correct + "/" + dailyPlayed.total + " doğru · " + dailyPlayed.score + " puan"}
-            onPress={() => {}}
-            variant="outline"
-            disabled
-          />
-        ) : (
-          <Btn
-            label="GÜNLÜK DAĞARCIK"
-            sub={"#" + dailyNumber + " · 14 soru · 2:30"}
-            onPress={() => navigation.navigate("Game", { mode: "daily" })}
-            variant="cta"
-          />
-        )}
-        <Btn
-          label="KLASİK MOD"
-          sub="Serbest oyun · 14 soru · 2:30"
-          onPress={() => navigation.navigate("Game", { mode: "classic" })}
-          variant="outline"
-        />
-
-        <Btn
-          label="KATEGORİ SEÇ"
-          sub="Tematik mod · 10 soru · 1:30"
-          onPress={() => navigation.navigate("Category")}
-          variant="outline"
-        />
-
-        <Btn
-          label="Nasıl Oynanır?"
-          onPress={() => navigation.navigate("HowToPlay")}
-          variant="ghost"
-        />
-        <Btn
-          label="Başarımlar"
-          onPress={() => navigation.navigate("Achievements")}
-          variant="ghost"
-        />
-        <Btn
-          label="Profil / Liderlik"
+    <View style={s.container}>
+      {/* Header bar with avatar */}
+      <View style={s.header}>
+        <View style={{ width: 40 }} />
+        <View style={{ flex: 1 }} />
+        <TouchableOpacity
+          style={s.avatarBtn}
           onPress={() => navigation.navigate("Profile")}
-          variant="ghost"
-        />
+          activeOpacity={0.7}
+        >
+          {profile ? (
+            <Text style={s.avatarText}>{profile.nickname.charAt(0).toLocaleUpperCase("tr-TR")}</Text>
+          ) : (
+            <Text style={s.avatarText}>?</Text>
+          )}
+        </TouchableOpacity>
       </View>
 
-      {/* Streak */}
-      {stats.streak > 0 && (
-        <View style={s.streakBanner}>
-          <Text style={s.streakText}>{"🔥 " + stats.streak + " gün üst üste!"}</Text>
+      <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
+        {/* Logo */}
+        <View style={s.logoSection}>
+          <View style={s.logoRing}>
+            <View style={s.logoCore}>
+              <Text style={s.logoChar}>Ğ</Text>
+            </View>
+          </View>
+          <Text style={[T.display, { color: C.text, marginTop: S.xl }]}>Dağarcık</Text>
+          <Text style={[T.body, { color: C.textSoft, marginTop: S.sm }]}>
+            Her gün yeni bir kelime bulmacası
+          </Text>
         </View>
-      )}
 
-      {/* Stats */}
-      {stats.totalGames > 0 && (
-        <View style={s.statsCard}>
-          <View style={s.statItem}>
-            <Text style={s.statValue}>{stats.totalGames}</Text>
-            <Text style={s.statLabel}>Oyun</Text>
+        {/* Streak */}
+        {stats.streak > 0 && (
+          <View style={s.streakBanner}>
+            <Text style={s.streakText}>{"🔥 " + stats.streak + " gün üst üste!"}</Text>
           </View>
-          <View style={s.statDivider} />
-          <View style={s.statItem}>
-            <Text style={s.statValue}>{stats.bestScore}</Text>
-            <Text style={s.statLabel}>En İyi</Text>
-          </View>
-          <View style={s.statDivider} />
-          <View style={s.statItem}>
-            <Text style={s.statValue}>{stats.streak}</Text>
-            <Text style={s.statLabel}>Seri</Text>
-          </View>
-          <View style={s.statDivider} />
-          <View style={s.statItem}>
-            <Text style={s.statValue}>{stats.totalCorrect}</Text>
-            <Text style={s.statLabel}>Doğru</Text>
-          </View>
+        )}
+
+        {/* Game modes */}
+        <View style={s.actions}>
+          {dailyPlayed ? (
+            <Btn
+              label={"GÜNLÜK DAĞARCIK #" + dailyNumber + " ✓"}
+              sub={dailyPlayed.correct + "/" + dailyPlayed.total + " doğru · " + dailyPlayed.score + " puan"}
+              onPress={() => {}}
+              variant="outline"
+              disabled
+            />
+          ) : (
+            <Btn
+              label="GÜNLÜK DAĞARCIK"
+              sub={"#" + dailyNumber + " · 14 soru · 2:30"}
+              onPress={() => navigation.navigate("Game", { mode: "daily" })}
+              variant="cta"
+            />
+          )}
+          <Btn
+            label="KLASİK MOD"
+            sub="Serbest oyun · 14 soru · 2:30"
+            onPress={() => navigation.navigate("Game", { mode: "classic" })}
+            variant="outline"
+          />
+          <Btn
+            label="KATEGORİ SEÇ"
+            sub="Tematik mod · 10 soru · 1:30"
+            onPress={() => navigation.navigate("Category")}
+            variant="outline"
+          />
         </View>
-      )}
 
-      {/* Footer */}
-      <Text style={[T.cap, { color: C.textFaint, position: "absolute", bottom: 36 }]}>
-        7.000+ kelime ile sınırsız eğlence
-      </Text>
-    </Screen>
+        {/* Leaderboard button */}
+        <TouchableOpacity
+          style={s.leaderboardBtn}
+          onPress={() => navigation.navigate("Leaderboard")}
+          activeOpacity={0.7}
+        >
+          <Text style={s.leaderboardIcon}>🏆</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={[T.h3, { color: C.text }]}>Liderlik Tablosu</Text>
+            <Text style={[T.cap, { color: C.textFaint }]}>Haftalık ve aylık sıralama</Text>
+          </View>
+          <Text style={[T.body, { color: C.textFaint }]}>›</Text>
+        </TouchableOpacity>
+
+        {/* Stats */}
+        {stats.totalGames > 0 && (
+          <View style={s.statsCard}>
+            <View style={s.statItem}>
+              <Text style={s.statValue}>{stats.totalGames}</Text>
+              <Text style={s.statLabel}>Oyun</Text>
+            </View>
+            <View style={s.statDivider} />
+            <View style={s.statItem}>
+              <Text style={s.statValue}>{stats.bestScore}</Text>
+              <Text style={s.statLabel}>En İyi</Text>
+            </View>
+            <View style={s.statDivider} />
+            <View style={s.statItem}>
+              <Text style={s.statValue}>{stats.streak}</Text>
+              <Text style={s.statLabel}>Seri</Text>
+            </View>
+            <View style={s.statDivider} />
+            <View style={s.statItem}>
+              <Text style={s.statValue}>{stats.totalCorrect}</Text>
+              <Text style={s.statLabel}>Doğru</Text>
+            </View>
+          </View>
+        )}
+
+        {/* Secondary links */}
+        <View style={s.links}>
+          <TouchableOpacity onPress={() => navigation.navigate("Achievements")} activeOpacity={0.6}>
+            <Text style={[T.btnSm, { color: C.textSoft }]}>Başarımlar</Text>
+          </TouchableOpacity>
+          <Text style={{ color: C.surfaceLight }}>·</Text>
+          <TouchableOpacity onPress={() => navigation.navigate("HowToPlay")} activeOpacity={0.6}>
+            <Text style={[T.btnSm, { color: C.textSoft }]}>Nasıl Oynanır?</Text>
+          </TouchableOpacity>
+        </View>
+
+        <Text style={[T.cap, { color: C.textFaint, textAlign: "center", marginTop: S.xl, marginBottom: S.xxl }]}>
+          7.000+ kelime ile sınırsız eğlence
+        </Text>
+      </ScrollView>
+    </View>
   );
 }
 
 const s = StyleSheet.create({
-  gridTexture: {
-    position: "absolute",
-    inset: 0,
-    borderWidth: 1,
-    borderColor: "rgba(0,0,0,0.02)",
+  container: {
+    flex: 1,
+    backgroundColor: C.bg,
   },
-  logo: {
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: S.page,
+    paddingTop: 50,
+    paddingBottom: S.sm,
+  },
+  avatarBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: C.text,
+    justifyContent: "center",
     alignItems: "center",
   },
+  avatarText: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: C.white,
+  },
+  scroll: {
+    paddingHorizontal: S.page,
+    alignItems: "center",
+  },
+  logoSection: {
+    alignItems: "center",
+    marginBottom: S.xxl,
+  },
   logoRing: {
-    width: 110,
-    height: 110,
-    borderRadius: 55,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     backgroundColor: C.surfaceLight,
     justifyContent: "center",
     alignItems: "center",
@@ -149,29 +201,24 @@ const s = StyleSheet.create({
     borderColor: C.tileBorder,
   },
   logoCore: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     backgroundColor: C.text,
     justifyContent: "center",
     alignItems: "center",
   },
   logoChar: {
-    fontSize: 44,
+    fontSize: 40,
     fontWeight: "900",
     color: C.white,
-    marginTop: -2,
-  },
-  actions: {
-    width: "100%",
-    gap: S.md,
   },
   streakBanner: {
     backgroundColor: C.goldSoft,
     borderRadius: R.lg,
     paddingVertical: S.md,
     paddingHorizontal: S.lg,
-    marginTop: S.lg,
+    marginBottom: S.lg,
     width: "100%",
     alignItems: "center",
     borderWidth: 1,
@@ -182,17 +229,37 @@ const s = StyleSheet.create({
     fontWeight: "700",
     color: C.gold,
   },
+  actions: {
+    width: "100%",
+    gap: S.md,
+    marginBottom: S.lg,
+  },
+  leaderboardBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: C.surface,
+    borderRadius: R.lg,
+    padding: S.lg,
+    width: "100%",
+    gap: S.md,
+    marginBottom: S.lg,
+    borderWidth: 1,
+    borderColor: C.goldBorder,
+  },
+  leaderboardIcon: {
+    fontSize: 28,
+  },
   statsCard: {
     flexDirection: "row",
     backgroundColor: C.surface,
     borderRadius: R.lg,
     padding: S.lg,
-    marginTop: S.xl,
     width: "100%",
     justifyContent: "space-around",
     alignItems: "center",
     borderWidth: 1,
     borderColor: C.surfaceLight,
+    marginBottom: S.lg,
   },
   statItem: {
     alignItems: "center",
@@ -213,5 +280,12 @@ const s = StyleSheet.create({
     width: 1,
     height: 30,
     backgroundColor: C.surfaceLight,
+  },
+  links: {
+    flexDirection: "row",
+    gap: S.lg,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: S.md,
   },
 });
