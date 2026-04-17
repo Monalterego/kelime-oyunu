@@ -20,16 +20,51 @@ export default function LeaderboardScreen({ navigation }: any) {
   useEffect(() => {
     setLoading(true);
     getLeaderboard(period, undefined, period === "daily" ? dailyNumber : undefined).then(data => {
-      setScores(data);
+      if (period === "daily") {
+        const best: Record<string, any> = {};
+        (data || []).forEach(item => {
+          const nick = item.profiles?.nickname || "Anonim";
+          if (!best[nick] || item.score > best[nick].score) best[nick] = item;
+        });
+        const sorted = Object.values(best).sort((a: any, b: any) => {
+          if (b.score !== a.score) return b.score - a.score;
+          return (a.duration_seconds || 999) - (b.duration_seconds || 999);
+        });
+        setScores(sorted);
+      } else {
+        const agg: Record<string, any> = {};
+        (data || []).forEach(item => {
+          const nick = item.profiles?.nickname || "Anonim";
+          if (!agg[nick]) agg[nick] = { totalScore: 0, games: 0, totalCorrect: 0, totalTotal: 0, minDuration: 999, nickname: nick };
+          agg[nick].totalScore += item.score;
+          agg[nick].games += 1;
+          agg[nick].totalCorrect += item.correct;
+          agg[nick].totalTotal += item.total;
+          if (item.duration_seconds && item.duration_seconds < agg[nick].minDuration) agg[nick].minDuration = item.duration_seconds;
+        });
+        const sorted = Object.values(agg)
+          .map((a: any) => ({ ...a, avgScore: Math.round(a.totalScore / a.games) }))
+          .sort((a: any, b: any) => {
+            if (b.avgScore !== a.avgScore) return b.avgScore - a.avgScore;
+            return a.minDuration - b.minDuration;
+          });
+        setScores(sorted.map((a: any) => ({
+          score: a.avgScore,
+          correct: a.totalCorrect,
+          total: a.totalTotal,
+          profiles: { nickname: a.nickname },
+          _games: a.games,
+        })));
+      }
       setLoading(false);
     });
   }, [period]);
 
   const periods: { key: Period; label: string }[] = [
-    { key: "daily", label: "Gunluk #" + dailyNumber },
-    { key: "weekly", label: "Haftalik" },
-    { key: "monthly", label: "Aylik" },
-    { key: "alltime", label: "Tum Zamanlar" },
+    { key: "daily", label: "Günlük #" + dailyNumber },
+    { key: "weekly", label: "Haftalık" },
+    { key: "monthly", label: "Aylık" },
+    { key: "alltime", label: "Tüm Zamanlar" },
   ];
 
   return (
@@ -49,24 +84,33 @@ export default function LeaderboardScreen({ navigation }: any) {
         ))}
       </ScrollView>
 
+      <Text style={[T.cap, { color: C.textFaint, marginBottom: S.md }]}>
+        {period === "daily" ? "En yüksek skor · eşitlikte en hızlı" : "Ortalama skor · oyun başına puan"}
+      </Text>
+
       <ScrollView style={s.list} showsVerticalScrollIndicator={false}>
         {loading ? (
-          <Text style={[T.body, { color: C.textFaint, textAlign: "center", marginTop: S.xl }]}>Yukleniyor...</Text>
+          <Text style={[T.body, { color: C.textFaint, textAlign: "center", marginTop: S.xl }]}>Yükleniyor...</Text>
         ) : scores.length === 0 ? (
-          <Text style={[T.body, { color: C.textFaint, textAlign: "center", marginTop: S.xl }]}>Henuz skor yok</Text>
+          <Text style={[T.body, { color: C.textFaint, textAlign: "center", marginTop: S.xl }]}>Henüz skor yok</Text>
         ) : (
           scores.map((item, i) => {
             const nick = item.profiles?.nickname || "Anonim";
-            const medal = i === 0 ? "\ud83e\udd47" : i === 1 ? "\ud83e\udd48" : i === 2 ? "\ud83e\udd49" : (i + 1) + ".";
+            const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : (i + 1) + ".";
             const isMe = nick === (myNick || "");
             return (
               <View key={i} style={[s.row, i < 3 && s.rowTop, isMe && s.rowMe]}>
                 <Text style={s.rank}>{medal}</Text>
                 <View style={{ flex: 1 }}>
                   <Text style={[T.body, { color: C.text, fontWeight: "600" }]}>{nick}{isMe ? " (sen)" : ""}</Text>
-                  <Text style={[T.cap, { color: C.textFaint }]}>{item.correct}/{item.total} dogru</Text>
+                  <Text style={[T.cap, { color: C.textFaint }]}>
+                    {item.correct}/{item.total} doğru{item._games ? " · " + item._games + " oyun" : ""}
+                  </Text>
                 </View>
-                <Text style={[T.h2, { color: i < 3 ? C.gold : C.text }]}>{item.score}</Text>
+                <View style={{ alignItems: "flex-end" }}>
+                  <Text style={[T.h2, { color: i < 3 ? C.gold : C.text }]}>{item.score}</Text>
+                  {period !== "daily" && <Text style={[T.cap, { color: C.textFaint }]}>ort.</Text>}
+                </View>
               </View>
             );
           })
@@ -74,7 +118,7 @@ export default function LeaderboardScreen({ navigation }: any) {
       </ScrollView>
 
       <TouchableOpacity style={s.back} onPress={() => navigation.goBack()} activeOpacity={0.6}>
-        <Text style={[T.btnSm, { color: C.textSoft }]}>Geri Don</Text>
+        <Text style={[T.btnSm, { color: C.textSoft }]}>Geri Dön</Text>
       </TouchableOpacity>
     </View>
   );
@@ -82,7 +126,7 @@ export default function LeaderboardScreen({ navigation }: any) {
 
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bg, paddingHorizontal: S.page, paddingTop: 56, paddingBottom: S.lg },
-  tabScroll: { flexGrow: 0, marginBottom: S.xl },
+  tabScroll: { flexGrow: 0, marginBottom: S.sm },
   tabs: { gap: S.sm },
   tab: { paddingVertical: S.md, paddingHorizontal: S.lg, borderRadius: R.md, backgroundColor: C.surface, alignItems: "center", borderWidth: 1, borderColor: C.surfaceLight },
   tabActive: { backgroundColor: C.text, borderColor: C.text },

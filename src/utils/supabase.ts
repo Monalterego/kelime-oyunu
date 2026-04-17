@@ -51,6 +51,7 @@ export async function submitScore(record: {
   skipped: number;
   total: number;
   dailyNumber?: number;
+  durationSeconds?: number;
 }): Promise<boolean> {
   try {
     const { error } = await supabase.from("scores").insert({
@@ -63,6 +64,7 @@ export async function submitScore(record: {
       skipped: record.skipped,
       total: record.total,
       daily_number: record.dailyNumber || null,
+      duration_seconds: record.durationSeconds || null,
     });
     if (error) { console.error("Skor kayit hatasi:", error); return false; }
     return true;
@@ -73,10 +75,10 @@ export async function getLeaderboard(period: "daily" | "weekly" | "monthly" | "a
   try {
     let query = supabase
       .from("scores")
-      .select("score, correct, total, created_at, profile_id, profiles(nickname)")
+      .select("score, correct, total, created_at, profile_id, duration_seconds, profiles(nickname)")
       .not("profile_id", "is", null)
       .order("score", { ascending: false })
-      .limit(100);
+      .limit(500);
 
     if (mode) query = query.eq("mode", mode);
 

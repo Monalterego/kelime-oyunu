@@ -162,6 +162,7 @@ export default function GameScreen({ navigation, route }: any) {
             skipped,
             total: state.questions.length,
             dailyNumber: mode === "daily" ? getDailyNumber() : undefined,
+            durationSeconds: (mode === "category" ? 90 : 150) - state.totalTimeLeft,
           });
         }
       });
