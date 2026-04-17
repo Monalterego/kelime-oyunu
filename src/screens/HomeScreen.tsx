@@ -1,18 +1,20 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { C, T, S, R } from "../theme/tokens";
 import { Screen, Btn } from "../components/ui";
 import { getStats } from "../utils/gameHistory";
-import { useFocusEffect } from "@react-navigation/native";
+
 
 export default function HomeScreen({ navigation }: any) {
   const [stats, setStats] = useState({ totalGames: 0, bestScore: 0, avgScore: 0, totalCorrect: 0, streak: 0 });
 
-  useFocusEffect(
-    useCallback(() => {
+  useEffect(() => {
+    getStats().then(setStats);
+    const unsub = navigation.addListener("focus", () => {
       getStats().then(setStats);
-    }, [])
-  );
+    });
+    return unsub;
+  }, [navigation]);
   return (
     <Screen>
       <View style={s.gridTexture} />

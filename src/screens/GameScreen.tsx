@@ -82,6 +82,24 @@ export default function GameScreen({ navigation, route }: any) {
     return () => { if (answerTimerRef.current) clearInterval(answerTimerRef.current); };
   }, [state.status]);
 
+  // Save game when it ends
+  useEffect(() => {
+    if (state.status === "gameover") {
+      const correct = state.questions.filter(q => q.correct).length;
+      const skipped = state.questions.filter(q => q.skipped).length;
+      const wrong = state.questions.length - correct - skipped;
+      saveGameRecord({
+        mode: mode as "classic" | "category",
+        category: category,
+        score: state.totalScore,
+        correct,
+        wrong,
+        skipped,
+        total: state.questions.length,
+      });
+    }
+  }, [state.status]);
+
   const cur = state.questions[state.currentQuestionIndex];
   const fmt = (sec: number) => Math.floor(sec / 60) + ":" + (sec % 60).toString().padStart(2, "0");
 
@@ -101,23 +119,6 @@ export default function GameScreen({ navigation, route }: any) {
     );
   }
 
-  // Save game when it ends
-  useEffect(() => {
-    if (state.status === "gameover") {
-      const correct = state.questions.filter(q => q.correct).length;
-      const skipped = state.questions.filter(q => q.skipped).length;
-      const wrong = state.questions.length - correct - skipped;
-      saveGameRecord({
-        mode: mode as "classic" | "category",
-        category: category,
-        score: state.totalScore,
-        correct,
-        wrong,
-        skipped,
-        total: state.questions.length,
-      });
-    }
-  }, [state.status]);
 
   // ── GAME OVER ────────────────────────────────────────
   if (state.status === "gameover") {
