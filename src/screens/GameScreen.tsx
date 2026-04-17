@@ -195,6 +195,8 @@ export default function GameScreen({ navigation, route }: any) {
             <ProgressDots current={state.questions.length} total={state.questions.length} correct={state.questions.map(q => q.correct)} />
           </View>
 
+          <Btn label="Sonucu Paylaş" onPress={shareResult} variant="cta" />
+
           {newAchievements.length > 0 && (
             <View style={gs.achSection}>
               <Text style={[T.h3, { color: C.gold, marginBottom: S.md }]}>Yeni Başarım!</Text>
@@ -245,7 +247,6 @@ export default function GameScreen({ navigation, route }: any) {
           })}
 
           <View style={[gs.endBtns, { marginTop: S.xl }]}>
-            <Btn label="Sonucu Paylaş" onPress={shareResult} variant="cta" />
             <Btn label="Tekrar Oyna" onPress={startGame} variant="outline" />
             <Btn label="Ana Sayfa" onPress={() => navigation.navigate("Home")} variant="ghost" />
           </View>
@@ -293,16 +294,6 @@ export default function GameScreen({ navigation, route }: any) {
 
   return (
     <View style={gs.game}>
-      {/* Sliding hint banner */}
-      {showHint && state.currentFlashHint ? (
-        <Animated.View style={[gs.hint, { transform: [{ translateY: hintSlide }], opacity: hintOpacity }]}>
-          <Text style={[T.bodySm, { color: C.gold, textAlign: "center", fontStyle: "italic" }]}>
-            {cur.wordData.origin ? cur.wordData.origin + " kökenli — " : "Öz Türkçe — "}
-            {state.currentFlashHint}
-          </Text>
-        </Animated.View>
-      ) : null}
-
       {/* TOP BAR */}
       <View style={gs.topBar}>
         <View style={[gs.timerPill, lowTime && { backgroundColor: tColor + "15" }]}>
@@ -322,6 +313,16 @@ export default function GameScreen({ navigation, route }: any) {
       <View style={gs.defBox}>
         <Text style={[T.game, { color: C.text, textAlign: "center" }]}>{cur.wordData.definition}</Text>
       </View>
+
+      {/* Hint banner */}
+      {showHint && state.currentFlashHint ? (
+        <Animated.View style={[gs.hint, { opacity: hintOpacity }]}>
+          <Text style={[T.body, { color: C.gold, textAlign: "center", fontStyle: "italic" }]}>
+            {cur.wordData.origin ? cur.wordData.origin + " kökenli — " : "Öz Türkçe — "}
+            {state.currentFlashHint}
+          </Text>
+        </Animated.View>
+      ) : null}
 
       {/* TILES */}
       <View style={gs.tiles}>
@@ -389,18 +390,13 @@ const gs = StyleSheet.create({
 
   // Hint
   hint: {
-    position: "absolute",
-    top: 48,
-    left: S.page,
-    right: S.page,
-    backgroundColor: C.surface,
-    borderRadius: R.md,
-    paddingVertical: S.md,
+    backgroundColor: C.goldSoft,
+    borderRadius: R.lg,
+    paddingVertical: S.lg,
     paddingHorizontal: S.lg,
-    zIndex: 20,
+    marginBottom: S.md,
     borderWidth: 1,
     borderColor: C.goldBorder,
-    ...SHADOW.soft,
   },
 
   // Top bar
