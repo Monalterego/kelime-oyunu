@@ -2,18 +2,21 @@ import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { C, T, S, R } from "../theme/tokens";
 import { Screen, Btn } from "../components/ui";
-import { getStats } from "../utils/gameHistory";
+import { getStats, getDailyStatus } from "../utils/gameHistory";
 import { getDailyNumber } from "../utils/questionGenerator";
 
 
 export default function HomeScreen({ navigation }: any) {
   const dailyNumber = getDailyNumber();
+  const [dailyPlayed, setDailyPlayed] = useState<{score: number; correct: number; total: number} | null>(null);
   const [stats, setStats] = useState({ totalGames: 0, bestScore: 0, avgScore: 0, totalCorrect: 0, streak: 0 });
 
   useEffect(() => {
     getStats().then(setStats);
+      getDailyStatus().then(d => { if (d && d.dailyNumber === dailyNumber) setDailyPlayed(d); else setDailyPlayed(null); });
     const unsub = navigation.addListener("focus", () => {
       getStats().then(setStats);
+      getDailyStatus().then(d => { if (d && d.dailyNumber === dailyNumber) setDailyPlayed(d); else setDailyPlayed(null); });
     });
     return unsub;
   }, [navigation]);
@@ -38,12 +41,22 @@ export default function HomeScreen({ navigation }: any) {
 
       {/* Main CTA — the thing you want people to tap */}
       <View style={s.actions}>
-        <Btn
-          label="GÜNLÜK DAĞARCIK"
-          sub={"#" + dailyNumber + " · 14 soru · 2:30"}
-          onPress={() => navigation.navigate("Game", { mode: "daily" })}
-          variant="cta"
-        />
+        {dailyPlayed ? (
+          <Btn
+            label={"GÜNLÜK DAĞARCIK #" + dailyNumber + " ✓"}
+            sub={dailyPlayed.correct + "/" + dailyPlayed.total + " doğru · " + dailyPlayed.score + " puan"}
+            onPress={() => {}}
+            variant="outline"
+            disabled
+          />
+        ) : (
+          <Btn
+            label="GÜNLÜK DAĞARCIK"
+            sub={"#" + dailyNumber + " · 14 soru · 2:30"}
+            onPress={() => navigation.navigate("Game", { mode: "daily" })}
+            variant="cta"
+          />
+        )}
         <Btn
           label="KLASİK MOD"
           sub="Serbest oyun · 14 soru · 2:30"

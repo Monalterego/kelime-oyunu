@@ -76,3 +76,24 @@ export async function getStats(): Promise<{
 
   return { totalGames, bestScore, avgScore, totalCorrect, streak };
 }
+
+
+const DAILY_KEY = "dagarcik_daily_played";
+
+export async function markDailyPlayed(dailyNumber: number, score: number, correct: number, total: number): Promise<void> {
+  try {
+    await AsyncStorage.setItem(DAILY_KEY, JSON.stringify({ dailyNumber, score, correct, total }));
+  } catch (e) {
+    console.error("Daily kayit hatasi:", e);
+  }
+}
+
+export async function getDailyStatus(): Promise<{ played: boolean; dailyNumber: number; score: number; correct: number; total: number } | null> {
+  try {
+    const data = await AsyncStorage.getItem(DAILY_KEY);
+    if (!data) return null;
+    return JSON.parse(data);
+  } catch (e) {
+    return null;
+  }
+}

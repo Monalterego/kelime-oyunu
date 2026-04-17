@@ -7,7 +7,8 @@ import {
   HINT_DELAY, HINT_DISPLAY,
 } from "../utils/gameReducer";
 import { C, T, S, R, SHADOW } from "../theme/tokens";
-import { saveGameRecord } from "../utils/gameHistory";
+import { saveGameRecord, markDailyPlayed } from "../utils/gameHistory";
+import { getDailyNumber } from "../utils/questionGenerator";
 import { generateGameQuestions } from "../utils/questionGenerator";
 import { Screen, Btn, Chip, Card, Tile, ProgressDots } from "../components/ui";
 
@@ -88,6 +89,10 @@ export default function GameScreen({ navigation, route }: any) {
       const correct = state.questions.filter(q => q.correct).length;
       const skipped = state.questions.filter(q => q.skipped).length;
       const wrong = state.questions.length - correct - skipped;
+      if (mode === "daily") {
+        const correct = state.questions.filter(q => q.correct).length;
+        markDailyPlayed(getDailyNumber(), state.totalScore, correct, state.questions.length);
+      }
       saveGameRecord({
         mode: mode as "classic" | "category" | "daily",
         category: category,
