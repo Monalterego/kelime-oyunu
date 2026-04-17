@@ -32,7 +32,16 @@ export default function GameScreen({ navigation, route }: any) {
     const text = "Dağarcık" + daily + " " + dots + "\n" + correct + "/" + state.questions.length + " · " + state.totalScore + " puan\ndagarcik.app";
     try {
       if (Platform.OS === "web") {
-        await navigator.clipboard.writeText(text);
+        try {
+          await navigator.clipboard.writeText(text);
+        } catch {
+          const ta = document.createElement("textarea");
+          ta.value = text;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand("copy");
+          document.body.removeChild(ta);
+        }
         alert("Sonuç kopyalandı!");
       } else {
         await Share.share({ message: text });
