@@ -20,6 +20,7 @@ export default function GameScreen({ navigation, route }: any) {
 
   const [state, dispatch] = useReducer(gameReducer, initialGameState);
   const [answer, setAnswer] = useState("");
+  const [profile, setProfile] = useState<{id: string} | null>(null);
   const [newAchievements, setNewAchievements] = useState<Achievement[]>([]);
   const [showHint, setShowHint] = useState(false);
   const hintSlide = useRef(new Animated.Value(-80)).current;
@@ -146,6 +147,7 @@ export default function GameScreen({ navigation, route }: any) {
           if (newAch.length > 0) setNewAchievements(newAch);
         });
       });
+      getLocalProfile().then(setProfile);
       // Cloud save
       getLocalProfile().then(profile => {
         if (profile) {
@@ -262,6 +264,17 @@ export default function GameScreen({ navigation, route }: any) {
               </View>
             );
           })}
+
+          {!profile && (
+            <TouchableOpacity
+              style={gs.profilePrompt}
+              onPress={() => navigation.navigate("Profile")}
+              activeOpacity={0.7}
+            >
+              <Text style={[T.h3, { color: C.gold }]}>Skorunu kaydet!</Text>
+              <Text style={[T.cap, { color: C.textSoft }]}>Profil oluştur, liderlik tablosunda yerini al</Text>
+            </TouchableOpacity>
+          )}
 
           <View style={[gs.endBtns, { marginTop: S.xl }]}>
             <Btn label="Tekrar Oyna" onPress={startGame} variant="outline" />

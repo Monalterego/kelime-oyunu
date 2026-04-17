@@ -9,10 +9,11 @@ export default function LeaderboardScreen({ navigation }: any) {
   const [period, setPeriod] = useState<Period>("weekly");
   const [scores, setScores] = useState<any[]>([]);
   const [myId, setMyId] = useState<string | null>(null);
+  const [myNick, setMyNick] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getLocalProfile().then(p => { if (p) setMyId(p.id); });
+    getLocalProfile().then(p => { if (p) { setMyId(p.id); setMyNick(p.nickname); } });
   }, []);
 
   useEffect(() => {
@@ -56,7 +57,7 @@ export default function LeaderboardScreen({ navigation }: any) {
             const nick = item.profiles?.nickname || "Anonim";
             const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : (i + 1) + ".";
             return (
-              <View key={i} style={[s.row, i < 3 && s.rowTop]}>
+              <View key={i} style={[s.row, i < 3 && s.rowTop, nick === (myNick || "") && s.rowMe]}>
                 <Text style={s.rank}>{medal}</Text>
                 <View style={{ flex: 1 }}>
                   <Text style={[T.body, { color: C.text, fontWeight: "600" }]}>{nick}</Text>
@@ -85,5 +86,9 @@ const s = StyleSheet.create({
   row: { flexDirection: "row", alignItems: "center", backgroundColor: C.surface, borderRadius: R.lg, padding: S.lg, marginBottom: S.sm, gap: S.md, borderWidth: 1, borderColor: C.surfaceLight },
   rowTop: { borderColor: C.goldBorder },
   rank: { fontSize: 20, width: 36, textAlign: "center" },
+  rowMe: {
+    backgroundColor: C.goldSoft,
+    borderColor: C.goldBorder,
+  },
   back: { paddingVertical: S.md, alignItems: "center" },
 });
