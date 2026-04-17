@@ -41,7 +41,7 @@ export default function HomeScreen({ navigation }: any) {
 
         <Btn
           label="Nasıl Oynanır?"
-          onPress={() => {}}
+          onPress={() => navigation.navigate("HowToPlay")}
           variant="ghost"
         />
       </View>
