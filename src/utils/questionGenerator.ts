@@ -24,13 +24,13 @@ const CLASSIC_STRUCTURE = [
 ];
 
 const CATEGORY_STRUCTURE = [
-  { length: 4, count: 1, preferDifficulty: "easy" },
-  { length: 5, count: 2, preferDifficulty: "easy" },
-  { length: 6, count: 2, preferDifficulty: "medium" },
-  { length: 7, count: 2, preferDifficulty: "medium" },
-  { length: 8, count: 1, preferDifficulty: "hard" },
-  { length: 9, count: 1, preferDifficulty: "hard" },
-  { length: 10, count: 1, preferDifficulty: "hard" },
+  { length: 4, count: 1 },
+  { length: 5, count: 2 },
+  { length: 6, count: 2 },
+  { length: 7, count: 2 },
+  { length: 8, count: 1 },
+  { length: 9, count: 1 },
+  { length: 10, count: 1 },
 ];
 
 let questionsDB: QuestionDBEntry[] | null = null;
