@@ -81,6 +81,11 @@ export default function HomeScreen({ navigation }: any) {
           onPress={() => navigation.navigate("Achievements")}
           variant="ghost"
         />
+        <Btn
+          label="Profil / Liderlik"
+          onPress={() => navigation.navigate("Profile")}
+          variant="ghost"
+        />
       </View>
 
       {/* Streak */}

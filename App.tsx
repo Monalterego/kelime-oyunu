@@ -10,6 +10,8 @@ import GameScreen from "./src/screens/GameScreen";
 import CategoryScreen from "./src/screens/CategoryScreen";
 import HowToPlayScreen from "./src/screens/HowToPlayScreen";
 import AchievementsScreen from "./src/screens/AchievementsScreen";
+import ProfileScreen from "./src/screens/ProfileScreen";
+import LeaderboardScreen from "./src/screens/LeaderboardScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -36,6 +38,8 @@ export default function App() {
         <Stack.Screen name="Game" component={GameScreen} />
         <Stack.Screen name="HowToPlay" component={HowToPlayScreen} />
         <Stack.Screen name="Achievements" component={AchievementsScreen} />
+        <Stack.Screen name="Profile" component={ProfileScreen} />
+        <Stack.Screen name="Leaderboard" component={LeaderboardScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -9,6 +9,7 @@ import {
 import { C, T, S, R, SHADOW } from "../theme/tokens";
 import { saveGameRecord, markDailyPlayed, getStats } from "../utils/gameHistory";
 import { checkAchievements, Achievement } from "../utils/achievements";
+import { getLocalProfile, submitScore } from "../utils/supabase";
 import { getDailyNumber } from "../utils/questionGenerator";
 import { generateGameQuestions } from "../utils/questionGenerator";
 import { Screen, Btn, Chip, Card, Tile, ProgressDots } from "../components/ui";
@@ -144,6 +145,22 @@ export default function GameScreen({ navigation, route }: any) {
         }).then(newAch => {
           if (newAch.length > 0) setNewAchievements(newAch);
         });
+      });
+      // Cloud save
+      getLocalProfile().then(profile => {
+        if (profile) {
+          submitScore({
+            profileId: profile.id,
+            mode,
+            category,
+            score: state.totalScore,
+            correct,
+            wrong,
+            skipped,
+            total: state.questions.length,
+            dailyNumber: mode === "daily" ? getDailyNumber() : undefined,
+          });
+        }
       });
     }
   }, [state.status]);
