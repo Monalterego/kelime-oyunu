@@ -3,9 +3,11 @@ import { View, Text, StyleSheet } from "react-native";
 import { C, T, S, R } from "../theme/tokens";
 import { Screen, Btn } from "../components/ui";
 import { getStats } from "../utils/gameHistory";
+import { getDailyNumber } from "../utils/questionGenerator";
 
 
 export default function HomeScreen({ navigation }: any) {
+  const dailyNumber = getDailyNumber();
   const [stats, setStats] = useState({ totalGames: 0, bestScore: 0, avgScore: 0, totalCorrect: 0, streak: 0 });
 
   useEffect(() => {
@@ -37,10 +39,16 @@ export default function HomeScreen({ navigation }: any) {
       {/* Main CTA — the thing you want people to tap */}
       <View style={s.actions}>
         <Btn
-          label="OYNA"
-          sub="Günün oyunu · 14 soru · 2:30"
-          onPress={() => navigation.navigate("Game", { mode: "classic" })}
+          label="GÜNLÜK DAĞARCIK"
+          sub={"#" + dailyNumber + " · 14 soru · 2:30"}
+          onPress={() => navigation.navigate("Game", { mode: "daily" })}
           variant="cta"
+        />
+        <Btn
+          label="KLASİK MOD"
+          sub="Serbest oyun · 14 soru · 2:30"
+          onPress={() => navigation.navigate("Game", { mode: "classic" })}
+          variant="outline"
         />
 
         <Btn
@@ -84,7 +92,7 @@ export default function HomeScreen({ navigation }: any) {
 
       {/* Footer */}
       <Text style={[T.cap, { color: C.textFaint, position: "absolute", bottom: 36 }]}>
-        NYT Games tarzı sade arayüz · 7.000+ kelime
+        7.000+ kelime ile sınırsız eğlence
       </Text>
     </Screen>
   );

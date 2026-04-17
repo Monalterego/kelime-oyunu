@@ -89,7 +89,7 @@ export default function GameScreen({ navigation, route }: any) {
       const skipped = state.questions.filter(q => q.skipped).length;
       const wrong = state.questions.length - correct - skipped;
       saveGameRecord({
-        mode: mode as "classic" | "category",
+        mode: mode as "classic" | "category" | "daily",
         category: category,
         score: state.totalScore,
         correct,
