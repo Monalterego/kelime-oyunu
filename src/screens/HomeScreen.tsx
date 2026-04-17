@@ -1,9 +1,18 @@
-import React from "react";
+import React, { useState, useCallback } from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { C, T, S } from "../theme/tokens";
+import { C, T, S, R } from "../theme/tokens";
 import { Screen, Btn } from "../components/ui";
+import { getStats } from "../utils/gameHistory";
+import { useFocusEffect } from "@react-navigation/native";
 
 export default function HomeScreen({ navigation }: any) {
+  const [stats, setStats] = useState({ totalGames: 0, bestScore: 0, avgScore: 0, totalCorrect: 0, streak: 0 });
+
+  useFocusEffect(
+    useCallback(() => {
+      getStats().then(setStats);
+    }, [])
+  );
   return (
     <Screen>
       <View style={s.gridTexture} />
@@ -45,6 +54,31 @@ export default function HomeScreen({ navigation }: any) {
           variant="ghost"
         />
       </View>
+
+      {/* Stats */}
+      {stats.totalGames > 0 && (
+        <View style={s.statsCard}>
+          <View style={s.statItem}>
+            <Text style={s.statValue}>{stats.totalGames}</Text>
+            <Text style={s.statLabel}>Oyun</Text>
+          </View>
+          <View style={s.statDivider} />
+          <View style={s.statItem}>
+            <Text style={s.statValue}>{stats.bestScore}</Text>
+            <Text style={s.statLabel}>En İyi</Text>
+          </View>
+          <View style={s.statDivider} />
+          <View style={s.statItem}>
+            <Text style={s.statValue}>{stats.streak}</Text>
+            <Text style={s.statLabel}>Seri</Text>
+          </View>
+          <View style={s.statDivider} />
+          <View style={s.statItem}>
+            <Text style={s.statValue}>{stats.totalCorrect}</Text>
+            <Text style={s.statLabel}>Doğru</Text>
+          </View>
+        </View>
+      )}
 
       {/* Footer */}
       <Text style={[T.cap, { color: C.textFaint, position: "absolute", bottom: 36 }]}>
@@ -91,5 +125,37 @@ const s = StyleSheet.create({
   actions: {
     width: "100%",
     gap: S.md,
+  },
+  statsCard: {
+    flexDirection: "row",
+    backgroundColor: C.surface,
+    borderRadius: R.lg,
+    padding: S.lg,
+    marginTop: S.xl,
+    width: "100%",
+    justifyContent: "space-around",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: C.surfaceLight,
+  },
+  statItem: {
+    alignItems: "center",
+  },
+  statValue: {
+    fontSize: 22,
+    fontWeight: "800",
+    color: C.text,
+  },
+  statLabel: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: C.textFaint,
+    marginTop: 2,
+    letterSpacing: 0.5,
+  },
+  statDivider: {
+    width: 1,
+    height: 30,
+    backgroundColor: C.surfaceLight,
   },
 });

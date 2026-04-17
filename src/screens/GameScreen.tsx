@@ -7,6 +7,7 @@ import {
   HINT_DELAY, HINT_DISPLAY,
 } from "../utils/gameReducer";
 import { C, T, S, R, SHADOW } from "../theme/tokens";
+import { saveGameRecord } from "../utils/gameHistory";
 import { generateGameQuestions } from "../utils/questionGenerator";
 import { Screen, Btn, Chip, Card, Tile, ProgressDots } from "../components/ui";
 
@@ -99,6 +100,24 @@ export default function GameScreen({ navigation, route }: any) {
       </Screen>
     );
   }
+
+  // Save game when it ends
+  useEffect(() => {
+    if (state.status === "gameover") {
+      const correct = state.questions.filter(q => q.correct).length;
+      const skipped = state.questions.filter(q => q.skipped).length;
+      const wrong = state.questions.length - correct - skipped;
+      saveGameRecord({
+        mode: mode as "classic" | "category",
+        category: category,
+        score: state.totalScore,
+        correct,
+        wrong,
+        skipped,
+        total: state.questions.length,
+      });
+    }
+  }, [state.status]);
 
   // ── GAME OVER ────────────────────────────────────────
   if (state.status === "gameover") {
