@@ -7,7 +7,8 @@ import {
   HINT_DELAY, HINT_DISPLAY,
 } from "../utils/gameReducer";
 import { C, T, S, R, SHADOW } from "../theme/tokens";
-import { saveGameRecord, markDailyPlayed } from "../utils/gameHistory";
+import { saveGameRecord, markDailyPlayed, getStats } from "../utils/gameHistory";
+import { checkAchievements, Achievement } from "../utils/achievements";
 import { getDailyNumber } from "../utils/questionGenerator";
 import { generateGameQuestions } from "../utils/questionGenerator";
 import { Screen, Btn, Chip, Card, Tile, ProgressDots } from "../components/ui";
@@ -18,6 +19,7 @@ export default function GameScreen({ navigation, route }: any) {
 
   const [state, dispatch] = useReducer(gameReducer, initialGameState);
   const [answer, setAnswer] = useState("");
+  const [newAchievements, setNewAchievements] = useState<Achievement[]>([]);
   const [showHint, setShowHint] = useState(false);
   const hintSlide = useRef(new Animated.Value(-80)).current;
   const hintOpacity = useRef(new Animated.Value(0)).current;
@@ -128,6 +130,21 @@ export default function GameScreen({ navigation, route }: any) {
         skipped,
         total: state.questions.length,
       });
+      getStats().then(stats => {
+        checkAchievements({
+          mode,
+          category,
+          score: state.totalScore,
+          correct,
+          total: state.questions.length,
+          skipped,
+          streak: stats.streak,
+          totalCorrect: stats.totalCorrect,
+          totalGames: stats.totalGames,
+        }).then(newAch => {
+          if (newAch.length > 0) setNewAchievements(newAch);
+        });
+      });
     }
   }, [state.status]);
 
@@ -177,6 +194,21 @@ export default function GameScreen({ navigation, route }: any) {
           <View style={{ marginVertical: S.lg }}>
             <ProgressDots current={state.questions.length} total={state.questions.length} correct={state.questions.map(q => q.correct)} />
           </View>
+
+          {newAchievements.length > 0 && (
+            <View style={gs.achSection}>
+              <Text style={[T.h3, { color: C.gold, marginBottom: S.md }]}>Yeni Başarım!</Text>
+              {newAchievements.map(ach => (
+                <View key={ach.id} style={gs.achCard}>
+                  <Text style={gs.achIcon}>{ach.icon}</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[T.h3, { color: C.text }]}>{ach.title}</Text>
+                    <Text style={[T.cap, { color: C.textSoft }]}>{ach.description}</Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+          )}
 
           <Text style={[T.h3, { color: C.text, marginTop: S.xl, marginBottom: S.md }]}>Sorular</Text>
 
@@ -500,6 +532,26 @@ const gs = StyleSheet.create({
     width: "100%",
     gap: S.md,
     marginTop: S.xxl,
+  },
+
+  // Achievements
+  achSection: {
+    marginTop: S.xl,
+    marginBottom: S.sm,
+  },
+  achCard: {
+    flexDirection: "row",
+    backgroundColor: C.goldSoft,
+    borderRadius: R.lg,
+    padding: S.lg,
+    marginBottom: S.sm,
+    gap: S.md,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: C.goldBorder,
+  },
+  achIcon: {
+    fontSize: 28,
   },
 
   // Summary
