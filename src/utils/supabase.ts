@@ -69,7 +69,7 @@ export async function submitScore(record: {
   } catch { return false; }
 }
 
-export async function getLeaderboard(period: "weekly" | "monthly" | "alltime", mode?: string): Promise<any[]> {
+export async function getLeaderboard(period: "daily" | "weekly" | "monthly" | "alltime", mode?: string, dailyNumber?: number): Promise<any[]> {
   try {
     let query = supabase
       .from("scores")
@@ -79,7 +79,9 @@ export async function getLeaderboard(period: "weekly" | "monthly" | "alltime", m
 
     if (mode) query = query.eq("mode", mode);
 
-    if (period === "weekly") {
+    if (period === "daily" && dailyNumber) {
+      query = query.eq("daily_number", dailyNumber);
+    } else if (period === "weekly") {
       const weekAgo = new Date();
       weekAgo.setDate(weekAgo.getDate() - 7);
       query = query.gte("created_at", weekAgo.toISOString());

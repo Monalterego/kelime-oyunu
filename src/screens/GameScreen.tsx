@@ -21,6 +21,7 @@ export default function GameScreen({ navigation, route }: any) {
   const [state, dispatch] = useReducer(gameReducer, initialGameState);
   const [answer, setAnswer] = useState("");
   const [profile, setProfile] = useState<{id: string} | null>(null);
+  const [showSummary, setShowSummary] = useState(false);
   const [newAchievements, setNewAchievements] = useState<Achievement[]>([]);
   const [showHint, setShowHint] = useState(false);
   const hintSlide = useRef(new Animated.Value(-80)).current;
@@ -231,9 +232,9 @@ export default function GameScreen({ navigation, route }: any) {
             </View>
           )}
 
-          <Text style={[T.h3, { color: C.text, marginTop: S.xl, marginBottom: S.md }]}>Sorular</Text>
+          <Btn label={showSummary ? "Özeti Gizle" : "Soru Özetini Gör"} onPress={() => setShowSummary(!showSummary)} variant="outline" />
 
-          {state.questions.map((q, i) => {
+          {showSummary && state.questions.map((q, i) => {
             const status = q.correct ? "correct" : q.skipped ? "skipped" : "wrong";
             const statusColor = status === "correct" ? C.green : status === "skipped" ? C.purple : C.red;
             const statusBg = status === "correct" ? C.greenSoft : status === "skipped" ? C.purpleSoft : C.redSoft;
