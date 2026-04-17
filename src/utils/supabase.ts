@@ -73,9 +73,10 @@ export async function getLeaderboard(period: "daily" | "weekly" | "monthly" | "a
   try {
     let query = supabase
       .from("scores")
-      .select("score, correct, total, created_at, profiles(nickname)")
+      .select("score, correct, total, created_at, profile_id, profiles(nickname)")
+      .not("profile_id", "is", null)
       .order("score", { ascending: false })
-      .limit(50);
+      .limit(100);
 
     if (mode) query = query.eq("mode", mode);
 
