@@ -177,13 +177,18 @@ export default function GameScreen({ navigation, route }: any) {
 
   // ── IDLE ─────────────────────────────────────────────
   if (state.status === "idle") {
+    const modeInfo = mode === "daily"
+      ? { title: "Günlük Dağarcık", sub: "Bugünün 14 sorusu · 2:30", icon: "📅" }
+      : mode === "category"
+      ? { title: "Kategori Modu", sub: (category || "") + " · 10 soru · 1:30", icon: "📚" }
+      : { title: "Klasik Mod", sub: "14 soru · 2:30 · kolaydan zora", icon: "🎯" };
     return (
       <Screen>
+        <Text style={{ fontSize: 48, marginBottom: S.lg }}>{modeInfo.icon}</Text>
         <Text style={[T.display, { color: C.text }]}>Dağarcık</Text>
-        <Text style={[T.body, { color: C.textSoft, marginTop: S.sm, marginBottom: S.xxl }]}>
-          {mode === "category" ? "Kategori Modu" : "Klasik Mod"}
-        </Text>
-        <Btn label="BAŞLA" onPress={startGame} />
+        <Text style={[T.h2, { color: C.textSoft, marginTop: S.md }]}>{modeInfo.title}</Text>
+        <Text style={[T.bodySm, { color: C.textFaint, marginTop: S.sm, marginBottom: S.xxxl }]}>{modeInfo.sub}</Text>
+        <Btn label="BAŞLA" onPress={startGame} variant="cta" />
       </Screen>
     );
   }
