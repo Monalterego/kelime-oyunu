@@ -288,7 +288,7 @@ export default function GameScreen({ navigation, route }: any) {
           )}
 
           <View style={[gs.endBtns, { marginTop: S.xl }]}>
-            <Btn label="Tekrar Oyna" onPress={startGame} variant="outline" />
+            {mode !== "daily" && <Btn label="Tekrar Oyna" onPress={startGame} variant="outline" />}
             <Btn label="Ana Sayfa" onPress={() => navigation.navigate("Home")} variant="ghost" />
           </View>
         </ScrollView>
