@@ -273,8 +273,12 @@ export default function GameScreen({ navigation, route }: any) {
               onPress={() => navigation.navigate("Profile")}
               activeOpacity={0.7}
             >
-              <Text style={[T.h3, { color: C.gold }]}>Skorunu kaydet!</Text>
-              <Text style={[T.cap, { color: C.textSoft }]}>Profil oluştur, liderlik tablosunda yerini al</Text>
+              <Text style={{ fontSize: 32, marginBottom: 8 }}>🏆</Text>
+              <Text style={[T.h2, { color: C.text }]}>Skorunu Kaydet!</Text>
+              <Text style={[T.bodySm, { color: C.textSoft, textAlign: "center", marginTop: 4 }]}>Profil oluştur, liderlik tablosunda yerini al</Text>
+              <View style={{ backgroundColor: C.orange, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 32, marginTop: 12 }}>
+                <Text style={[T.btn, { color: C.white }]}>Profil Oluştur</Text>
+              </View>
             </TouchableOpacity>
           )}
 
