@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from "react-native";
 import { C, T, S, R } from "../theme/tokens";
 import { Btn } from "../components/ui";
 import { getStats, getDailyStatus } from "../utils/gameHistory";
@@ -49,11 +49,7 @@ export default function HomeScreen({ navigation }: any) {
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
         {/* Logo */}
         <View style={s.logoSection}>
-          <View style={s.logoRing}>
-            <View style={s.logoCore}>
-              <Text style={s.logoChar}>Ğ</Text>
-            </View>
-          </View>
+          <Image source={require("../../assets/icon.png")} style={s.logoImage} />
           <Text style={[T.display, { color: C.text, marginTop: S.xl }]}>Dağarcık</Text>
           <Text style={[T.body, { color: C.textSoft, marginTop: S.sm }]}>
             Her gün yeni bir kelime bulmacası
@@ -190,28 +186,10 @@ const s = StyleSheet.create({
     alignItems: "center",
     marginBottom: S.xxl,
   },
-  logoRing: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: C.surfaceLight,
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: C.tileBorder,
-  },
-  logoCore: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: C.text,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  logoChar: {
-    fontSize: 40,
-    fontWeight: "900",
-    color: C.white,
+  logoImage: {
+    width: 120,
+    height: 120,
+    borderRadius: 24,
   },
   streakBanner: {
     backgroundColor: C.goldSoft,
