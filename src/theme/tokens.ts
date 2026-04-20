@@ -116,4 +116,4 @@ export const SHADOW = Platform.select({
 })!;
 
 // ─── LAYOUT HELPERS ────────────────────────────────────────
-export const TILE_SIZE = Math.min(44, (SCREEN_W - S.page * 2 - 10 * 9) / 10);
+export const TILE_SIZE = Math.min(48, (SCREEN_W - S.page * 2 - 10 * 8) / 10);

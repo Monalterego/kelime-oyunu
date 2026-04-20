@@ -339,44 +339,47 @@ export default function GameScreen({ navigation, route }: any) {
 
   return (
     <View style={gs.game}>
-      {/* TOP BAR */}
-      <View style={gs.topBar}>
-        <View style={[gs.timerPill, lowTime && { backgroundColor: tColor + "15" }]}>
-          <Text style={[T.timer, { color: tColor }]}>{fmt(state.totalTimeLeft)}</Text>
+      {/* CONTENT AREA */}
+      <View style={gs.content}>
+        {/* TOP BAR */}
+        <View style={gs.topBar}>
+          <View style={[gs.timerPill, lowTime && { backgroundColor: tColor + "15" }]}>
+            <Text style={[T.timer, { color: tColor }]}>{fmt(state.totalTimeLeft)}</Text>
+          </View>
+          <ProgressDots current={state.currentQuestionIndex} total={qTotal} correct={correctArr} />
+          <Text style={[T.badge, { color: C.text }]}>{state.totalScore} P</Text>
         </View>
-        <ProgressDots current={state.currentQuestionIndex} total={qTotal} correct={correctArr} />
-        <Text style={[T.badge, { color: C.text }]}>{state.totalScore} P</Text>
+
+        {/* POINTS + LENGTH */}
+        <View style={gs.metaRow}>
+          <Chip text={pts + " puan"} color="gold" />
+          <Text style={[T.bodySm, { color: C.textFaint }]}>{cur.wordData.length} harfli</Text>
+        </View>
+
+        {/* DEFINITION */}
+        <View style={gs.defBox}>
+          <Text style={[T.h3, { color: C.text, textAlign: "center", lineHeight: 26 }]}>{cur.wordData.definition}</Text>
+        </View>
+
+        {/* Hint banner */}
+        {showHint && state.currentFlashHint ? (
+          <Animated.View style={[gs.hint, { opacity: hintOpacity }]}>
+            <Text style={[T.bodySm, { color: C.gold, textAlign: "center", fontStyle: "italic" }]}>
+              {cur.wordData.origin ? cur.wordData.origin + " kökenli — " : "Öz Türkçe — "}
+              {state.currentFlashHint}
+            </Text>
+          </Animated.View>
+        ) : null}
+
+        {/* TILES */}
+        <View style={gs.tiles}>
+          {cur.wordData.word.split("").map((ch, i) => (
+            <Tile key={i} letter={ch} revealed={cur.revealedLetters.includes(i)} />
+          ))}
+        </View>
       </View>
 
-      {/* POINTS + LENGTH */}
-      <View style={gs.metaRow}>
-        <Chip text={pts + " puan"} color="gold" />
-        <Text style={[T.cap, { color: C.textFaint }]}>{cur.wordData.length} harfli</Text>
-      </View>
-
-      {/* DEFINITION */}
-      <View style={gs.defBox}>
-        <Text style={[T.game, { color: C.text, textAlign: "center" }]}>{cur.wordData.definition}</Text>
-      </View>
-
-      {/* Hint banner */}
-      {showHint && state.currentFlashHint ? (
-        <Animated.View style={[gs.hint, { opacity: hintOpacity }]}>
-          <Text style={[T.body, { color: C.gold, textAlign: "center", fontStyle: "italic" }]}>
-            {cur.wordData.origin ? cur.wordData.origin + " kökenli — " : "Öz Türkçe — "}
-            {state.currentFlashHint}
-          </Text>
-        </Animated.View>
-      ) : null}
-
-      {/* TILES */}
-      <View style={gs.tiles}>
-        {cur.wordData.word.split("").map((ch, i) => (
-          <Tile key={i} letter={ch} revealed={cur.revealedLetters.includes(i)} />
-        ))}
-      </View>
-
-      {/* ACTIONS */}
+      {/* FIXED BOTTOM ACTIONS */}
       {state.status === "answering" ? (
         <View style={gs.answerZone}>
           <View style={gs.answerTimer}>
@@ -392,7 +395,13 @@ export default function GameScreen({ navigation, route }: any) {
             placeholderTextColor={C.textFaint}
             onSubmitEditing={() => { dispatch({ type: "SUBMIT_ANSWER", answer }); setAnswer(""); }}
           />
-          <Btn label="CEVAPLA" onPress={() => { dispatch({ type: "SUBMIT_ANSWER", answer }); setAnswer(""); }} variant="primary" />
+          <TouchableOpacity
+            style={gs.ctaBtn}
+            onPress={() => { dispatch({ type: "SUBMIT_ANSWER", answer }); setAnswer(""); }}
+            activeOpacity={0.75}
+          >
+            <Text style={[T.btn, { color: C.white }]}>CEVAPLA</Text>
+          </TouchableOpacity>
         </View>
       ) : (
         <View style={gs.playZone}>
@@ -429,8 +438,11 @@ const gs = StyleSheet.create({
     backgroundColor: C.bg,
     paddingHorizontal: S.page,
     paddingTop: 52,
-    paddingBottom: S.xl,
-    justifyContent: "space-between",
+    paddingBottom: S.lg,
+  },
+  content: {
+    flex: 1,
+    justifyContent: "center",
   },
 
   // Hint
@@ -449,7 +461,7 @@ const gs = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: S.md,
+    marginBottom: S.sm,
   },
   timerPill: {
     backgroundColor: C.surface,
@@ -463,16 +475,16 @@ const gs = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: S.sm,
+    marginBottom: S.xs,
   },
 
   // Definition
   defBox: {
     backgroundColor: C.surface,
-    borderRadius: R.xl,
-    paddingVertical: S.lg,
+    borderRadius: R.lg,
+    paddingVertical: S.md,
     paddingHorizontal: S.lg,
-    marginBottom: S.md,
+    marginBottom: S.sm,
     borderWidth: 1,
     borderColor: C.brandBorder,
   },
@@ -481,13 +493,13 @@ const gs = StyleSheet.create({
   tiles: {
     flexDirection: "row",
     justifyContent: "center",
-    gap: 6,
-    marginBottom: S.md,
+    gap: 7,
+    marginBottom: S.sm,
     flexWrap: "wrap",
   },
 
   // Answer
-  answerZone: { alignItems: "center", gap: S.md },
+  answerZone: { alignItems: "center", gap: S.sm },
   answerTimer: {
     width: 60,
     height: 60,
@@ -502,9 +514,9 @@ const gs = StyleSheet.create({
     width: "100%",
     backgroundColor: C.surface,
     borderWidth: 2,
-    borderColor: C.brand,
+    borderColor: C.orange,
     borderRadius: R.lg,
-    padding: S.lg,
+    padding: S.md,
     ...T.game,
     color: C.text,
     textAlign: "center",
