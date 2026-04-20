@@ -449,7 +449,7 @@ const gs = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: S.lg,
+    marginBottom: S.md,
   },
   timerPill: {
     backgroundColor: C.surface,
@@ -463,16 +463,16 @@ const gs = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: S.md,
+    marginBottom: S.sm,
   },
 
   // Definition
   defBox: {
     backgroundColor: C.surface,
     borderRadius: R.xl,
-    paddingVertical: S.xl,
+    paddingVertical: S.lg,
     paddingHorizontal: S.lg,
-    marginBottom: S.xl,
+    marginBottom: S.md,
     borderWidth: 1,
     borderColor: C.brandBorder,
   },
@@ -482,7 +482,7 @@ const gs = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     gap: 6,
-    marginBottom: S.xl,
+    marginBottom: S.md,
     flexWrap: "wrap",
   },
 
