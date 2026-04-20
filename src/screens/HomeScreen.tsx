@@ -63,20 +63,26 @@ export default function HomeScreen({ navigation }: any) {
         {/* Game modes */}
         <View style={s.actions}>
           {dailyPlayed ? (
-            <Btn
-              label={"GÜNLÜK DAĞARCIK #" + dailyNumber + " ✓"}
-              sub={dailyPlayed.correct + "/" + dailyPlayed.total + " doğru · " + dailyPlayed.score + " puan"}
-              onPress={() => {}}
-              variant="outline"
-              disabled
-            />
+            <View style={s.dailyDone}>
+              <Text style={{ fontSize: 20 }}>✅</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={[T.h3, { color: C.text }]}>{"Günlük Dağarcık #" + dailyNumber}</Text>
+                <Text style={[T.cap, { color: C.textSoft }]}>{dailyPlayed.correct + "/" + dailyPlayed.total + " doğru · " + dailyPlayed.score + " puan"}</Text>
+              </View>
+            </View>
           ) : (
-            <Btn
-              label="GÜNLÜK DAĞARCIK"
-              sub={"#" + dailyNumber + " · 14 soru · 2:30"}
+            <TouchableOpacity
+              style={s.dailyCard}
               onPress={() => navigation.navigate("Game", { mode: "daily" })}
-              variant="cta"
-            />
+              activeOpacity={0.8}
+            >
+              <Text style={{ fontSize: 24 }}>📅</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={[T.h2, { color: C.white }]}>Günlük Dağarcık</Text>
+                <Text style={[T.cap, { color: "rgba(255,255,255,0.7)" }]}>{"#" + dailyNumber + " · 14 soru · 2:30"}</Text>
+              </View>
+              <Text style={[T.h3, { color: C.white }]}>›</Text>
+            </TouchableOpacity>
           )}
           <Btn
             label="KLASİK MOD"
@@ -204,6 +210,28 @@ const s = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
     color: C.gold,
+  },
+  dailyCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: C.orange,
+    borderRadius: R.lg,
+    padding: S.lg,
+    width: "100%",
+    gap: S.md,
+    marginBottom: S.sm,
+  },
+  dailyDone: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: C.surface,
+    borderRadius: R.lg,
+    padding: S.lg,
+    width: "100%",
+    gap: S.md,
+    marginBottom: S.sm,
+    borderWidth: 1,
+    borderColor: C.greenBorder,
   },
   actions: {
     width: "100%",
