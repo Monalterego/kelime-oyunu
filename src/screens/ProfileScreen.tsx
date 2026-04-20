@@ -28,11 +28,11 @@ export default function ProfileScreen({ navigation }: any) {
   }, []);
 
   const handleCreate = async () => {
-    if (nickname.trim().length < 3) { setError("En az 3 karakter olmali"); return; }
+    if (nickname.trim().length < 3) { setError("En az 3 karakter olmalı"); return; }
     if (nickname.trim().length > 15) { setError("En fazla 15 karakter olabilir"); return; }
     setError("");
     const result = await createProfile(nickname.trim());
-    if (result) { setProfile(result); } else { setError("Bu isim alinmis, baska bir isim dene"); }
+    if (result) { setProfile(result); } else { setError("Bu isim alınmış, başka bir isim dene"); }
   };
 
   if (loading) return null;
@@ -84,7 +84,7 @@ export default function ProfileScreen({ navigation }: any) {
                 <View key={g.id} style={s.gameRow}>
                   <View style={{ flex: 1 }}>
                     <Text style={[T.bodySm, { color: C.text, fontWeight: "600" }]}>{modeLabel(g.mode)}{g.category ? " - " + g.category : ""}</Text>
-                    <Text style={[T.cap, { color: C.textFaint }]}>{g.correct}/{g.total} dogru</Text>
+                    <Text style={[T.cap, { color: C.textFaint }]}>{g.correct}/{g.total} doğru</Text>
                   </View>
                   <Text style={[T.h3, { color: g.score >= 0 ? C.green : C.red }]}>{g.score}</Text>
                 </View>
@@ -94,7 +94,7 @@ export default function ProfileScreen({ navigation }: any) {
 
           <View style={{ marginTop: S.xxl, gap: S.md }}>
             <Btn label="Liderlik Tablosu" onPress={() => navigation.navigate("Leaderboard")} variant="cta" />
-            <Btn label="Geri Don" onPress={() => navigation.goBack()} variant="ghost" />
+            <Btn label="Geri Dön" onPress={() => navigation.goBack()} variant="ghost" />
           </View>
         </ScrollView>
       </View>
@@ -104,15 +104,15 @@ export default function ProfileScreen({ navigation }: any) {
   return (
     <View style={s.container}>
       <View style={s.createContent}>
-        <Text style={[T.h1, { color: C.text }]}>Profil Olustur</Text>
+        <Text style={[T.h1, { color: C.text }]}>Profil Oluştur</Text>
         <Text style={[T.bodySm, { color: C.textSoft, marginTop: S.sm, textAlign: "center" }]}>
-          Liderlik tablosunda yer almak icin bir kullanici adi sec
+          Liderlik tablosunda yer almak için bir kullanıcı adı seç
         </Text>
         <TextInput
           style={s.input}
           value={nickname}
           onChangeText={setNickname}
-          placeholder="Kullanici adi..."
+          placeholder="Kullanıcı adı..."
           placeholderTextColor={C.textFaint}
           autoCapitalize="none"
           maxLength={15}
@@ -121,7 +121,7 @@ export default function ProfileScreen({ navigation }: any) {
       </View>
       <View style={s.createActions}>
         <Btn label="Kaydet" onPress={handleCreate} variant="cta" />
-        <Btn label="Simdilik Gec" onPress={() => navigation.goBack()} variant="ghost" />
+        <Btn label="Şimdilik Geç" onPress={() => navigation.goBack()} variant="ghost" />
       </View>
     </View>
   );
