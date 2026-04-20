@@ -26,8 +26,8 @@ export const C = {
   goldBorder: "rgba(197, 150, 44, 0.3)",
 
   // Energy — muted ink
-  orange: "#121212",
-  orangeSoft: "rgba(18, 18, 18, 0.12)",
+  orange: "#E8722A",
+  orangeSoft: "rgba(232, 114, 42, 0.12)",
 
   // Feedback
   green: "#4D8B55",

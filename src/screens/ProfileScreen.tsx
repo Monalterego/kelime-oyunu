@@ -38,7 +38,7 @@ export default function ProfileScreen({ navigation }: any) {
   if (loading) return null;
 
   if (profile) {
-    const modeLabel = (m: string) => m === "daily" ? "Gunluk" : m === "category" ? "Kategori" : "Klasik";
+    const modeLabel = (m: string) => m === "daily" ? "Günlük" : m === "category" ? "Kategori" : "Klasik";
     return (
       <View style={s.container}>
         <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
@@ -71,8 +71,8 @@ export default function ProfileScreen({ navigation }: any) {
           <TouchableOpacity style={s.achCard} onPress={() => navigation.navigate("Achievements")} activeOpacity={0.7}>
             <Text style={{ fontSize: 24 }}>🏆</Text>
             <View style={{ flex: 1 }}>
-              <Text style={[T.h3, { color: C.text }]}>Basarimlar</Text>
-              <Text style={[T.cap, { color: C.textFaint }]}>{achCount.unlocked}/{achCount.total} acildi</Text>
+              <Text style={[T.h3, { color: C.text }]}>Başarımlar</Text>
+              <Text style={[T.cap, { color: C.textFaint }]}>{achCount.unlocked}/{achCount.total} açıldı</Text>
             </View>
             <Text style={[T.body, { color: C.textFaint }]}>›</Text>
           </TouchableOpacity>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
 import { C, T, S, R } from "../theme/tokens";
 import { Btn } from "../components/ui";
 import { getStats, getDailyStatus } from "../utils/gameHistory";
