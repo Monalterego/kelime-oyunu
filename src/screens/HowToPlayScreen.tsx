@@ -25,6 +25,10 @@ const STEPS = [
 
 const MODES = [
   {
+    title: "Günlük Dağarcık",
+    desc: "Her gün aynı 14 soru, herkes için aynı. Günde bir kez oyna, arkadaşlarınla yarış!",
+  },
+  {
     title: "Klasik Mod",
     desc: "14 soru, 2.5 dakika. 4 ile 10 harfli karışık kelimeler. Kolaydan zora gider.",
   },

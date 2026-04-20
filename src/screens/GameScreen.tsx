@@ -223,6 +223,8 @@ export default function GameScreen({ navigation, route }: any) {
 
           <Btn label="Sonucu Paylaş" onPress={shareResult} variant="cta" />
 
+          <View style={{ height: S.sm }} />
+
           {newAchievements.length > 0 && (
             <View style={gs.achSection}>
               <Text style={[T.h3, { color: C.gold, marginBottom: S.md }]}>Yeni Başarım!</Text>
@@ -239,6 +241,8 @@ export default function GameScreen({ navigation, route }: any) {
           )}
 
           <Btn label={showSummary ? "Özeti Gizle" : "Soru Özetini Gör"} onPress={() => setShowSummary(!showSummary)} variant="outline" />
+
+          <View style={{ height: S.sm }} />
 
           {showSummary && state.questions.map((q, i) => {
             const status = q.correct ? "correct" : q.skipped ? "skipped" : "wrong";

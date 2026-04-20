@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
+import { ArrowLeft } from "lucide-react-native";
 import { C, T, S, R } from "../theme/tokens";
 import { getLeaderboard, getLocalProfile } from "../utils/supabase";
 import { getDailyNumber } from "../utils/questionGenerator";
@@ -118,7 +119,8 @@ export default function LeaderboardScreen({ navigation }: any) {
       </ScrollView>
 
       <TouchableOpacity style={s.back} onPress={() => navigation.goBack()} activeOpacity={0.6}>
-        <Text style={[T.btnSm, { color: C.textSoft }]}>Geri Dön</Text>
+        <ArrowLeft size={16} color={C.textSoft} strokeWidth={2} />
+        <Text style={[T.btnSm, { color: C.textSoft, marginLeft: 6 }]}>Geri Dön</Text>
       </TouchableOpacity>
     </View>
   );
@@ -135,5 +137,5 @@ const s = StyleSheet.create({
   rowTop: { borderColor: C.goldBorder },
   rowMe: { backgroundColor: C.goldSoft, borderColor: C.goldBorder },
   rank: { fontSize: 20, width: 36, textAlign: "center" },
-  back: { paddingVertical: S.md, alignItems: "center" },
+  back: { paddingVertical: S.md, flexDirection: "row", justifyContent: "center", alignItems: "center" },
 });

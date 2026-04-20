@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
+import { ArrowLeft } from "lucide-react-native";
 import { C, T, S, R } from "../theme/tokens";
 import { getAchievements, Achievement } from "../utils/achievements";
 
@@ -53,8 +54,9 @@ export default function AchievementsScreen({ navigation }: any) {
         )}
       </ScrollView>
 
-      <TouchableOpacity style={s.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
-        <Text style={[T.btnSm, { color: C.textSoft }]}>Geri Dön</Text>
+      <TouchableOpacity style={s.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.6}>
+        <ArrowLeft size={16} color={C.textSoft} strokeWidth={2} />
+        <Text style={[T.btnSm, { color: C.textSoft, marginLeft: 6 }]}>Geri Dön</Text>
       </TouchableOpacity>
     </View>
   );
@@ -94,6 +96,8 @@ const s = StyleSheet.create({
   },
   backBtn: {
     paddingVertical: S.md,
+    flexDirection: "row",
+    justifyContent: "center",
     alignItems: "center",
     marginBottom: S.lg,
   },
