@@ -49,11 +49,8 @@ export default function HomeScreen({ navigation }: any) {
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
         {/* Logo */}
         <View style={s.logoSection}>
-          <Image source={require("../../assets/icon.png")} style={s.logoImage} />
-          <Text style={[T.display, { color: C.text, marginTop: S.xl }]}>Dağarcık</Text>
-          <Text style={[T.body, { color: C.textSoft, marginTop: S.sm }]}>
-            Her gün yeni bir kelime bulmacası
-          </Text>
+          <Text style={s.brandText}>Dağarcık</Text>
+          <Text style={[T.bodySm, { color: C.textFaint, letterSpacing: 2 }]}>KELİME BULMACASI</Text>
         </View>
 
         {/* Streak */}
@@ -184,12 +181,13 @@ const s = StyleSheet.create({
   },
   logoSection: {
     alignItems: "center",
-    marginBottom: S.xxl,
+    marginBottom: S.xl,
   },
-  logoImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 24,
+  brandText: {
+    fontSize: 42,
+    fontWeight: "900",
+    color: C.text,
+    letterSpacing: -1,
   },
   streakBanner: {
     backgroundColor: C.goldSoft,
