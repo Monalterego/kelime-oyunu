@@ -31,7 +31,7 @@ export function Btn({ label, sub, onPress, variant = "cta", disabled = false, fu
         s.btn,
         { backgroundColor: v.bg, borderColor: v.border, borderWidth: v.borderW },
         full && { width: "100%" },
-        disabled && { opacity: 0.35 },
+        disabled && { opacity: 0.5 },
         variant === "cta" && SHADOW.soft,
       ]}
     >
@@ -114,15 +114,15 @@ const s = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: C.bg,
-    justifyContent: "center",
-    alignItems: "center",
     padding: S.page,
   },
   btn: {
+    minHeight: 56,
     borderRadius: R.lg,
-    paddingVertical: 16,
-    paddingHorizontal: 24,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
     alignItems: "center",
+    justifyContent: "center",
   },
   chip: {
     paddingHorizontal: S.md,
@@ -158,8 +158,8 @@ const s = StyleSheet.create({
     justifyContent: "center",
   },
   dot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
+    width: 8,
+    height: 8,
+    borderRadius: 999,
   },
 });

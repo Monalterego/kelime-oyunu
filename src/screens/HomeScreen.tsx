@@ -165,7 +165,7 @@ const s = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: S.page,
-    paddingTop: 50,
+    paddingTop: 56,
     paddingBottom: S.sm,
   },
   avatarBtn: {
@@ -183,11 +183,10 @@ const s = StyleSheet.create({
   },
   scroll: {
     paddingHorizontal: S.page,
-    alignItems: "center",
   },
   logoSection: {
     alignItems: "center",
-    marginBottom: S.xl,
+    marginBottom: S.xl + 4,
   },
   brandText: {
     fontSize: 42,
@@ -259,7 +258,7 @@ const s = StyleSheet.create({
     borderRadius: R.lg,
     padding: S.lg,
     width: "100%",
-    justifyContent: "space-around",
+    justifyContent: "space-between",
     alignItems: "center",
     borderWidth: 1,
     borderColor: C.surfaceLight,
@@ -274,7 +273,7 @@ const s = StyleSheet.create({
     color: C.text,
   },
   statLabel: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: "600",
     color: C.textFaint,
     marginTop: 2,
@@ -287,7 +286,7 @@ const s = StyleSheet.create({
   },
   links: {
     flexDirection: "row",
-    gap: S.lg,
+    gap: S.md,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: S.md,

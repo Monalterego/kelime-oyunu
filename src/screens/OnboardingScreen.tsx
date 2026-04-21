@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { Btn } from "../components/ui";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { C, T, S, R } from "../theme/tokens";
 
@@ -56,22 +57,24 @@ export default function OnboardingScreen({ navigation }: any) {
             <View key={i} style={[s.dot, i === step && s.dotActive]} />
           ))}
         </View>
-        <TouchableOpacity style={s.nextBtn} onPress={handleNext} activeOpacity={0.7}>
-          <Text style={[T.btn, { color: C.white }]}>{step === SLIDES.length - 1 ? "Başlayalım!" : "Devam"}</Text>
-        </TouchableOpacity>
+        <Btn
+          label={step === SLIDES.length - 1 ? "Başlayalım!" : "Devam"}
+          onPress={handleNext}
+          variant="cta"
+        />
       </View>
     </View>
   );
 }
 
 const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.bg, paddingHorizontal: S.page, paddingTop: 60, paddingBottom: 40 },
-  skipBtn: { alignSelf: "flex-end", padding: S.sm },
+  container: { flex: 1, backgroundColor: C.bg, paddingHorizontal: S.page, paddingTop: 56, paddingBottom: 32 },
+  skipBtn: { alignSelf: "flex-end", paddingVertical: S.sm, paddingHorizontal: S.xs },
   content: { flex: 1, justifyContent: "center", alignItems: "center" },
   icon: { fontSize: 72 },
-  bottom: { alignItems: "center", gap: S.xl },
-  dots: { flexDirection: "row", gap: S.sm },
-  dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: C.surfaceLight },
-  dotActive: { backgroundColor: C.text, width: 24 },
-  nextBtn: { backgroundColor: C.orange, borderRadius: R.lg, paddingVertical: 16, width: "100%", alignItems: "center" },
+  bottom: { alignItems: "center", gap: S.lg },
+  dots: { flexDirection: "row", gap: S.sm, alignItems: "center", justifyContent: "center" },
+  dot: { width: 8, height: 8, borderRadius: 999, backgroundColor: C.surfaceLight },
+  dotActive: { backgroundColor: C.text, width: 24, borderRadius: 999 },
+
 });
