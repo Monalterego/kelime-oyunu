@@ -445,6 +445,7 @@ const gs = StyleSheet.create({
   },
   content: {
     flex: 1,
+    justifyContent: "space-evenly",
   },
 
   // Hint
@@ -503,9 +504,9 @@ const gs = StyleSheet.create({
   // Answer
   answerZone: { alignItems: "center", gap: S.sm },
   answerTimer: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     backgroundColor: C.redSoft,
     borderWidth: 2,
     borderColor: C.redBorder,

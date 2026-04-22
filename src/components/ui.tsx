@@ -114,6 +114,8 @@ const s = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: C.bg,
+    justifyContent: "center",
+    alignItems: "center",
     padding: S.page,
   },
   btn: {
@@ -154,7 +156,7 @@ const s = StyleSheet.create({
   },
   dots: {
     flexDirection: "row",
-    gap: 5,
+    gap: 4,
     justifyContent: "center",
   },
   dot: {
