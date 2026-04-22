@@ -1,7 +1,8 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
 import { Home, ScrollText, FlaskConical, HardHat, Palette, Leaf, Dumbbell, UtensilsCrossed, ChevronRight, ArrowLeft } from "lucide-react-native";
-import { C, T, S, R } from "../theme/tokens";
+import { C, T, S, R, SAFE_TOP } from "../theme/tokens";
+
 
 const CATEGORIES = [
   { id: "Gunluk Hayat", label: "Günlük Hayat", Icon: Home, accent: "#2E5B8C" },
@@ -76,7 +77,7 @@ const s = StyleSheet.create({
     flex: 1,
     backgroundColor: C.bg,
     paddingHorizontal: S.page,
-    paddingTop: 56,
+    paddingTop: SAFE_TOP,
     paddingBottom: S.lg,
   },
   header: {

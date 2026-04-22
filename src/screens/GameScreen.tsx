@@ -6,7 +6,7 @@ import {
   LETTER_PENALTY, SKIP_PENALTY_RATIO, getBasePoints,
   HINT_DELAY, HINT_DISPLAY,
 } from "../utils/gameReducer";
-import { C, T, S, R, SHADOW } from "../theme/tokens";
+import { C, T, S, R, SHADOW, SAFE_TOP } from "../theme/tokens";
 import { saveGameRecord, markDailyPlayed, getStats } from "../utils/gameHistory";
 import { checkAchievements, Achievement } from "../utils/achievements";
 import { getLocalProfile, submitScore } from "../utils/supabase";
@@ -189,6 +189,9 @@ export default function GameScreen({ navigation, route }: any) {
         <Text style={[T.h2, { color: C.textSoft, marginTop: S.md }]}>{modeInfo.title}</Text>
         <Text style={[T.bodySm, { color: C.textFaint, marginTop: S.sm, marginBottom: S.xxxl }]}>{modeInfo.sub}</Text>
         <Btn label="BAŞLA" onPress={startGame} variant="cta" />
+        <View style={{ marginTop: S.xl }}>
+          <Btn label="← Geri Dön" onPress={() => navigation.goBack()} variant="ghost" />
+        </View>
       </Screen>
     );
   }
@@ -396,7 +399,7 @@ export default function GameScreen({ navigation, route }: any) {
             onSubmitEditing={() => { dispatch({ type: "SUBMIT_ANSWER", answer }); setAnswer(""); }}
           />
           <TouchableOpacity
-            style={gs.ctaBtn}
+            style={[gs.ctaBtn, { width: "100%" }]}
             onPress={() => { dispatch({ type: "SUBMIT_ANSWER", answer }); setAnswer(""); }}
             activeOpacity={0.75}
           >
@@ -437,12 +440,11 @@ const gs = StyleSheet.create({
     flex: 1,
     backgroundColor: C.bg,
     paddingHorizontal: S.page,
-    paddingTop: 52,
+    paddingTop: SAFE_TOP,
     paddingBottom: S.lg,
   },
   content: {
     flex: 1,
-    justifyContent: "center",
   },
 
   // Hint
@@ -484,7 +486,7 @@ const gs = StyleSheet.create({
     borderRadius: R.lg,
     paddingVertical: S.md,
     paddingHorizontal: S.lg,
-    marginBottom: S.sm,
+    marginBottom: S.md,
     borderWidth: 1,
     borderColor: C.brandBorder,
   },
@@ -493,7 +495,7 @@ const gs = StyleSheet.create({
   tiles: {
     flexDirection: "row",
     justifyContent: "center",
-    gap: 7,
+    gap: 10,
     marginBottom: S.sm,
     flexWrap: "wrap",
   },
@@ -516,7 +518,7 @@ const gs = StyleSheet.create({
     borderWidth: 2,
     borderColor: C.orange,
     borderRadius: R.lg,
-    padding: S.md,
+    padding: S.md + 2,
     ...T.game,
     color: C.text,
     textAlign: "center",
@@ -538,7 +540,7 @@ const gs = StyleSheet.create({
     flex: 1.6,
     backgroundColor: C.orange,
     borderRadius: R.lg,
-    paddingVertical: S.lg,
+    paddingVertical: 16,
     alignItems: "center",
     justifyContent: "center",
     ...SHADOW.soft,

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
-import { C, T, S, R } from "../theme/tokens";
+import { C, T, S, R, SAFE_TOP } from "../theme/tokens";
+
 
 const STEPS = [
   {
@@ -107,7 +108,7 @@ const s = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: C.bg,
-    paddingTop: 56,
+    paddingTop: SAFE_TOP,
   },
   scroll: {
     paddingHorizontal: S.page,

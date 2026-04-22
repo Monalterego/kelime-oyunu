@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
-import { C, T, S, R } from "../theme/tokens";
+import { C, T, S, R, SAFE_TOP } from "../theme/tokens";
+
 import { Btn } from "../components/ui";
 import { getStats, getDailyStatus } from "../utils/gameHistory";
 import { getDailyNumber } from "../utils/questionGenerator";

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
 import { ArrowLeft } from "lucide-react-native";
-import { C, T, S, R } from "../theme/tokens";
+import { C, T, S, R, SAFE_TOP } from "../theme/tokens";
+
 import { getLeaderboard, getLocalProfile } from "../utils/supabase";
 import { getDailyNumber } from "../utils/questionGenerator";
 
@@ -127,7 +128,7 @@ export default function LeaderboardScreen({ navigation }: any) {
 }
 
 const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.bg, paddingHorizontal: S.page, paddingTop: 56, paddingBottom: S.lg },
+  container: { flex: 1, backgroundColor: C.bg, paddingHorizontal: S.page, paddingTop: SAFE_TOP, paddingBottom: S.lg },
   tabScroll: { flexGrow: 0, marginBottom: S.sm },
   tabs: { gap: S.sm },
   tab: { paddingVertical: S.md, paddingHorizontal: S.lg, borderRadius: R.md, backgroundColor: C.surface, alignItems: "center", borderWidth: 1, borderColor: C.surfaceLight },

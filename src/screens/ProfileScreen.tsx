@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
-import { C, T, S, R } from "../theme/tokens";
+import { C, T, S, R, SAFE_TOP } from "../theme/tokens";
+
 import { getLocalProfile, createProfile } from "../utils/supabase";
 import { getStats, getGameHistory, GameRecord } from "../utils/gameHistory";
 import { getAchievements } from "../utils/achievements";
@@ -129,7 +130,7 @@ export default function ProfileScreen({ navigation }: any) {
 
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bg },
-  scroll: { paddingHorizontal: S.page, paddingTop: 60, paddingBottom: 40 },
+  scroll: { paddingHorizontal: S.page, paddingTop: SAFE_TOP, paddingBottom: 40 },
   avatarSection: { alignItems: "center", marginBottom: S.xxl },
   avatar: { width: 80, height: 80, borderRadius: 40, backgroundColor: C.orange, justifyContent: "center", alignItems: "center" },
   avatarText: { fontSize: 36, fontWeight: "900", color: C.white },

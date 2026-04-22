@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Btn } from "../components/ui";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { C, T, S, R } from "../theme/tokens";
+import { C, T, S, R, SAFE_TOP } from "../theme/tokens";
 
 const SLIDES = [
   {

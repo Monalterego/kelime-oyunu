@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
 import { ArrowLeft } from "lucide-react-native";
-import { C, T, S, R } from "../theme/tokens";
+import { C, T, S, R, SAFE_TOP } from "../theme/tokens";
+
 import { getAchievements, Achievement } from "../utils/achievements";
 
 export default function AchievementsScreen({ navigation }: any) {
@@ -66,7 +67,7 @@ const s = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: C.bg,
-    paddingTop: 56,
+    paddingTop: SAFE_TOP,
   },
   scroll: {
     paddingHorizontal: S.page,
