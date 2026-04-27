@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ViewStyle } from "react-native";
-import { C, T, S, R, SHADOW, TILE_SIZE } from "../theme/tokens";
+import { C, T, S, R, SHADOW, TILE_SIZE, getTileSize } from "../theme/tokens";
 
 // ─── SCREEN ────────────────────────────────────────────────
 export function Screen({ children, style }: { children: React.ReactNode; style?: ViewStyle }) {
@@ -27,6 +27,9 @@ export function Btn({ label, sub, onPress, variant = "cta", disabled = false, fu
       onPress={onPress}
       disabled={disabled}
       activeOpacity={0.75}
+      accessibilityRole="button"
+      accessibilityLabel={sub ? `${label}, ${sub}` : label}
+      accessibilityState={{ disabled }}
       style={[
         s.btn,
         { backgroundColor: v.bg, borderColor: v.border, borderWidth: v.borderW },
@@ -77,14 +80,19 @@ export function Card({ children, style }: { children: React.ReactNode; style?: V
 
 // ─── LETTER TILE ───────────────────────────────────────────
 // The star of the show. Each tile is a mini-reward when revealed.
-export function Tile({ letter, revealed }: { letter: string; revealed: boolean }) {
+export function Tile({ letter, revealed, size }: { letter: string; revealed: boolean; size?: number }) {
+  const sz = size ?? TILE_SIZE;
   return (
-    <View style={[
-      s.tile,
-      revealed && s.tileRevealed,
-      revealed && SHADOW.glow(C.brand),
-    ]}>
-      <Text style={[T.tile, { color: revealed ? C.tileLetter : "transparent" }]}>
+    <View
+      style={[
+        s.tile,
+        { width: sz, height: sz * 1.15 },
+        revealed && s.tileRevealed,
+        revealed && SHADOW.glow(C.brand),
+      ]}
+      accessibilityLabel={revealed ? letter.toLocaleUpperCase("tr-TR") : "gizli harf"}
+    >
+      <Text style={[T.tile, { fontSize: Math.max(14, sz * 0.38), color: revealed ? C.tileLetter : "transparent" }]}>
         {revealed ? letter.toLocaleUpperCase("tr-TR") : " "}
       </Text>
     </View>
@@ -93,13 +101,22 @@ export function Tile({ letter, revealed }: { letter: string; revealed: boolean }
 
 // ─── PROGRESS DOTS ─────────────────────────────────────────
 // Shows question progress like ●●●○○○○ — satisfying to fill up
-export function ProgressDots({ current, total, correct }: { current: number; total: number; correct: boolean[] }) {
+export function ProgressDots({
+  current, total, correct, skipped,
+}: {
+  current: number;
+  total: number;
+  correct: boolean[];
+  skipped?: boolean[];
+}) {
   return (
     <View style={s.dots}>
       {Array.from({ length: total }, (_, i) => {
-        let dotColor = C.surfaceLight;
+        let dotColor = C.textFaint + "50";
         if (i < correct.length) {
-          dotColor = correct[i] ? C.green : C.red;
+          if (correct[i]) dotColor = C.green;
+          else if (skipped?.[i]) dotColor = C.orange;
+          else dotColor = C.red;
         } else if (i === current) {
           dotColor = C.brand;
         }
@@ -141,8 +158,6 @@ const s = StyleSheet.create({
     ...SHADOW.soft,
   },
   tile: {
-    width: TILE_SIZE,
-    height: TILE_SIZE * 1.15,
     backgroundColor: C.tileEmpty,
     borderRadius: R.sm,
     borderWidth: 1.5,

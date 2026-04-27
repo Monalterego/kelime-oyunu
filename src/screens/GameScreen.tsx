@@ -1,22 +1,27 @@
-import React, { useReducer, useEffect, useRef, useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Animated, ScrollView, Share, Platform } from "react-native";
+import React, { useReducer, useEffect, useRef, useState, useCallback } from "react";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Animated, ScrollView, Share, Platform, Keyboard, ActivityIndicator, KeyboardAvoidingView, Alert } from "react-native";
+import { X } from "lucide-react-native";
+import * as Haptics from "expo-haptics";
 import { Question } from "../types";
 import {
   gameReducer, initialGameState, calculateQuestionPoints,
   LETTER_PENALTY, SKIP_PENALTY_RATIO, getBasePoints,
   HINT_DELAY, HINT_DISPLAY,
 } from "../utils/gameReducer";
-import { C, T, S, R, SHADOW, SAFE_TOP } from "../theme/tokens";
-import { saveGameRecord, markDailyPlayed, getStats } from "../utils/gameHistory";
+import { useSafeAreaInsets, SafeAreaView } from "react-native-safe-area-context";
+import { C, T, S, R, SHADOW, getTileSize } from "../theme/tokens";
+import { saveGameRecord, markDailyPlayed, getStats, getDailyStatus } from "../utils/gameHistory";
 import { checkAchievements, Achievement } from "../utils/achievements";
 import { getLocalProfile, submitScore } from "../utils/supabase";
 import { getDailyNumber } from "../utils/questionGenerator";
 import { generateGameQuestions } from "../utils/questionGenerator";
 import { Screen, Btn, Chip, Card, Tile, ProgressDots } from "../components/ui";
+import { ScreenProps } from "../types/navigation";
 
-export default function GameScreen({ navigation, route }: any) {
-  const mode = route?.params?.mode || "classic";
-  const category = route?.params?.category;
+export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
+  const mode = route.params?.mode ?? "classic";
+  const category = route.params?.category;
+  const insets = useSafeAreaInsets();
 
   const [state, dispatch] = useReducer(gameReducer, initialGameState);
   const [answer, setAnswer] = useState("");
@@ -24,6 +29,21 @@ export default function GameScreen({ navigation, route }: any) {
   const [showSummary, setShowSummary] = useState(false);
   const [newAchievements, setNewAchievements] = useState<Achievement[]>([]);
   const [showHint, setShowHint] = useState(false);
+  const [dailyAlreadyPlayed, setDailyAlreadyPlayed] = useState<{score: number; correct: number; total: number} | null>(null);
+  const [scoreDelta, setScoreDelta] = useState<"up" | "down" | null>(null);
+  const prevScoreRef = useRef(0);
+
+  useEffect(() => {
+    if (mode !== "daily") return;
+    getDailyStatus().then(status => {
+      if (status && status.dailyNumber === getDailyNumber()) setDailyAlreadyPlayed(status);
+    });
+  }, [mode]);
+
+  // Kategori modunda kullanıcı zaten seçim yaptı — idle ekranını atla
+  useEffect(() => {
+    if (mode === "category" && state.status === "idle") startGame();
+  }, [mode]);
   const hintSlide = useRef(new Animated.Value(-80)).current;
   const hintOpacity = useRef(new Animated.Value(0)).current;
   const totalTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -64,6 +84,52 @@ export default function GameScreen({ navigation, route }: any) {
     } catch (e) { console.error(e); }
   };
 
+  const handleSubmitAnswer = useCallback(() => {
+    Keyboard.dismiss();
+    dispatch({ type: "SUBMIT_ANSWER", answer });
+    setAnswer("");
+  }, [answer]);
+
+  const handleExit = useCallback(() => {
+    Alert.alert(
+      "Oyundan Çıkılsın mı?",
+      "Mevcut ilerlemen kaybedilecek ve kalan tüm sorular başarısız sayılacaktır.",
+      [
+        { text: "Devam Et", style: "cancel" },
+        {
+          text: "Çık",
+          style: "destructive",
+          onPress: () => {
+            Keyboard.dismiss();
+            // Remaining questions (current + future) all treated as skipped → apply penalties
+            const remaining = state.questions.slice(state.currentQuestionIndex);
+            const skipPenalty = remaining.reduce(
+              (sum, q) => sum + Math.round(getBasePoints(q) * SKIP_PENALTY_RATIO), 0
+            );
+            const finalScore = state.totalScore - skipPenalty;
+
+            const answered = state.questions.slice(0, state.currentQuestionIndex);
+            const correct  = answered.filter(q => q.correct).length;
+            const skippedAnswered = answered.filter(q => q.skipped).length;
+            const wrong    = answered.length - correct - skippedAnswered;
+
+            saveGameRecord({
+              mode,
+              category,
+              score: finalScore,
+              correct,
+              wrong,
+              skipped: skippedAnswered + remaining.length, // remaining all skipped
+              total: state.questions.length,
+            });
+
+            navigation.popToTop();
+          },
+        },
+      ]
+    );
+  }, [state, mode, category, navigation]);
+
   // Hint: slides in from top after delay
   useEffect(() => {
     if (state.status === "playing") {
@@ -101,6 +167,11 @@ export default function GameScreen({ navigation, route }: any) {
   useEffect(() => {
     if (state.status === "result") {
       const q = state.questions[state.currentQuestionIndex];
+      if (q?.correct) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      } else {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      }
       const d = q?.correct ? 1500 : 2500;
       const t = setTimeout(() => dispatch({ type: "NEXT_QUESTION" }), d);
       return () => clearTimeout(t);
@@ -114,60 +185,75 @@ export default function GameScreen({ navigation, route }: any) {
     return () => { if (answerTimerRef.current) clearInterval(answerTimerRef.current); };
   }, [state.status]);
 
+  useEffect(() => {
+    const delta = state.totalScore - prevScoreRef.current;
+    prevScoreRef.current = state.totalScore;
+    if (delta === 0) return;
+    setScoreDelta(delta > 0 ? "up" : "down");
+    const t = setTimeout(() => setScoreDelta(null), 700);
+    return () => clearTimeout(t);
+  }, [state.totalScore]);
+
   // Save game when it ends
   useEffect(() => {
-    if (state.status === "gameover") {
-      const correct = state.questions.filter(q => q.correct).length;
-      const skipped = state.questions.filter(q => q.skipped).length;
-      const wrong = state.questions.length - correct - skipped;
-      if (mode === "daily") {
-        const correct = state.questions.filter(q => q.correct).length;
-        markDailyPlayed(getDailyNumber(), state.totalScore, correct, state.questions.length);
-      }
-      saveGameRecord({
-        mode: mode as "classic" | "category" | "daily",
-        category: category,
-        score: state.totalScore,
+    if (state.status !== "gameover") return;
+
+    const correct = state.questions.filter(q => q.correct).length;
+    const skipped = state.questions.filter(q => q.skipped).length;
+    const wrong = state.questions.length - correct - skipped;
+    const totalScore = state.totalScore;
+    const totalQuestions = state.questions.length;
+    const totalTimeLeft = state.totalTimeLeft;
+    const dailyNumber = getDailyNumber();
+
+    if (mode === "daily") {
+      markDailyPlayed(dailyNumber, totalScore, correct, totalQuestions);
+    }
+
+    saveGameRecord({
+      mode,
+      category,
+      score: totalScore,
+      correct,
+      wrong,
+      skipped,
+      total: totalQuestions,
+    });
+
+    getStats().then(stats =>
+      checkAchievements({
+        mode,
+        category,
+        score: totalScore,
         correct,
-        wrong,
+        total: totalQuestions,
         skipped,
-        total: state.questions.length,
-      });
-      getStats().then(stats => {
-        checkAchievements({
+        streak: stats.streak,
+        totalCorrect: stats.totalCorrect,
+        totalGames: stats.totalGames,
+      }).then(newAch => {
+        if (newAch.length > 0) setNewAchievements(newAch);
+      })
+    );
+
+    getLocalProfile().then(localProfile => {
+      setProfile(localProfile);
+      if (localProfile) {
+        submitScore({
+          profileId: localProfile.id,
           mode,
           category,
-          score: state.totalScore,
+          score: totalScore,
           correct,
-          total: state.questions.length,
+          wrong,
           skipped,
-          streak: stats.streak,
-          totalCorrect: stats.totalCorrect,
-          totalGames: stats.totalGames,
-        }).then(newAch => {
-          if (newAch.length > 0) setNewAchievements(newAch);
+          total: totalQuestions,
+          dailyNumber: mode === "daily" ? dailyNumber : undefined,
+          durationSeconds: (mode === "category" ? 90 : 150) - totalTimeLeft,
         });
-      });
-      getLocalProfile().then(setProfile);
-      // Cloud save
-      getLocalProfile().then(profile => {
-        if (profile) {
-          submitScore({
-            profileId: profile.id,
-            mode,
-            category,
-            score: state.totalScore,
-            correct,
-            wrong,
-            skipped,
-            total: state.questions.length,
-            dailyNumber: mode === "daily" ? getDailyNumber() : undefined,
-            durationSeconds: (mode === "category" ? 90 : 150) - state.totalTimeLeft,
-          });
-        }
-      });
-    }
-  }, [state.status]);
+      }
+    });
+  }, [state.status, state.questions, state.totalScore, state.totalTimeLeft, mode, category]);
 
   const cur = state.questions[state.currentQuestionIndex];
   const fmt = (sec: number) => Math.floor(sec / 60) + ":" + (sec % 60).toString().padStart(2, "0");
@@ -177,10 +263,31 @@ export default function GameScreen({ navigation, route }: any) {
 
   // ── IDLE ─────────────────────────────────────────────
   if (state.status === "idle") {
+    if (mode === "daily" && dailyAlreadyPlayed) {
+      return (
+        <Screen>
+          <Text style={{ fontSize: 48, marginBottom: S.lg }}>✅</Text>
+          <Text style={[T.display, { color: C.text }]}>Dağarcık</Text>
+          <Text style={[T.h2, { color: C.textSoft, marginTop: S.md }]}>Bugün oynadın!</Text>
+          <Text style={[T.bodySm, { color: C.textFaint, marginTop: S.sm }]}>
+            {"#" + getDailyNumber() + " · " + dailyAlreadyPlayed.correct + "/" + dailyAlreadyPlayed.total + " doğru · " + dailyAlreadyPlayed.score + " puan"}
+          </Text>
+          <Text style={[T.cap, { color: C.textFaint, marginTop: S.xs, marginBottom: S.xxxl }]}>Yarın yeni sorular gelecek.</Text>
+          <Btn label="← Geri Dön" onPress={() => navigation.goBack()} variant="outline" />
+        </Screen>
+      );
+    }
+
+    if (mode === "category") {
+      return (
+        <Screen>
+          <ActivityIndicator size="large" color={C.brand} />
+        </Screen>
+      );
+    }
+
     const modeInfo = mode === "daily"
       ? { title: "Günlük Dağarcık", sub: "Bugünün 14 sorusu · 2:30", icon: "📅" }
-      : mode === "category"
-      ? { title: "Kategori Modu", sub: (category || "") + " · 10 soru · 1:30", icon: "📚" }
       : { title: "Klasik Mod", sub: "14 soru · 2:30 · kolaydan zora", icon: "🎯" };
     return (
       <Screen>
@@ -206,7 +313,7 @@ export default function GameScreen({ navigation, route }: any) {
 
     return (
       <View style={gs.summaryScreen}>
-        <ScrollView contentContainerStyle={gs.summaryScroll} showsVerticalScrollIndicator={false}>
+        <ScrollView contentContainerStyle={[gs.summaryScroll, { paddingTop: insets.top || S.xxxl }]} showsVerticalScrollIndicator={false}>
           <Text style={[T.h2, { color: C.textSoft, marginTop: S.xxl, marginBottom: S.md, textAlign: "center" }]}>Oyun Bitti</Text>
 
           <View style={[gs.scoreRing, { borderColor: pos ? C.green + "60" : C.red + "60" }]}>
@@ -296,7 +403,7 @@ export default function GameScreen({ navigation, route }: any) {
 
           <View style={[gs.endBtns, { marginTop: S.xl }]}>
             {mode !== "daily" && <Btn label="Tekrar Oyna" onPress={startGame} variant="outline" />}
-            <Btn label="Ana Sayfa" onPress={() => navigation.navigate("Home")} variant="ghost" />
+            <Btn label="Ana Sayfa" onPress={() => navigation.popToTop()} variant="ghost" />
           </View>
         </ScrollView>
       </View>
@@ -307,24 +414,71 @@ export default function GameScreen({ navigation, route }: any) {
   if (state.status === "result" && cur) {
     const ok = cur.correct;
     const skip = cur.skipped;
+    const resultCorrectArr = correctArr.concat([ok]);
+    const resultSkippedArr = state.questions.slice(0, state.currentQuestionIndex).map(q => q.skipped).concat([skip ?? false]);
+
     return (
-      <Screen style={{ justifyContent: "flex-start", paddingTop: 56 }}>
-        <View style={gs.topBar}>
-          <Text style={[T.timer, { color: C.textFaint }]}>{fmt(state.totalTimeLeft)}</Text>
-          <Text style={[T.badge, { color: C.textSoft }]}>{state.totalScore} P</Text>
-        </View>
+      <SafeAreaView edges={["bottom"]} style={gs.safeBottom}>
+      <View style={gs.game}>
+        <View style={gs.gameInner}>
+          <View style={{ paddingTop: insets.top || S.xxxl }}>
+            <View style={gs.exitRow}>
+              <TouchableOpacity
+                onPress={handleExit}
+                style={gs.exitBtn}
+                activeOpacity={0.65}
+              >
+                <X size={15} color={C.textSoft} strokeWidth={2.5} />
+                <Text style={gs.exitLabel}>Çık</Text>
+              </TouchableOpacity>
+            </View>
 
-        <View style={[gs.resultBox, { backgroundColor: ok ? C.greenSoft : C.redSoft, borderColor: ok ? C.greenBorder : C.redBorder }]}>
-          <Text style={{ fontSize: 44, marginBottom: S.md }}>{ok ? "✓" : skip ? "⊘" : "✗"}</Text>
-          <Text style={[T.h1, { color: C.text }]}>{cur.wordData.word.toLocaleUpperCase("tr-TR")}</Text>
-          <Text style={[T.bodySm, { color: C.textSoft, textAlign: "center", marginTop: S.sm }]}>{cur.wordData.definition}</Text>
-          <Text style={[T.h2, { color: ok ? C.green : C.red, marginTop: S.lg }]}>
-            {cur.earnedPoints > 0 ? "+" : ""}{cur.earnedPoints}
-          </Text>
-        </View>
+            <View style={gs.hud}>
+              <View style={gs.hudPill}>
+                <Text style={[gs.hudValue, { color: C.textFaint }]}>{fmt(state.totalTimeLeft)}</Text>
+                <Text style={gs.hudLabel}>SÜRE</Text>
+              </View>
+              <View style={gs.progressBlock}>
+                <ProgressDots
+                  current={state.currentQuestionIndex + 1}
+                  total={state.questions.length}
+                  correct={resultCorrectArr}
+                  skipped={resultSkippedArr}
+                />
+                <Text style={gs.qCounter}>{state.currentQuestionIndex + 1} / {state.questions.length}</Text>
+              </View>
+              <View style={gs.hudPill}>
+                <Text style={[gs.hudValue, { color: C.text }]}>{state.totalScore}</Text>
+                <Text style={gs.hudLabel}>PUAN</Text>
+              </View>
+            </View>
+          </View>
 
-        <ProgressDots current={state.currentQuestionIndex + 1} total={state.questions.length} correct={correctArr.concat([ok])} />
-      </Screen>
+          <View style={gs.spacerTop} />
+
+          <View style={gs.midContent}>
+            <View style={[gs.resultBox, { backgroundColor: ok ? C.greenSoft : C.redSoft, borderColor: ok ? C.greenBorder : C.redBorder }]}>
+              <Text style={{ fontSize: 44, marginBottom: S.md }}>{ok ? "✓" : skip ? "⊘" : "✗"}</Text>
+              <Text style={[T.h1, { color: C.text }]}>{cur.wordData.word.toLocaleUpperCase("tr-TR")}</Text>
+              <Text style={[T.bodySm, { color: C.textSoft, textAlign: "center", marginTop: S.sm }]}>{cur.wordData.definition}</Text>
+              <Text style={[T.h2, { color: ok ? C.green : C.red, marginTop: S.lg }]}>
+                {cur.earnedPoints > 0 ? "+" : ""}{cur.earnedPoints}
+              </Text>
+            </View>
+          </View>
+
+          <View style={gs.spacerBottom} />
+
+          <View style={[gs.playZone, { opacity: 0 }]} pointerEvents="none">
+            <View style={[gs.ctaBtn, { width: "100%" }]}><Text> </Text></View>
+            <View style={gs.secondaryBtns}>
+              <View style={gs.secondaryBtn} />
+              <View style={gs.secondaryBtn} />
+            </View>
+          </View>
+        </View>
+      </View>
+      </SafeAreaView>
     );
   }
 
@@ -339,32 +493,74 @@ export default function GameScreen({ navigation, route }: any) {
   const tColor = critTime ? C.red : lowTime ? C.gold : C.brand;
   const skipCost = Math.round(getBasePoints(cur) * SKIP_PENALTY_RATIO);
   const canHint = cur.revealedLetters.length < cur.wordData.length - 1;
+  const tileSize = getTileSize(cur.wordData.length);
+  const skippedArr = state.questions.slice(0, state.currentQuestionIndex).map(q => q.skipped);
 
   return (
-    <View style={gs.game}>
-      {/* CONTENT AREA */}
-      <View style={gs.content}>
-        {/* TOP BAR */}
-        <View style={gs.topBar}>
-          <View style={[gs.timerPill, lowTime && { backgroundColor: tColor + "15" }]}>
-            <Text style={[T.timer, { color: tColor }]}>{fmt(state.totalTimeLeft)}</Text>
+    <SafeAreaView edges={["bottom"]} style={gs.safeBottom}>
+    <KeyboardAvoidingView
+      style={gs.game}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={0}
+    >
+      <View style={gs.gameInner}>
+      {/* ── HEADER: çık + HUD, her zaman üstte ── */}
+      <View style={{ paddingTop: insets.top || S.xxxl }}>
+        <View style={gs.exitRow}>
+          <TouchableOpacity
+            onPress={handleExit}
+            style={gs.exitBtn}
+            activeOpacity={0.65}
+          >
+            <X size={15} color={C.textSoft} strokeWidth={2.5} />
+            <Text style={gs.exitLabel}>Çık</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={gs.hud}>
+          <View style={[gs.hudPill, lowTime && { backgroundColor: tColor + "15", borderColor: tColor + "40" }]}>
+            <Text style={[gs.hudValue, { color: tColor }]}>{fmt(state.totalTimeLeft)}</Text>
+            <Text style={gs.hudLabel}>SÜRE</Text>
           </View>
-          <ProgressDots current={state.currentQuestionIndex} total={qTotal} correct={correctArr} />
-          <Text style={[T.badge, { color: C.text }]}>{state.totalScore} P</Text>
-        </View>
 
-        {/* POINTS + LENGTH */}
+          <View style={gs.progressBlock}>
+            <ProgressDots
+              current={state.currentQuestionIndex}
+              total={qTotal}
+              correct={correctArr}
+              skipped={skippedArr}
+            />
+            <Text style={gs.qCounter}>{qNum} / {qTotal}</Text>
+          </View>
+
+          <View style={[
+            gs.hudPill,
+            scoreDelta === "up" && { backgroundColor: C.greenSoft, borderColor: C.greenBorder },
+            scoreDelta === "down" && { backgroundColor: C.redSoft, borderColor: C.redBorder },
+          ]}>
+            <Text style={[gs.hudValue, { color: scoreDelta === "up" ? C.green : scoreDelta === "down" ? C.red : C.text }]}>
+              {state.totalScore}
+            </Text>
+            <Text style={gs.hudLabel}>PUAN</Text>
+          </View>
+        </View>
+      </View>
+
+      <View style={gs.spacerTop} />
+
+      {/* ── ORTA: meta + ipucu + tanım + kutucuklar, dikey ortada ── */}
+      <View style={gs.midContent}>
         <View style={gs.metaRow}>
-          <Chip text={pts + " puan"} color="gold" />
-          <Text style={[T.bodySm, { color: C.textFaint }]}>{cur.wordData.length} harfli</Text>
+          <View style={gs.metaPill}>
+            <Text style={[gs.metaValue, { color: C.orange }]}>+{pts}</Text>
+            <Text style={gs.metaLabel}>puan</Text>
+          </View>
+          <View style={gs.metaPill}>
+            <Text style={[gs.metaValue, { color: C.brand }]}>{cur.wordData.length}</Text>
+            <Text style={gs.metaLabel}>harf</Text>
+          </View>
         </View>
 
-        {/* DEFINITION */}
-        <View style={gs.defBox}>
-          <Text style={[T.h3, { color: C.text, textAlign: "center", lineHeight: 26 }]}>{cur.wordData.definition}</Text>
-        </View>
-
-        {/* Hint banner */}
         {showHint && state.currentFlashHint ? (
           <Animated.View style={[gs.hint, { opacity: hintOpacity }]}>
             <Text style={[T.bodySm, { color: C.gold, textAlign: "center", fontStyle: "italic" }]}>
@@ -374,19 +570,24 @@ export default function GameScreen({ navigation, route }: any) {
           </Animated.View>
         ) : null}
 
-        {/* TILES */}
+        <View style={gs.defBox}>
+          <Text style={[T.h3, { color: C.text, textAlign: "center", lineHeight: 26 }]}>{cur.wordData.definition}</Text>
+        </View>
+
         <View style={gs.tiles}>
           {cur.wordData.word.split("").map((ch, i) => (
-            <Tile key={i} letter={ch} revealed={cur.revealedLetters.includes(i)} />
+            <Tile key={i} letter={ch} revealed={cur.revealedLetters.includes(i)} size={tileSize} />
           ))}
         </View>
       </View>
 
-      {/* FIXED BOTTOM ACTIONS */}
+      <View style={gs.spacerBottom} />
+
+      {/* ── BOTTOM ACTIONS ── */}
       {state.status === "answering" ? (
         <View style={gs.answerZone}>
           <View style={gs.answerTimer}>
-            <Text style={[T.timerBig, { color: C.red }]}>{state.answerTimeLeft}</Text>
+            <Text style={gs.timerNum}>{state.answerTimeLeft}</Text>
           </View>
           <TextInput
             style={gs.input}
@@ -396,11 +597,12 @@ export default function GameScreen({ navigation, route }: any) {
             autoCapitalize="none"
             placeholder="Cevabınızı yazın..."
             placeholderTextColor={C.textFaint}
-            onSubmitEditing={() => { dispatch({ type: "SUBMIT_ANSWER", answer }); setAnswer(""); }}
+            onSubmitEditing={() => { if (answer.trim()) handleSubmitAnswer(); }}
           />
           <TouchableOpacity
-            style={[gs.ctaBtn, { width: "100%" }]}
-            onPress={() => { dispatch({ type: "SUBMIT_ANSWER", answer }); setAnswer(""); }}
+            style={[gs.ctaBtn, { width: "100%" }, !answer.trim() && { opacity: 0.45 }]}
+            onPress={handleSubmitAnswer}
+            disabled={!answer.trim()}
             activeOpacity={0.75}
           >
             <Text style={[T.btn, { color: C.white }]}>CEVAPLA</Text>
@@ -408,44 +610,81 @@ export default function GameScreen({ navigation, route }: any) {
         </View>
       ) : (
         <View style={gs.playZone}>
-          <View style={gs.mainBtns}>
+          <TouchableOpacity
+            style={[gs.ctaBtn, { width: "100%" }]}
+            onPress={() => { setAnswer(""); dispatch({ type: "PRESS_BUTTON" }); }}
+            activeOpacity={0.75}
+          >
+            <Text style={[T.btn, { color: C.white }]}>CEVAPLA</Text>
+          </TouchableOpacity>
+          <View style={gs.secondaryBtns}>
             <TouchableOpacity
-              style={[gs.hintBtn, !canHint && { opacity: 0.3 }]}
-              onPress={() => dispatch({ type: "REQUEST_LETTER" })}
+              style={[gs.secondaryBtn, !canHint && { opacity: 0.3 }]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                dispatch({ type: "REQUEST_LETTER" });
+              }}
               disabled={!canHint}
               activeOpacity={0.7}
             >
               <Text style={[T.btnSm, { color: C.textSoft }]}>HARF AL</Text>
-              <Text style={[T.cap, { color: C.textFaint }]}>-{LETTER_PENALTY}P</Text>
+              <Text style={gs.penaltyText}>-{LETTER_PENALTY}P</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={gs.ctaBtn}
-              onPress={() => { setAnswer(""); dispatch({ type: "PRESS_BUTTON" }); }}
-              activeOpacity={0.75}
+              style={gs.secondaryBtn}
+              onPress={() => dispatch({ type: "SKIP_QUESTION" })}
+              activeOpacity={0.5}
             >
-              <Text style={[T.btn, { color: C.white }]}>CEVAPLA</Text>
+              <Text style={[T.btnSm, { color: C.textSoft }]}>PAS GEÇ</Text>
+              <Text style={gs.penaltyText}>-{skipCost}P</Text>
             </TouchableOpacity>
           </View>
-          <TouchableOpacity style={gs.skipBtn} onPress={() => dispatch({ type: "SKIP_QUESTION" })} activeOpacity={0.5}>
-            <Text style={[T.cap, { color: C.textFaint }]}>PAS GEÇ (-{skipCost}P)</Text>
-          </TouchableOpacity>
         </View>
       )}
-    </View>
+      </View>{/* gameInner */}
+    </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const gs = StyleSheet.create({
+  safeBottom: {
+    flex: 1,
+    backgroundColor: C.bg,
+  },
   game: {
     flex: 1,
     backgroundColor: C.bg,
     paddingHorizontal: S.page,
-    paddingTop: SAFE_TOP,
     paddingBottom: S.lg,
   },
-  content: {
+  gameInner: {
     flex: 1,
-    justifyContent: "space-evenly",
+  },
+  spacerTop: { flex: 1.4 },
+  spacerBottom: { flex: 1 },
+  topSection: {},
+  midContent: {},
+  exitRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: S.md,
+    marginTop: S.xs,
+  },
+  exitBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    backgroundColor: C.surfaceLight,
+    borderRadius: R.pill,
+    paddingVertical: 8,
+    paddingHorizontal: S.lg,
+  },
+  exitLabel: {
+    fontSize: 14,
+    fontWeight: "600" as const,
+    color: C.textSoft,
+    letterSpacing: 0.2,
   },
 
   // Hint
@@ -459,26 +698,74 @@ const gs = StyleSheet.create({
     borderColor: C.goldBorder,
   },
 
-  // Top bar
-  topBar: {
+  // HUD
+  hud: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: S.sm,
+    marginBottom: S.lg,
   },
-  timerPill: {
+  hudPill: {
     backgroundColor: C.surface,
-    paddingHorizontal: S.lg,
-    paddingVertical: S.sm,
+    borderWidth: 1,
+    borderColor: C.surfaceLight,
     borderRadius: R.md,
+    paddingHorizontal: S.md,
+    paddingVertical: S.sm,
+    minWidth: 72,
+    alignItems: "center",
+    gap: 1,
+  },
+  hudValue: {
+    fontSize: 20,
+    fontWeight: "800" as const,
+    fontVariant: ["tabular-nums" as const],
+    letterSpacing: -0.3,
+  },
+  hudLabel: {
+    fontSize: 9,
+    fontWeight: "700" as const,
+    color: C.textFaint,
+    letterSpacing: 0.8,
+  },
+  progressBlock: {
+    alignItems: "center",
+    gap: 2,
+  },
+  qCounter: {
+    fontSize: 11,
+    fontWeight: "700" as const,
+    color: C.textFaint,
+    letterSpacing: 0.5,
   },
 
   // Meta
   metaRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: S.xs,
+    justifyContent: "center",
+    gap: S.lg,
+    marginBottom: S.lg,
+  },
+  metaPill: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    backgroundColor: C.surface,
+    borderWidth: 1,
+    borderColor: C.surfaceLight,
+    borderRadius: R.sm,
+    paddingHorizontal: S.md,
+    paddingVertical: S.xs + 1,
+    gap: S.xs,
+  },
+  metaValue: {
+    fontSize: 16,
+    fontWeight: "800" as const,
+  },
+  metaLabel: {
+    fontSize: 11,
+    fontWeight: "600" as const,
+    color: C.textFaint,
+    letterSpacing: 0.5,
   },
 
   // Definition
@@ -492,11 +779,11 @@ const gs = StyleSheet.create({
     borderColor: C.brandBorder,
   },
 
-  // Tiles
+  // Tiles — gap MUST match getTileSize() gap constant (both = 6)
   tiles: {
     flexDirection: "row",
     justifyContent: "center",
-    gap: 10,
+    gap: 6,
     marginBottom: S.sm,
     flexWrap: "wrap",
   },
@@ -504,14 +791,20 @@ const gs = StyleSheet.create({
   // Answer
   answerZone: { alignItems: "center", gap: S.sm },
   answerTimer: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: C.redSoft,
     borderWidth: 2,
     borderColor: C.redBorder,
     justifyContent: "center",
     alignItems: "center",
+  },
+  timerNum: {
+    fontSize: 18,
+    fontWeight: "900" as const,
+    color: C.red,
+    fontVariant: ["tabular-nums" as const],
   },
   input: {
     width: "100%",
@@ -519,14 +812,31 @@ const gs = StyleSheet.create({
     borderWidth: 2,
     borderColor: C.orange,
     borderRadius: R.lg,
-    padding: S.md + 2,
-    ...T.game,
+    paddingHorizontal: S.lg,
+    paddingTop: S.md + 2,
+    paddingBottom: S.lg + 2,   // extra room for descenders (p, y, g, ş, ç)
+    fontSize: 18,
+    fontWeight: "500" as const,
+    // lineHeight intentionally omitted — causes vertical misalignment in iOS TextInput
     color: C.text,
     textAlign: "center",
   },
 
   // Play
-  playZone: { gap: S.md },
+  playZone: { gap: S.sm },
+  secondaryBtns: {
+    flexDirection: "row",
+    gap: S.md,
+  },
+  secondaryBtn: {
+    flex: 1,
+    backgroundColor: C.surface,
+    borderRadius: R.lg,
+    paddingVertical: S.lg,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: C.surfaceLight,
+  },
   mainBtns: { flexDirection: "row", gap: S.md },
   hintBtn: {
     flex: 1,
@@ -538,23 +848,19 @@ const gs = StyleSheet.create({
     borderColor: C.surfaceLight,
   },
   ctaBtn: {
-    flex: 1.6,
     backgroundColor: C.orange,
     borderRadius: R.lg,
-    paddingVertical: 16,
+    paddingVertical: 14,
     alignItems: "center",
     justifyContent: "center",
     ...SHADOW.soft,
   },
-  skipBtn: {
-    backgroundColor: C.surface,
-    borderWidth: 1,
-    borderColor: C.surfaceLight,
-    borderRadius: R.md,
-    paddingHorizontal: S.lg,
-    paddingVertical: S.sm,
-    alignItems: "center",
-    alignSelf: "center",
+  penaltyText: {
+    fontSize: 13,
+    fontWeight: "700" as const,
+    color: C.red,
+    opacity: 0.75,
+    marginTop: 2,
   },
 
   // Result
@@ -562,7 +868,7 @@ const gs = StyleSheet.create({
     borderRadius: R.xxl,
     padding: S.xxl,
     alignItems: "center",
-    marginVertical: S.xxl,
+    marginTop: S.xl,
     borderWidth: 1,
   },
 

@@ -43,7 +43,7 @@ export const C = {
   white: "#FFFFFF",
   text: "#1F1F1F",
   textSoft: "#5E5A53",
-  textFaint: "#8B867E",
+  textFaint: "#6B6560",
 
   // Game elements
   tileEmpty: "#E3E0D8",
@@ -119,3 +119,9 @@ export const SHADOW = Platform.select({
 export const SAFE_TOP = 56;
 
 export const TILE_SIZE = Math.min(52, (SCREEN_W - S.page * 2 - 10 * 7) / 10);
+
+export function getTileSize(wordLength: number): number {
+  const gap = 6;
+  const available = SCREEN_W - S.page * 2 - gap * (wordLength - 1);
+  return Math.max(28, Math.min(52, Math.floor(available / wordLength)));
+}
