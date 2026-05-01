@@ -2,7 +2,9 @@ import React, { useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Btn } from "../components/ui";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { C, T, S, R, SAFE_TOP } from "../theme/tokens";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { C, T, S, R } from "../theme/tokens";
+import { ScreenProps } from "../types/navigation";
 
 const SLIDES = [
   {
@@ -22,7 +24,8 @@ const SLIDES = [
   },
 ];
 
-export default function OnboardingScreen({ navigation }: any) {
+export default function OnboardingScreen({ navigation }: ScreenProps<"Onboarding">) {
+  const insets = useSafeAreaInsets();
   const [step, setStep] = useState(0);
 
   const handleNext = async () => {
@@ -42,7 +45,7 @@ export default function OnboardingScreen({ navigation }: any) {
   const slide = SLIDES[step];
 
   return (
-    <View style={s.container}>
+    <View style={[s.container, { paddingTop: (insets.top || S.xxxl) + S.sm }]}>
       <TouchableOpacity style={s.skipBtn} onPress={handleSkip}>
         <Text style={[T.btnSm, { color: C.textFaint }]}>Atla</Text>
       </TouchableOpacity>
@@ -68,7 +71,7 @@ export default function OnboardingScreen({ navigation }: any) {
 }
 
 const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.bg, paddingHorizontal: S.page, paddingTop: 56, paddingBottom: 32 },
+  container: { flex: 1, backgroundColor: C.bg, paddingHorizontal: S.page, paddingBottom: 32 },
   skipBtn: { alignSelf: "flex-end", paddingVertical: S.sm, paddingHorizontal: S.xs },
   content: { flex: 1, justifyContent: "center", alignItems: "center" },
   icon: { fontSize: 72 },

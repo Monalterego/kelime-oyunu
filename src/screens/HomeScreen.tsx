@@ -1,17 +1,21 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { C, T, S, R, SAFE_TOP } from "../theme/tokens";
 
 import { Btn } from "../components/ui";
 import { getStats, getDailyStatus } from "../utils/gameHistory";
 import { getDailyNumber } from "../utils/questionGenerator";
 import { getLocalProfile } from "../utils/supabase";
+import { ScreenProps } from "../types/navigation";
 
-export default function HomeScreen({ navigation }: any) {
+export default function HomeScreen({ navigation }: ScreenProps<"Home">) {
+  const insets = useSafeAreaInsets();
   const dailyNumber = getDailyNumber();
   const [dailyPlayed, setDailyPlayed] = useState<{score: number; correct: number; total: number} | null>(null);
   const [stats, setStats] = useState({ totalGames: 0, bestScore: 0, avgScore: 0, totalCorrect: 0, streak: 0 });
   const [profile, setProfile] = useState<{id: string; nickname: string} | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     loadData();
@@ -20,18 +24,21 @@ export default function HomeScreen({ navigation }: any) {
   }, [navigation]);
 
   const loadData = () => {
-    getStats().then(setStats);
-    getDailyStatus().then(d => {
-      if (d && d.dailyNumber === dailyNumber) setDailyPlayed(d);
-      else setDailyPlayed(null);
-    });
-    getLocalProfile().then(setProfile);
+    setIsLoading(true);
+    Promise.all([
+      getStats().then(setStats),
+      getDailyStatus().then(d => {
+        if (d && d.dailyNumber === dailyNumber) setDailyPlayed(d);
+        else setDailyPlayed(null);
+      }),
+      getLocalProfile().then(setProfile),
+    ]).finally(() => setIsLoading(false));
   };
 
   return (
     <View style={s.container}>
       {/* Header bar with avatar */}
-      <View style={s.header}>
+      <View style={[s.header, { paddingTop: (insets.top || S.xxxl) + S.sm }]}>
         <View style={{ width: 40 }} />
         <View style={{ flex: 1 }} />
         <TouchableOpacity
@@ -114,7 +121,11 @@ export default function HomeScreen({ navigation }: any) {
         </TouchableOpacity>
 
         {/* Stats */}
-        {stats.totalGames > 0 && (
+        {isLoading ? (
+          <View style={s.statsCard}>
+            <ActivityIndicator size="small" color={C.textFaint} />
+          </View>
+        ) : stats.totalGames > 0 && (
           <View style={s.statsCard}>
             <View style={s.statItem}>
               <Text style={s.statValue}>{stats.totalGames}</Text>
@@ -166,7 +177,6 @@ const s = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: S.page,
-    paddingTop: 56,
     paddingBottom: S.sm,
   },
   avatarBtn: {

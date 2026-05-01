@@ -1,12 +1,12 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const HISTORY_KEY = "dagarcik_game_history";
-const MAX_HISTORY = 20;
+const MAX_HISTORY = 50;
 
 export interface GameRecord {
   id: string;
   date: string;
-  mode: "classic" | "category";
+  mode: "classic" | "category" | "daily";
   category?: string;
   score: number;
   correct: number;
@@ -58,18 +58,20 @@ export async function getStats(): Promise<{
   const avgScore = Math.round(history.reduce((sum, h) => sum + h.score, 0) / totalGames);
   const totalCorrect = history.reduce((sum, h) => sum + h.correct, 0);
 
-  // Streak: ardisik gun sayisi
-  let streak = 0;
+  // Streak: kaç gün ard arda oynandı.
+  // Bugün oynanmadıysa dünden başla (streak'i kırmaz), oynanmışsa bugün de sayılır.
+  const playedDays = new Set(history.map(h => h.date.slice(0, 10)));
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  for (let i = 0; i < 30; i++) {
-    const checkDate = new Date(today);
-    checkDate.setDate(checkDate.getDate() - i);
-    const dateStr = checkDate.toISOString().slice(0, 10);
-    const played = history.some(h => h.date.slice(0, 10) === dateStr);
-    if (played) {
+  const todayStr = today.toISOString().slice(0, 10);
+  const startOffset = playedDays.has(todayStr) ? 0 : 1;
+  let streak = 0;
+  for (let i = startOffset; i < MAX_HISTORY; i++) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    if (playedDays.has(d.toISOString().slice(0, 10))) {
       streak++;
-    } else if (i > 0) {
+    } else {
       break;
     }
   }

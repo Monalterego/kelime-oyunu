@@ -15,7 +15,7 @@ import { checkAchievements, Achievement } from "../utils/achievements";
 import { getLocalProfile, submitScore } from "../utils/supabase";
 import { getDailyNumber } from "../utils/questionGenerator";
 import { generateGameQuestions } from "../utils/questionGenerator";
-import { Screen, Btn, Chip, Card, Tile, ProgressDots } from "../components/ui";
+import { Screen, Btn, BackBtn, Chip, Card, Tile, ProgressDots } from "../components/ui";
 import { ScreenProps } from "../types/navigation";
 
 export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
@@ -273,7 +273,7 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
             {"#" + getDailyNumber() + " · " + dailyAlreadyPlayed.correct + "/" + dailyAlreadyPlayed.total + " doğru · " + dailyAlreadyPlayed.score + " puan"}
           </Text>
           <Text style={[T.cap, { color: C.textFaint, marginTop: S.xs, marginBottom: S.xxxl }]}>Yarın yeni sorular gelecek.</Text>
-          <Btn label="← Geri Dön" onPress={() => navigation.goBack()} variant="outline" />
+          <BackBtn onPress={() => navigation.goBack()} />
         </Screen>
       );
     }
@@ -297,7 +297,7 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
         <Text style={[T.bodySm, { color: C.textFaint, marginTop: S.sm, marginBottom: S.xxxl }]}>{modeInfo.sub}</Text>
         <Btn label="BAŞLA" onPress={startGame} variant="cta" />
         <View style={{ marginTop: S.xl }}>
-          <Btn label="← Geri Dön" onPress={() => navigation.goBack()} variant="ghost" />
+          <BackBtn onPress={() => navigation.goBack()} />
         </View>
       </Screen>
     );
@@ -368,7 +368,7 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
                     <Text style={[gs.summaryIcon, { color: statusColor }]}>{statusIcon}</Text>
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={[T.h3, { color: C.text }]}>{q.wordData.word.toLocaleUpperCase("tr-TR")}</Text>
+                    <Text style={[T.h3, { color: C.text }]}>{(q.wordData.displayWord ?? q.wordData.word).toLocaleUpperCase("tr-TR")}</Text>
                     <Text style={[T.cap, { color: statusColor, marginTop: 2 }]}>{statusLabel} · {q.earnedPoints > 0 ? "+" : ""}{q.earnedPoints}P</Text>
                   </View>
                 </View>
@@ -459,7 +459,7 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
           <View style={gs.midContent}>
             <View style={[gs.resultBox, { backgroundColor: ok ? C.greenSoft : C.redSoft, borderColor: ok ? C.greenBorder : C.redBorder }]}>
               <Text style={{ fontSize: 44, marginBottom: S.md }}>{ok ? "✓" : skip ? "⊘" : "✗"}</Text>
-              <Text style={[T.h1, { color: C.text }]}>{cur.wordData.word.toLocaleUpperCase("tr-TR")}</Text>
+              <Text style={[T.h1, { color: C.text }]}>{(cur.wordData.displayWord ?? cur.wordData.word).toLocaleUpperCase("tr-TR")}</Text>
               <Text style={[T.bodySm, { color: C.textSoft, textAlign: "center", marginTop: S.sm }]}>{cur.wordData.definition}</Text>
               <Text style={[T.h2, { color: ok ? C.green : C.red, marginTop: S.lg }]}>
                 {cur.earnedPoints > 0 ? "+" : ""}{cur.earnedPoints}
@@ -494,6 +494,8 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
   const skipCost = Math.round(getBasePoints(cur) * SKIP_PENALTY_RATIO);
   const canHint = cur.revealedLetters.length < cur.wordData.length - 1;
   const tileSize = getTileSize(cur.wordData.length);
+  const isAnswering = state.status === "answering";
+  const displayTileSize = isAnswering ? Math.min(tileSize, 32) : tileSize;
   const skippedArr = state.questions.slice(0, state.currentQuestionIndex).map(q => q.skipped);
 
   return (
@@ -546,7 +548,7 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
         </View>
       </View>
 
-      <View style={gs.spacerTop} />
+      {!isAnswering && <View style={gs.spacerTop} />}
 
       {/* ── ORTA: meta + ipucu + tanım + kutucuklar, dikey ortada ── */}
       <View style={gs.midContent}>
@@ -571,19 +573,26 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
         ) : null}
 
         <View style={gs.defBox}>
-          <Text style={[T.h3, { color: C.text, textAlign: "center", lineHeight: 26 }]}>{cur.wordData.definition}</Text>
+          <Text
+            style={[T.h3, { color: C.text, textAlign: "center" }]}
+            numberOfLines={3}
+            adjustsFontSizeToFit
+            minimumFontScale={0.65}
+          >
+            {cur.wordData.definition}
+          </Text>
         </View>
 
         <View style={gs.tiles}>
           {cur.wordData.word.split("").map((ch, i) => (
-            <Tile key={i} letter={ch} revealed={cur.revealedLetters.includes(i)} size={tileSize} />
+            <Tile key={i} letter={ch} revealed={cur.revealedLetters.includes(i)} size={displayTileSize} />
           ))}
         </View>
       </View>
 
-      <View style={gs.spacerBottom} />
+      {!isAnswering && <View style={gs.spacerBottom} />}
 
-      {/* ── BOTTOM ACTIONS ── */}
+      {/* ── BOTTOM ACTIONS: her zaman klavyenin üstünde sabit ── */}
       {state.status === "answering" ? (
         <View style={gs.answerZone}>
           <View style={gs.answerTimer}>
@@ -663,7 +672,6 @@ const gs = StyleSheet.create({
   },
   spacerTop: { flex: 1.4 },
   spacerBottom: { flex: 1 },
-  topSection: {},
   midContent: {},
   exitRow: {
     flexDirection: "row",
@@ -777,6 +785,8 @@ const gs = StyleSheet.create({
     marginBottom: S.md,
     borderWidth: 1,
     borderColor: C.brandBorder,
+    minHeight: 72,
+    justifyContent: "center" as const,
   },
 
   // Tiles — gap MUST match getTileSize() gap constant (both = 6)

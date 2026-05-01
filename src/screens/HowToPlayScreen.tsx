@@ -1,6 +1,8 @@
-import React, { useState } from "react";
+import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
-import { C, T, S, R, SAFE_TOP } from "../theme/tokens";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { C, T, S, R } from "../theme/tokens";
+import { ScreenProps } from "../types/navigation";
 
 
 const STEPS = [
@@ -39,9 +41,10 @@ const MODES = [
   },
 ];
 
-export default function HowToPlayScreen({ navigation }: any) {
+export default function HowToPlayScreen({ navigation }: ScreenProps<"HowToPlay">) {
+  const insets = useSafeAreaInsets();
   return (
-    <View style={s.container}>
+    <View style={[s.container, { paddingTop: insets.top || S.xxxl }]}>
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
         <Text style={[T.h1, { color: C.text, marginBottom: S.sm }]}>Nasıl Oynanır?</Text>
         <Text style={[T.bodySm, { color: C.textFaint, marginBottom: S.xl }]}>
@@ -62,6 +65,22 @@ export default function HowToPlayScreen({ navigation }: any) {
             </View>
           </View>
         ))}
+
+        {/* EXIT INFO */}
+        <View style={s.exitCard}>
+          <View style={s.exitHeader}>
+            <Text style={s.exitIcon}>✕</Text>
+            <Text style={[T.h3, { color: C.text }]}>Oyundan Çıkış</Text>
+          </View>
+          <Text style={[T.bodySm, { color: C.textSoft, marginTop: S.xs }]}>
+            Oyun sırasında sol üstteki <Text style={{ fontWeight: "700", color: C.text }}>"✕ Çık"</Text> butonuna basarak oyunu istediğin zaman bitirebilirsin.
+          </Text>
+          <View style={s.exitBullets}>
+            <Text style={s.exitBullet}>• Kalan tüm sorular <Text style={{ color: C.orange, fontWeight: "700" }}>pas geçilmiş</Text> sayılır</Text>
+            <Text style={s.exitBullet}>• Her kalan soru için <Text style={{ color: C.red, fontWeight: "700" }}>%25 puan cezası</Text> uygulanır</Text>
+            <Text style={s.exitBullet}>• Tamamlanan sorular ve mevcut puan istatistiklere kaydedilir</Text>
+          </View>
+        </View>
 
         <View style={s.divider} />
 
@@ -94,6 +113,10 @@ export default function HowToPlayScreen({ navigation }: any) {
             <Text style={[T.bodySm, { color: C.gold, flex: 1 }]}>Harf alma</Text>
             <Text style={[T.bodySm, { color: C.textSoft }]}>her harf -100P</Text>
           </View>
+          <View style={[s.scoreRow, s.scoreRowLast]}>
+            <Text style={[T.bodySm, { color: C.orange, flex: 1 }]}>✕ Oyundan çıkış</Text>
+            <Text style={[T.bodySm, { color: C.textSoft }]}>kalan her soru -%25</Text>
+          </View>
         </View>
       </ScrollView>
 
@@ -108,7 +131,6 @@ const s = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: C.bg,
-    paddingTop: SAFE_TOP,
   },
   scroll: {
     paddingHorizontal: S.page,
@@ -169,6 +191,40 @@ const s = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     paddingVertical: S.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: C.surfaceLight,
+  },
+  scoreRowLast: {
+    borderBottomWidth: 0,
+  },
+  exitCard: {
+    backgroundColor: C.surface,
+    borderRadius: R.lg,
+    padding: S.lg,
+    marginTop: S.sm,
+    borderWidth: 1,
+    borderColor: C.orangeSoft,
+  },
+  exitHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: S.sm,
+    marginBottom: S.xs,
+  },
+  exitIcon: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: C.orange,
+  },
+  exitBullets: {
+    marginTop: S.sm,
+    gap: S.xs,
+  },
+  exitBullet: {
+    fontSize: 13,
+    fontWeight: "500",
+    color: C.textSoft,
+    lineHeight: 20,
   },
   backBtn: {
     backgroundColor: C.orange,

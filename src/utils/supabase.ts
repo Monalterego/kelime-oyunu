@@ -1,8 +1,8 @@
 import { createClient } from "@supabase/supabase-js";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const SUPABASE_URL = "https://ptpkaanbuykcsqnudvdh.supabase.co";
-const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB0cGthYW5idXlrY3NxbnVkdmRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzODE4MTAsImV4cCI6MjA5MTk1NzgxMH0.Vgli0dUFTbH8VTGZa3JGwRR67fWVWNBE7pGeD0JEne4";
+const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL!;
+const SUPABASE_ANON = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!;
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON);
 
@@ -71,31 +71,47 @@ export async function submitScore(record: {
   } catch { return false; }
 }
 
-export async function getLeaderboard(period: "daily" | "weekly" | "monthly" | "alltime", mode?: string, dailyNumber?: number): Promise<any[]> {
+// Minimum oyun sayısı eşikleri — tek oyunla zirveye oturma önlemi
+const MIN_GAMES: Record<string, number> = {
+  weekly:  3,   // haftada en az 3 oyun
+  monthly: 5,   // ayda en az 5 oyun
+  alltime: 10,  // toplamda en az 10 oyun
+};
+
+export async function getLeaderboard(
+  period: "daily" | "weekly" | "monthly" | "alltime",
+  _mode?: string,
+  dailyNumber?: number,
+): Promise<any[]> {
   try {
-    let query = supabase
-      .from("scores")
-      .select("score, correct, total, created_at, profile_id, duration_seconds, profiles(nickname)")
-      .not("profile_id", "is", "null")
-      .order("score", { ascending: false })
-      .limit(500);
-
-    if (mode) query = query.eq("mode", mode);
-
     if (period === "daily" && dailyNumber) {
-      query = query.eq("daily_number", dailyNumber);
-    } else if (period === "weekly") {
-      const weekAgo = new Date();
-      weekAgo.setDate(weekAgo.getDate() - 7);
-      query = query.gte("created_at", weekAgo.toISOString());
-    } else if (period === "monthly") {
-      const monthAgo = new Date();
-      monthAgo.setMonth(monthAgo.getMonth() - 1);
-      query = query.gte("created_at", monthAgo.toISOString());
+      const { data, error } = await supabase.rpc("get_leaderboard_daily", { daily_num: dailyNumber });
+      if (error) { console.error("Leaderboard hatasi:", error); return []; }
+      return (data || []).map((r: any) => ({
+        score: r.score,
+        correct: r.correct,
+        total: r.total,
+        duration_seconds: r.duration_secs,
+        profiles: { nickname: r.nickname },
+      }));
     }
 
-    const { data, error } = await query;
+    const startTs =
+      period === "weekly"  ? (() => { const d = new Date(); d.setDate(d.getDate() - 7);  return d.toISOString(); })()
+      : period === "monthly" ? (() => { const d = new Date(); d.setMonth(d.getMonth() - 1); return d.toISOString(); })()
+      : null;
+
+    const { data, error } = await supabase.rpc("get_leaderboard_period", {
+      start_ts:  startTs,
+      min_games: MIN_GAMES[period] ?? 1,
+    });
     if (error) { console.error("Leaderboard hatasi:", error); return []; }
-    return data || [];
+    return (data || []).map((r: any) => ({
+      score: r.avg_score,
+      correct: r.total_correct,
+      total: r.total_total,
+      profiles: { nickname: r.nickname },
+      _games: r.games,
+    }));
   } catch { return []; }
 }

@@ -2,6 +2,7 @@ import { Question } from "../types";
 
 interface QuestionDBEntry {
   word: string;
+  displayWord?: string;
   length: number;
   definition: string;
   gameDefinition?: string;
@@ -11,6 +12,7 @@ interface QuestionDBEntry {
   difficulty: "easy" | "medium" | "hard";
   flashHint?: string;
   themeCategory?: string;
+  wordCount?: number;
 }
 
 const CLASSIC_STRUCTURE = [
@@ -33,13 +35,45 @@ const CATEGORY_STRUCTURE = [
   { length: 10, count: 1 },
 ];
 
-let questionsDB: QuestionDBEntry[] | null = null;
+// ── KALİTE FİLTRELERİ ─────────────────────────────────────────────────────────
+
+const WORD_BLACKLIST = new Set([
+  "ferç", "meni", "puşt", "taşak", "orkit",
+  "şehvet", "orgazm", "erotik", "libido",
+  "genelev", "erotiklik", "kerhaneci",
+]);
+
+// Trivial occupation/derivative suffixes: -cı/-ci/-cu/-cü/-çı/-çi/-çu/-çü/-lık/-lik/-luk/-lük
+const AGENT_SUFFIX = /[cç][ıiuü]$/u;
+const NOUN_SUFFIX = /l[ıiuü]k$/u;
+
+// Definitions that signal a trivially derived word ("X yapan kişi", "X işi" etc.)
+const TRIVIAL_DEF = /yapan kişi|işleten kişi|ile uğraşan|satan kişi|satan esnaf|üreten kişi|yapan usta|işi yapan|taşıyan kişi|veren kişi/iu;
+
+// Definition patterns that indicate sexual/inappropriate content
+const ADULT_DEF = /cinsel organ|üreme organ|fuhuş|cinsel ilişki|cinsel birleşme|ereksiyon/iu;
+
+function isQualityEntry(e: QuestionDBEntry): boolean {
+  const word = e.word.toLocaleLowerCase("tr-TR");
+  const def = (e.gameDefinition || e.definition || "").toLocaleLowerCase("tr-TR");
+
+  if (WORD_BLACKLIST.has(word)) return false;
+  if (ADULT_DEF.test(def)) return false;
+  if ((AGENT_SUFFIX.test(word) || NOUN_SUFFIX.test(word)) && TRIVIAL_DEF.test(def)) return false;
+
+  return true;
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+
+let filteredDB: QuestionDBEntry[] | null = null;
 
 function loadDB(): QuestionDBEntry[] {
-  if (!questionsDB) {
-    questionsDB = require("../data/questions-db.json") as QuestionDBEntry[];
+  if (!filteredDB) {
+    const raw = require("../data/questions-db.json") as QuestionDBEntry[];
+    filteredDB = raw.filter(isQualityEntry);
   }
-  return questionsDB;
+  return filteredDB;
 }
 
 function pickRandom<T>(arr: T[], count: number): T[] {
@@ -86,6 +120,7 @@ function buildQuestions(pool: QuestionDBEntry[], structure: any[]): Question[] {
       questions.push({
         wordData: {
           word: entry.word,
+          displayWord: entry.displayWord,
           length: entry.length,
           definition: entry.gameDefinition || entry.definition,
           origin: entry.origin,
@@ -117,6 +152,7 @@ function buildDailyQuestions(pool: QuestionDBEntry[], structure: any[]): Questio
       questions.push({
         wordData: {
           word: entry.word,
+          displayWord: entry.displayWord,
           length: entry.length,
           definition: entry.gameDefinition || entry.definition,
           origin: entry.origin,

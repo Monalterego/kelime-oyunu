@@ -1,5 +1,6 @@
 export interface WordData {
   word: string;
+  displayWord?: string;  // iki kelimeli girişlerde boşluklu gösterim ("göz bebeği")
   length: number;
   definition: string;
   origin: string;

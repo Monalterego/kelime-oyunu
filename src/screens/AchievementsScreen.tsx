@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
-import { ArrowLeft } from "lucide-react-native";
-import { C, T, S, R, SAFE_TOP } from "../theme/tokens";
+import { View, Text, StyleSheet, ScrollView } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { C, T, S, R } from "../theme/tokens";
+import { BackBtn } from "../components/ui";
+import { ScreenProps } from "../types/navigation";
 
 import { getAchievements, Achievement } from "../utils/achievements";
 
-export default function AchievementsScreen({ navigation }: any) {
+export default function AchievementsScreen({ navigation }: ScreenProps<"Achievements">) {
+  const insets = useSafeAreaInsets();
   const [achievements, setAchievements] = useState<Achievement[]>([]);
 
   useEffect(() => {
@@ -16,7 +19,7 @@ export default function AchievementsScreen({ navigation }: any) {
   const locked = achievements.filter(a => !a.unlocked);
 
   return (
-    <View style={s.container}>
+    <View style={[s.container, { paddingTop: insets.top || S.xxxl }]}>
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
         <Text style={[T.h1, { color: C.text, marginBottom: S.sm }]}>Başarımlar</Text>
         <Text style={[T.bodySm, { color: C.textFaint, marginBottom: S.xl }]}>
@@ -55,10 +58,9 @@ export default function AchievementsScreen({ navigation }: any) {
         )}
       </ScrollView>
 
-      <TouchableOpacity style={s.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.6}>
-        <ArrowLeft size={16} color={C.textSoft} strokeWidth={2} />
-        <Text style={[T.btnSm, { color: C.textSoft, marginLeft: 6 }]}>Geri Dön</Text>
-      </TouchableOpacity>
+      <View style={{ marginVertical: S.lg }}>
+        <BackBtn onPress={() => navigation.goBack()} />
+      </View>
     </View>
   );
 }
@@ -67,7 +69,6 @@ const s = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: C.bg,
-    paddingTop: SAFE_TOP,
   },
   scroll: {
     paddingHorizontal: S.page,
@@ -94,12 +95,5 @@ const s = StyleSheet.create({
     height: 1,
     backgroundColor: C.surfaceLight,
     marginVertical: S.xl,
-  },
-  backBtn: {
-    paddingVertical: S.md,
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: S.lg,
   },
 });

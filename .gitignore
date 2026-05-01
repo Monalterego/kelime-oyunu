@@ -31,6 +31,7 @@ yarn-error.*
 *.pem
 
 # local env files
+.env
 .env*.local
 
 # typescript
@@ -40,3 +41,13 @@ yarn-error.*
 /ios
 /android
 serve.log
+
+# DB scripts — checkpoint & intermediate files
+scripts/.improve-progress.json
+scripts/.compound-progress.json
+scripts/.expand-progress.json
+src/data/questions-db-backup.json
+src/data/questions-db-improved.json
+
+# Claude local config
+.claude/
