@@ -12,7 +12,7 @@ import { useSafeAreaInsets, SafeAreaView } from "react-native-safe-area-context"
 import { C, T, S, R, SHADOW, getTileSize } from "../theme/tokens";
 import { saveGameRecord, markDailyPlayed, getStats, getDailyStatus } from "../utils/gameHistory";
 import { checkAchievements, Achievement } from "../utils/achievements";
-import { getLocalProfile, submitScore } from "../utils/supabase";
+import { getLocalProfile, submitScore, submitFeedback, getLocalFeedbackVotes } from "../utils/supabase";
 import { getDailyNumber } from "../utils/questionGenerator";
 import { generateGameQuestions } from "../utils/questionGenerator";
 import { Screen, Btn, BackBtn, Chip, Card, Tile, ProgressDots } from "../components/ui";
@@ -32,6 +32,8 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
   const [dailyAlreadyPlayed, setDailyAlreadyPlayed] = useState<{score: number; correct: number; total: number} | null>(null);
   const [scoreDelta, setScoreDelta] = useState<"up" | "down" | null>(null);
   const prevScoreRef = useRef(0);
+  const [feedbackVote, setFeedbackVote] = useState<1 | -1 | null>(null);
+  const [localVotes, setLocalVotes] = useState<Record<string, number>>({});
 
   useEffect(() => {
     if (mode !== "daily") return;
@@ -39,6 +41,17 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
       if (status && status.dailyNumber === getDailyNumber()) setDailyAlreadyPlayed(status);
     });
   }, [mode]);
+
+  // Local feedback oylarını yükle
+  useEffect(() => { getLocalFeedbackVotes().then(setLocalVotes); }, []);
+
+  // Her yeni soru result ekranına geçince feedback state'ini sıfırla
+  useEffect(() => {
+    if (state.status === "result") {
+      const word = state.questions[state.currentQuestionIndex]?.wordData.word;
+      setFeedbackVote(word && localVotes[word] ? localVotes[word] as 1 | -1 : null);
+    }
+  }, [state.status, state.currentQuestionIndex]);
 
   // Kategori modunda kullanıcı zaten seçim yaptı — idle ekranını atla
   useEffect(() => {
@@ -465,6 +478,37 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
                 {cur.earnedPoints > 0 ? "+" : ""}{cur.earnedPoints}
               </Text>
             </View>
+
+            {/* ── BETA FEEDBACK ── */}
+            <View style={gs.feedbackRow}>
+              <Text style={[T.cap, { color: C.textFaint }]}>Bu soru nasıldı?</Text>
+              <View style={gs.feedbackBtns}>
+                <TouchableOpacity
+                  style={[gs.feedbackBtn, feedbackVote === 1 && gs.feedbackBtnActive]}
+                  activeOpacity={0.7}
+                  onPress={async () => {
+                    if (feedbackVote !== null) return;
+                    setFeedbackVote(1);
+                    await submitFeedback(cur.wordData.word, 1);
+                    setLocalVotes(v => ({ ...v, [cur.wordData.word]: 1 }));
+                  }}
+                >
+                  <Text style={{ fontSize: 20 }}>👍</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[gs.feedbackBtn, feedbackVote === -1 && gs.feedbackBtnActive]}
+                  activeOpacity={0.7}
+                  onPress={async () => {
+                    if (feedbackVote !== null) return;
+                    setFeedbackVote(-1);
+                    await submitFeedback(cur.wordData.word, -1);
+                    setLocalVotes(v => ({ ...v, [cur.wordData.word]: -1 }));
+                  }}
+                >
+                  <Text style={{ fontSize: 20 }}>👎</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
 
           <View style={gs.spacerBottom} />
@@ -880,6 +924,31 @@ const gs = StyleSheet.create({
     alignItems: "center",
     marginTop: S.xl,
     borderWidth: 1,
+  },
+  feedbackRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: S.lg,
+    marginTop: S.lg,
+  },
+  feedbackBtns: {
+    flexDirection: "row",
+    gap: S.sm,
+  },
+  feedbackBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: R.lg,
+    backgroundColor: C.surface,
+    borderWidth: 1,
+    borderColor: C.surfaceLight,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  feedbackBtnActive: {
+    borderColor: C.brand,
+    backgroundColor: C.surfaceLight,
   },
 
   // Score

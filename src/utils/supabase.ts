@@ -71,6 +71,29 @@ export async function submitScore(record: {
   } catch { return false; }
 }
 
+// ── SORU GERİ BİLDİRİMİ (beta) ───────────────────────────────────────────
+const FEEDBACK_KEY = "dagarcik_feedback_v1"; // verilen oyların local kaydı
+
+export async function submitFeedback(word: string, vote: 1 | -1): Promise<boolean> {
+  try {
+    const { error } = await supabase.from("question_feedback").insert({ word, vote });
+    if (error) { console.error("Feedback hatasi:", error); return false; }
+    // Local'e kaydet — tekrar oy vermesin
+    const raw = await AsyncStorage.getItem(FEEDBACK_KEY);
+    const votes: Record<string, number> = raw ? JSON.parse(raw) : {};
+    votes[word] = vote;
+    await AsyncStorage.setItem(FEEDBACK_KEY, JSON.stringify(votes));
+    return true;
+  } catch { return false; }
+}
+
+export async function getLocalFeedbackVotes(): Promise<Record<string, number>> {
+  try {
+    const raw = await AsyncStorage.getItem(FEEDBACK_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch { return {}; }
+}
+
 // Minimum oyun sayısı eşikleri — tek oyunla zirveye oturma önlemi
 const MIN_GAMES: Record<string, number> = {
   weekly:  3,   // haftada en az 3 oyun
