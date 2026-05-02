@@ -161,7 +161,7 @@ export default function HomeScreen({ navigation }: ScreenProps<"Home">) {
         </View>
 
         <Text style={[T.cap, { color: C.textFaint, textAlign: "center", marginTop: S.xl, marginBottom: S.xxl }]}>
-          7.000+ kelime ile sınırsız eğlence
+          12.000+ kelime · her gün yeni sorular
         </Text>
       </ScrollView>
     </View>
