@@ -51,3 +51,4 @@ src/data/questions-db-improved.json
 
 # Claude local config
 .claude/
+scripts/.categorize-progress.json
