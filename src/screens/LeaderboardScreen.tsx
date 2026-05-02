@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { C, T, S, R } from "../theme/tokens";
@@ -13,6 +13,8 @@ type Period = "daily" | "weekly" | "monthly" | "alltime";
 export default function LeaderboardScreen({ navigation }: ScreenProps<"Leaderboard">) {
   const insets = useSafeAreaInsets();
   const [period, setPeriod] = useState<Period>("daily");
+  const tabScrollRef = useRef<ScrollView>(null);
+  const tabOffsetsRef = useRef<Record<string, number>>({});
   const [scores, setScores] = useState<any[]>([]);
   const [myNick, setMyNick] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -44,12 +46,17 @@ export default function LeaderboardScreen({ navigation }: ScreenProps<"Leaderboa
     <View style={[s.container, { paddingTop: (insets.top || S.xxxl) + S.md }]}>
       <Text style={[T.h1, { color: C.text, marginBottom: S.lg }]}>Liderlik Tablosu</Text>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.tabScroll} contentContainerStyle={s.tabs}>
+      <ScrollView ref={tabScrollRef} horizontal showsHorizontalScrollIndicator={false} style={s.tabScroll} contentContainerStyle={s.tabs}>
         {periods.map(p => (
           <TouchableOpacity
             key={p.key}
             style={[s.tab, period === p.key && s.tabActive]}
-            onPress={() => setPeriod(p.key)}
+            onPress={() => {
+              setPeriod(p.key);
+              const x = tabOffsetsRef.current[p.key];
+              if (x !== undefined) tabScrollRef.current?.scrollTo({ x: Math.max(0, x - 16), animated: true });
+            }}
+            onLayout={e => { tabOffsetsRef.current[p.key] = e.nativeEvent.layout.x; }}
             activeOpacity={0.7}
           >
             <Text style={[T.btnSm, { color: period === p.key ? C.white : C.textSoft }]}>{p.label}</Text>
