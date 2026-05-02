@@ -330,7 +330,7 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
           <Text style={[T.h2, { color: C.textSoft, marginTop: S.xxl, marginBottom: S.md, textAlign: "center" }]}>Oyun Bitti</Text>
 
           <View style={[gs.scoreRing, { borderColor: pos ? C.green + "60" : C.red + "60" }]}>
-            <Text style={[T.score, { color: pos ? C.gold : C.red }]}>{state.totalScore}</Text>
+            <Text style={[T.score, { color: pos ? C.gold : C.red, maxWidth: 140 }]} adjustsFontSizeToFit numberOfLines={1} minimumFontScale={0.5}>{state.totalScore}</Text>
             <Text style={[T.scoreLabel, { color: C.textFaint }]}>PUAN</Text>
           </View>
 
