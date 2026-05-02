@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { C, T, S, R } from "../theme/tokens";
 
@@ -125,28 +125,35 @@ export default function ProfileScreen({ navigation }: ScreenProps<"Profile">) {
 
   // ── CREATE PROFILE ────────────────────────────────────────
   return (
-    <View style={[s.container, { paddingTop: insets.top || S.xxxl }]}>
-      <View style={s.createContent}>
-        <Text style={[T.h1, { color: C.text }]}>Profil Oluştur</Text>
-        <Text style={[T.bodySm, { color: C.textSoft, marginTop: S.sm, textAlign: "center" }]}>
-          Liderlik tablosunda yer almak için bir kullanıcı adı seç
-        </Text>
-        <TextInput
-          style={s.input}
-          value={nickname}
-          onChangeText={setNickname}
-          placeholder="Kullanıcı adı..."
-          placeholderTextColor={C.textFaint}
-          autoCapitalize="none"
-          maxLength={15}
-        />
-        {error ? <Text style={[T.bodySm, { color: C.red, marginTop: S.sm }]}>{error}</Text> : null}
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
+      <View style={[s.container, { paddingTop: insets.top || S.xxxl }]}>
+        <View style={s.createContent}>
+          <Text style={[T.h1, { color: C.text }]}>Profil Oluştur</Text>
+          <Text style={[T.bodySm, { color: C.textSoft, marginTop: S.sm, textAlign: "center" }]}>
+            Liderlik tablosunda yer almak için bir kullanıcı adı seç
+          </Text>
+          <TextInput
+            style={s.input}
+            value={nickname}
+            onChangeText={setNickname}
+            placeholder="Kullanıcı adı..."
+            placeholderTextColor={C.textFaint}
+            autoCapitalize="none"
+            maxLength={15}
+            returnKeyType="done"
+            onSubmitEditing={handleCreate}
+          />
+          {error ? <Text style={[T.bodySm, { color: C.red, marginTop: S.sm }]}>{error}</Text> : null}
+        </View>
+        <View style={s.createActions}>
+          <Btn label="Kaydet" onPress={handleCreate} variant="cta" />
+          <Btn label="Şimdilik Geç" onPress={() => navigation.goBack()} variant="ghost" />
+        </View>
       </View>
-      <View style={s.createActions}>
-        <Btn label="Kaydet" onPress={handleCreate} variant="cta" />
-        <Btn label="Şimdilik Geç" onPress={() => navigation.goBack()} variant="ghost" />
-      </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
