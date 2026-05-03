@@ -12,7 +12,7 @@ const path = require("path");
 
 const DB_PATH      = path.join(__dirname, "../src/data/questions-db.json");
 const PROGRESS_PATH = path.join(__dirname, ".familiarity-progress.json");
-const BATCH_SIZE   = 50;
+const BATCH_SIZE   = 40;
 const SKIP_THRESHOLD = 2; // 1 veya 2 alan kelimeler skip edilir
 
 const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
@@ -25,7 +25,7 @@ async function callClaude(words) {
 
   const body = {
     model: "claude-haiku-4-5",
-    max_tokens: 1024,
+    max_tokens: 2048,
     messages: [{
       role: "user",
       content: `Aşağıdaki Türkçe kelimeleri değerlendir. Her kelime için Türkiye'deki ortalama bir yetişkinin bu kelimeyi bilme olasılığını 1-5 arası puanla:
@@ -71,12 +71,6 @@ async function main() {
   const db = JSON.parse(fs.readFileSync(DB_PATH, "utf-8"));
   const active = db.filter(e => !e.skip);
 
-  const targets = active.filter(e =>
-    e.difficulty === "medium" &&
-    e.length >= 8 && e.length <= 10 &&
-    (e.themeCategory === "Genel" || e.themeCategory === "Meslekler")
-  );
-
   // Checkpoint yükle
   let progress = { evaluated: {}, lastBatch: 0 };
   if (fs.existsSync(PROGRESS_PATH)) {
@@ -84,7 +78,10 @@ async function main() {
     console.log(`Checkpoint: ${Object.keys(progress.evaluated).length} kelime değerlendirildi`);
   }
 
-  const remaining = targets.filter(e => !(e.word in progress.evaluated));
+  // Tüm aktif kelimeler — daha önce evaluate edilenleri atla
+  const targets = active.filter(e => !(e.word in progress.evaluated));
+
+  const remaining = targets;
   console.log(`Kalan: ${remaining.length} / ${targets.length}`);
 
   const batches = [];
