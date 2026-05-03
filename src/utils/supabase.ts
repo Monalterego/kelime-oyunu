@@ -72,7 +72,7 @@ export async function submitScore(record: {
 }
 
 // ── SORU GERİ BİLDİRİMİ (beta) ───────────────────────────────────────────
-const FEEDBACK_KEY = "dagarcik_feedback_v1"; // verilen oyların local kaydı
+const FEEDBACK_KEY = "dagarcik_feedback_v2"; // verilen oyların local kaydı
 
 export async function submitFeedback(word: string, vote: 1 | -1): Promise<boolean> {
   try {
