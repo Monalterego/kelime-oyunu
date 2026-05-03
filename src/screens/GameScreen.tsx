@@ -1,5 +1,6 @@
 import React, { useReducer, useEffect, useRef, useState, useCallback } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Animated, ScrollView, Share, Platform, Keyboard, ActivityIndicator, KeyboardAvoidingView, Alert } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Animated, ScrollView, Share, Platform, Keyboard, ActivityIndicator, KeyboardAvoidingView, Alert, BackHandler } from "react-native";
+import { useFocusEffect } from "@react-navigation/native";
 import { X } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
 import { Question } from "../types";
@@ -142,6 +143,21 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
       ]
     );
   }, [state, mode, category, navigation]);
+
+  // Android donanım geri tuşunu yakala — oyun aktifken handleExit'e yönlendir
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        if (state.status === "playing" || state.status === "answering" || state.status === "result") {
+          handleExit();
+          return true; // varsayılan geri navigasyonunu engelle
+        }
+        return false; // idle / gameover → normal davranış
+      };
+      const sub = BackHandler.addEventListener("hardwareBackPress", onBackPress);
+      return () => sub.remove();
+    }, [state.status, handleExit])
+  );
 
   // Hint: slides in from top after delay
   useEffect(() => {
@@ -395,6 +411,26 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
                 {q.skipped ? (
                   <Text style={[T.cap, { color: C.textFaint, marginTop: S.xs, fontStyle: "italic" }]}>Pas geçildi</Text>
                 ) : null}
+                {/* Geçici beta feedback */}
+                <View style={gs.summaryFeedbackRow}>
+                  <Text style={[T.cap, { color: C.textFaint }]}>Bu soru nasıldı?</Text>
+                  <View style={gs.feedbackBtns}>
+                    {([1, -1] as const).map(vote => (
+                      <TouchableOpacity
+                        key={vote}
+                        style={[gs.feedbackBtn, localVotes[q.wordData.word] === vote && gs.feedbackBtnActive]}
+                        activeOpacity={0.7}
+                        onPress={async () => {
+                          if (localVotes[q.wordData.word] !== undefined) return;
+                          setLocalVotes(v => ({ ...v, [q.wordData.word]: vote }));
+                          await submitFeedback(q.wordData.word, vote);
+                        }}
+                      >
+                        <Text style={{ fontSize: 16 }}>{vote === 1 ? "👍" : "👎"}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
               </View>
             );
           })}
@@ -1034,5 +1070,14 @@ const gs = StyleSheet.create({
     alignItems: "center",
     marginTop: S.sm,
     flexWrap: "wrap",
+  },
+  summaryFeedbackRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: S.md,
+    paddingTop: S.sm,
+    borderTopWidth: 1,
+    borderTopColor: C.surfaceLight,
   },
 });
