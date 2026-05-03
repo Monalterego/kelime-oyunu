@@ -70,7 +70,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     case "SUBMIT_ANSWER": {
       const q = state.questions[state.currentQuestionIndex];
       if (!q) return state;
-      const isCorrect = action.answer.toLocaleLowerCase("tr-TR").trim() === q.wordData.word.toLocaleLowerCase("tr-TR").trim();
+      const normalizeAnswer = (s: string) => s.toLocaleLowerCase("tr-TR").trim().replace(/\s+/g, "");
+      const isCorrect = normalizeAnswer(action.answer) === normalizeAnswer(q.wordData.word);
       const basePoints = getBasePoints(q);
       const letterPenalty = getLetterPenalty(q);
       const earnedPoints = isCorrect ? Math.max(0, basePoints - letterPenalty) : -basePoints;
