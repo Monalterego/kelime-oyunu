@@ -582,7 +582,7 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
     <SafeAreaView edges={["bottom"]} style={gs.safeBottom}>
     <KeyboardAvoidingView
       style={gs.game}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      behavior="padding"
       keyboardVerticalOffset={0}
     >
       <View style={gs.gameInner}>
@@ -631,7 +631,7 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
       {!isAnswering && <View style={gs.spacerTop} />}
 
       {/* ── ORTA: meta + ipucu + tanım + kutucuklar, dikey ortada ── */}
-      <View style={[gs.midContent, isAnswering && { flex: 1, justifyContent: "center" }]}>
+      <View style={gs.midContent}>
         <View style={gs.metaRow}>
           <View style={gs.metaPill}>
             <Text style={[gs.metaValue, { color: C.orange }]}>+{pts}</Text>
@@ -658,7 +658,7 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
           </Animated.View>
         ) : null}
 
-        <View style={[gs.defBox, isAnswering && { maxHeight: 90, minHeight: 0 }]}>
+        <View style={gs.defBox}>
           <Text
             style={[T.h3, { color: C.text, textAlign: "center" }]}
             numberOfLines={isAnswering ? 3 : 4}
