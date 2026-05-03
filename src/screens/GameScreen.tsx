@@ -631,7 +631,7 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
       {!isAnswering && <View style={gs.spacerTop} />}
 
       {/* ── ORTA: meta + ipucu + tanım + kutucuklar, dikey ortada ── */}
-      <View style={gs.midContent}>
+      <View style={[gs.midContent, isAnswering && { flex: 1, justifyContent: "center" }]}>
         <View style={gs.metaRow}>
           <View style={gs.metaPill}>
             <Text style={[gs.metaValue, { color: C.orange }]}>+{pts}</Text>
@@ -658,7 +658,7 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
           </Animated.View>
         ) : null}
 
-        <View style={[gs.defBox, isAnswering && { maxHeight: 100 }]}>
+        <View style={[gs.defBox, isAnswering && { maxHeight: 90, minHeight: 0 }]}>
           <Text
             style={[T.h3, { color: C.text, textAlign: "center" }]}
             numberOfLines={isAnswering ? 3 : 4}
