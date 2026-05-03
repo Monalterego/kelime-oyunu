@@ -652,12 +652,12 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
           </Animated.View>
         ) : null}
 
-        <View style={gs.defBox}>
+        <View style={[gs.defBox, isAnswering && { maxHeight: 100 }]}>
           <Text
             style={[T.h3, { color: C.text, textAlign: "center" }]}
-            numberOfLines={3}
+            numberOfLines={isAnswering ? 3 : 4}
             adjustsFontSizeToFit
-            minimumFontScale={0.65}
+            minimumFontScale={0.5}
           >
             {cur.wordData.definition}
           </Text>

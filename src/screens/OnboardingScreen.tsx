@@ -1,10 +1,12 @@
-import React, { useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import React, { useState, useRef } from "react";
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Dimensions } from "react-native";
 import { Btn } from "../components/ui";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { C, T, S, R } from "../theme/tokens";
 import { ScreenProps } from "../types/navigation";
+
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 const SLIDES = [
   {
@@ -27,10 +29,16 @@ const SLIDES = [
 export default function OnboardingScreen({ navigation }: ScreenProps<"Onboarding">) {
   const insets = useSafeAreaInsets();
   const [step, setStep] = useState(0);
+  const scrollRef = useRef<ScrollView>(null);
+
+  const goTo = (index: number) => {
+    scrollRef.current?.scrollTo({ x: index * SCREEN_WIDTH, animated: true });
+    setStep(index);
+  };
 
   const handleNext = async () => {
     if (step < SLIDES.length - 1) {
-      setStep(step + 1);
+      goTo(step + 1);
     } else {
       await AsyncStorage.setItem("dagarcik_onboarded", "true");
       navigation.replace("Home");
@@ -42,18 +50,34 @@ export default function OnboardingScreen({ navigation }: ScreenProps<"Onboarding
     navigation.replace("Home");
   };
 
-  const slide = SLIDES[step];
+  const handleScroll = (e: any) => {
+    const newStep = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
+    if (newStep !== step) setStep(newStep);
+  };
 
   return (
     <View style={[s.container, { paddingTop: (insets.top || S.xxxl) + S.sm }]}>
       <TouchableOpacity style={s.skipBtn} onPress={handleSkip}>
         <Text style={[T.btnSm, { color: C.textFaint }]}>Atla</Text>
       </TouchableOpacity>
-      <View style={s.content}>
-        <Text style={s.icon}>{slide.icon}</Text>
-        <Text style={[T.h1, { color: C.text, marginTop: S.xl, textAlign: "center" }]}>{slide.title}</Text>
-        <Text style={[T.body, { color: C.textSoft, marginTop: S.md, textAlign: "center", lineHeight: 26 }]}>{slide.desc}</Text>
-      </View>
+
+      <ScrollView
+        ref={scrollRef}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onMomentumScrollEnd={handleScroll}
+        style={{ flex: 1 }}
+      >
+        {SLIDES.map((slide, i) => (
+          <View key={i} style={[s.content, { width: SCREEN_WIDTH }]}>
+            <Text style={s.icon}>{slide.icon}</Text>
+            <Text style={[T.h1, { color: C.text, marginTop: S.xl, textAlign: "center" }]}>{slide.title}</Text>
+            <Text style={[T.body, { color: C.textSoft, marginTop: S.md, textAlign: "center", lineHeight: 26 }]}>{slide.desc}</Text>
+          </View>
+        ))}
+      </ScrollView>
+
       <View style={s.bottom}>
         <View style={s.dots}>
           {SLIDES.map((_, i) => (
