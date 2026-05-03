@@ -641,6 +641,12 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
             <Text style={[gs.metaValue, { color: C.brand }]}>{cur.wordData.length}</Text>
             <Text style={gs.metaLabel}>harf</Text>
           </View>
+          {cur.wordData.displayWord?.includes(" ") && (
+            <View style={[gs.metaPill, { borderColor: C.gold + "80", backgroundColor: C.gold + "18" }]}>
+              <Text style={[gs.metaValue, { color: C.gold }]}>2</Text>
+              <Text style={gs.metaLabel}>kelime</Text>
+            </View>
+          )}
         </View>
 
         {showHint && state.currentFlashHint ? (
@@ -663,11 +669,37 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
           </Text>
         </View>
 
-        <View style={gs.tiles}>
-          {cur.wordData.word.split("").map((ch, i) => (
-            <Tile key={i} letter={ch} revealed={cur.revealedLetters.includes(i)} size={displayTileSize} />
-          ))}
-        </View>
+        {cur.wordData.displayWord?.includes(" ") ? (
+          // Çok kelimeli: her kelimeyi ayrı blokta göster
+          <View style={[gs.tiles, { gap: 12 }]}>
+            {cur.wordData.displayWord.split(" ").reduce<{ tiles: React.ReactNode[]; offset: number }>(
+              (acc, part, groupIdx) => {
+                if (groupIdx > 0) {
+                  acc.tiles.push(
+                    <View key={`sep-${groupIdx}`} style={gs.tileSep}>
+                      <Text style={gs.tileSepText}>·</Text>
+                    </View>
+                  );
+                }
+                for (let j = 0; j < part.length; j++) {
+                  const i = acc.offset + j;
+                  acc.tiles.push(
+                    <Tile key={i} letter={cur.wordData.word[i]} revealed={cur.revealedLetters.includes(i)} size={displayTileSize} />
+                  );
+                }
+                acc.offset += part.length;
+                return acc;
+              },
+              { tiles: [], offset: 0 }
+            ).tiles}
+          </View>
+        ) : (
+          <View style={gs.tiles}>
+            {cur.wordData.word.split("").map((ch, i) => (
+              <Tile key={i} letter={ch} revealed={cur.revealedLetters.includes(i)} size={displayTileSize} />
+            ))}
+          </View>
+        )}
       </View>
 
       {!isAnswering && <View style={gs.spacerBottom} />}
@@ -869,10 +901,23 @@ const gs = StyleSheet.create({
     justifyContent: "center" as const,
   },
 
+  // Tile separator (çok kelimeli cevaplar)
+  tileSep: {
+    justifyContent: "center",
+    alignItems: "center",
+    marginHorizontal: 2,
+  },
+  tileSepText: {
+    fontSize: 22,
+    color: C.textFaint,
+    fontWeight: "700" as const,
+  },
+
   // Tiles — gap MUST match getTileSize() gap constant (both = 6)
   tiles: {
     flexDirection: "row",
     justifyContent: "center",
+    flexWrap: "wrap",
     gap: 6,
     marginBottom: S.sm,
     flexWrap: "wrap",
