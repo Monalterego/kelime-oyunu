@@ -71,6 +71,34 @@ export async function submitScore(record: {
   } catch { return false; }
 }
 
+// ── HESAP SİLME ───────────────────────────────────────────────────────────
+export async function deleteAccount(profileId: string): Promise<boolean> {
+  try {
+    // Supabase'den skor ve profil sil
+    await supabase.from("scores").delete().eq("profile_id", profileId);
+    await supabase.from("question_feedback").delete().eq("profile_id", profileId);
+    const { error } = await supabase.from("profiles").delete().eq("id", profileId);
+    if (error) { console.error("Profil silme hatasi:", error); return false; }
+
+    // Yerel verileri temizle
+    await AsyncStorage.multiRemove([
+      "dagarcik_profile_id",
+      "dagarcik_nickname",
+      "dagarcik_game_history",
+      "dagarcik_stats_total",
+      "dagarcik_daily_played",
+      "dagarcik_achievements",
+      "dagarcik_feedback_v2",
+      "dagarcik_seen_words_v1",
+      "dagarcik_onboarded",
+    ]);
+    return true;
+  } catch (e) {
+    console.error("Hesap silme hatasi:", e);
+    return false;
+  }
+}
+
 // ── SORU GERİ BİLDİRİMİ (beta) ───────────────────────────────────────────
 const FEEDBACK_KEY = "dagarcik_feedback_v2"; // verilen oyların local kaydı
 

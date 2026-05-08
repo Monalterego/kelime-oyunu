@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform, Alert } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { C, T, S, R } from "../theme/tokens";
 
-import { getLocalProfile, createProfile } from "../utils/supabase";
+import { getLocalProfile, createProfile, deleteAccount } from "../utils/supabase";
 import { ScreenProps } from "../types/navigation";
 import { getStats, getGameHistory, GameRecord } from "../utils/gameHistory";
 import { getAchievements } from "../utils/achievements";
@@ -15,6 +15,7 @@ export default function ProfileScreen({ navigation }: ScreenProps<"Profile">) {
   const [profile, setProfile] = useState<{ id: string; nickname: string } | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState(false);
   const [stats, setStats] = useState({ totalGames: 0, bestScore: 0, avgScore: 0, totalCorrect: 0, streak: 0 });
   const [achCount, setAchCount] = useState({ total: 0, unlocked: 0 });
   const [recentGames, setRecentGames] = useState<GameRecord[]>([]);
@@ -27,6 +28,31 @@ export default function ProfileScreen({ navigation }: ScreenProps<"Profile">) {
     );
     getGameHistory().then(h => setRecentGames(h.slice(0, 5)));
   }, []);
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      "Hesabı Sil",
+      "Profil, skorlar ve tüm veriler kalıcı olarak silinecek. Bu işlem geri alınamaz.",
+      [
+        { text: "Vazgeç", style: "cancel" },
+        {
+          text: "Sil",
+          style: "destructive",
+          onPress: async () => {
+            if (!profile) return;
+            setDeleting(true);
+            const success = await deleteAccount(profile.id);
+            setDeleting(false);
+            if (success) {
+              navigation.popToTop();
+            } else {
+              Alert.alert("Hata", "Hesap silinemedi. Lütfen tekrar dene.");
+            }
+          },
+        },
+      ]
+    );
+  };
 
   const handleCreate = async () => {
     if (nickname.trim().length < 3) { setError("En az 3 karakter olmalı"); return; }
@@ -118,6 +144,9 @@ export default function ProfileScreen({ navigation }: ScreenProps<"Profile">) {
         <View style={s.actions}>
           <Btn label="Liderlik Tablosu" onPress={() => navigation.navigate("Leaderboard")} variant="cta" />
           <BackBtn onPress={() => navigation.goBack()} />
+          <TouchableOpacity onPress={handleDeleteAccount} disabled={deleting} style={s.deleteBtn}>
+            <Text style={s.deleteBtnText}>{deleting ? "Siliniyor..." : "Hesabı Sil"}</Text>
+          </TouchableOpacity>
         </View>
       </View>
     );
@@ -218,6 +247,8 @@ const s = StyleSheet.create({
 
   // Actions
   actions: { gap: S.sm },
+  deleteBtn: { alignItems: "center", paddingVertical: S.sm },
+  deleteBtnText: { fontSize: 13, color: C.textFaint, textDecorationLine: "underline" },
 
   // Create profile
   createContent: { flex: 1, justifyContent: "center", alignItems: "center" },
