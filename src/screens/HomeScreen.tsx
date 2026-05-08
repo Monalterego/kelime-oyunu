@@ -57,7 +57,7 @@ export default function HomeScreen({ navigation }: ScreenProps<"Home">) {
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
         {/* Logo */}
         <View style={s.logoSection}>
-          <Text style={s.brandText}>Dağarcık</Text>
+          <Text style={s.brandText}>HECE</Text>
           <Text style={[T.bodySm, { color: C.textFaint, letterSpacing: 2 }]}>KELİME BULMACASI</Text>
         </View>
 
@@ -74,7 +74,7 @@ export default function HomeScreen({ navigation }: ScreenProps<"Home">) {
             <View style={s.dailyDone}>
               <Text style={{ fontSize: 20 }}>✅</Text>
               <View style={{ flex: 1 }}>
-                <Text style={[T.h3, { color: C.text }]}>{"Günlük Dağarcık #" + dailyNumber}</Text>
+                <Text style={[T.h3, { color: C.text }]}>{"Günlük HECE #" + dailyNumber}</Text>
                 <Text style={[T.cap, { color: C.textSoft }]}>{dailyPlayed.correct + "/" + dailyPlayed.total + " doğru · " + dailyPlayed.score + " puan"}</Text>
               </View>
             </View>
@@ -86,7 +86,7 @@ export default function HomeScreen({ navigation }: ScreenProps<"Home">) {
             >
               <Text style={{ fontSize: 24 }}>📅</Text>
               <View style={{ flex: 1 }}>
-                <Text style={[T.h2, { color: C.white }]}>Günlük Dağarcık</Text>
+                <Text style={[T.h2, { color: C.white }]}>Günlük HECE</Text>
                 <Text style={[T.cap, { color: "rgba(255,255,255,0.7)" }]}>{"#" + dailyNumber + " · 14 soru · 2:30"}</Text>
               </View>
               <Text style={[T.h3, { color: C.white }]}>›</Text>

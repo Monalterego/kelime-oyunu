@@ -68,7 +68,7 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
     const dots = state.questions.map(q => q.correct ? "🟩" : q.skipped ? "⬜" : "🟥").join("");
     const correct = state.questions.filter(q => q.correct).length;
     const daily = mode === "daily" ? " #" + getDailyNumber() : "";
-    const text = "Dağarcık" + daily + " " + dots + "\n" + correct + "/" + state.questions.length + " · " + state.totalScore + " puan\ndagarcik.app";
+    const text =   "HECE" + daily + " " + dots + "\n" + correct + "/" + state.questions.length + " · " + state.totalScore + " puan\nhece.app";
     try {
       if (Platform.OS === "web") {
         try {
@@ -303,7 +303,7 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
       return (
         <Screen>
           <Text style={{ fontSize: 48, marginBottom: S.lg }}>✅</Text>
-          <Text style={[T.display, { color: C.text }]}>Dağarcık</Text>
+          <Text style={[T.display, { color: C.text }]}>HECE</Text>
           <Text style={[T.h2, { color: C.textSoft, marginTop: S.md }]}>Bugün oynadın!</Text>
           <Text style={[T.bodySm, { color: C.textFaint, marginTop: S.sm }]}>
             {"#" + getDailyNumber() + " · " + dailyAlreadyPlayed.correct + "/" + dailyAlreadyPlayed.total + " doğru · " + dailyAlreadyPlayed.score + " puan"}
@@ -323,12 +323,12 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
     }
 
     const modeInfo = mode === "daily"
-      ? { title: "Günlük Dağarcık", sub: "Bugünün 14 sorusu · 2:30", icon: "📅" }
+      ? { title: "Günlük HECE", sub: "Bugünün 14 sorusu · 2:30", icon: "📅" }
       : { title: "Klasik Mod", sub: "14 soru · 2:30 · kolaydan zora", icon: "🎯" };
     return (
       <Screen>
         <Text style={{ fontSize: 48, marginBottom: S.lg }}>{modeInfo.icon}</Text>
-        <Text style={[T.display, { color: C.text }]}>Dağarcık</Text>
+        <Text style={[T.display, { color: C.text }]}>HECE</Text>
         <Text style={[T.h2, { color: C.textSoft, marginTop: S.md }]}>{modeInfo.title}</Text>
         <Text style={[T.bodySm, { color: C.textFaint, marginTop: S.sm, marginBottom: S.xxxl }]}>{modeInfo.sub}</Text>
         <Btn label="BAŞLA" onPress={startGame} variant="cta" />

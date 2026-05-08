@@ -17,7 +17,7 @@ const ACHIEVEMENT_DEFS: Omit<Achievement, "unlocked" | "unlockedAt">[] = [
   { id: "perfect", title: "Mükemmel", description: "Bir oyunda tüm soruları doğru bil", icon: "💯" },
   { id: "streak_3", title: "3 Günlük Seri", description: "3 gün üst üste oyna", icon: "🔥" },
   { id: "streak_7", title: "Haftalık Seri", description: "7 gün üst üste oyna", icon: "⚡" },
-  { id: "total_100", title: "Dağarcık Ustası", description: "Toplam 100 doğru cevap", icon: "📚" },
+  { id: "total_100", title: "HECE Ustası", description: "Toplam 100 doğru cevap", icon: "📚" },
   { id: "total_500", title: "Kelime Gurusu", description: "Toplam 500 doğru cevap", icon: "🧠" },
   { id: "score_5000", title: "Puan Avcısı", description: "Tek oyunda 5000+ puan", icon: "🏅" },
   { id: "score_8000", title: "Efsane Skor", description: "Tek oyunda 8000+ puan", icon: "👑" },
