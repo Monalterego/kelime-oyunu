@@ -1,6 +1,7 @@
 {
   "cli": {
-    "version": ">= 16.0.0"
+    "version": ">= 16.0.0",
+    "appVersionSource": "remote"
   },
   "build": {
     "development": {
@@ -14,7 +15,18 @@
       }
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_SUPABASE_URL": "https://ptpkaanbuykcsqnudvdh.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_btnW7-H1lIbYoWFwzLAW7A_-ra4dkAh",
+        "EXPO_PUBLIC_ADMOB_ANDROID_APP_ID": "ca-app-pub-8017334395191649~8645262458",
+        "EXPO_PUBLIC_ADMOB_IOS_APP_ID": "ca-app-pub-8017334395191649~5041893519",
+        "EXPO_PUBLIC_ADMOB_INTERSTITIAL_GAME_OVER_ANDROID": "ca-app-pub-8017334395191649/1607484925",
+        "EXPO_PUBLIC_ADMOB_INTERSTITIAL_DAILY_ANDROID": "ca-app-pub-8017334395191649/9878453070",
+        "EXPO_PUBLIC_ADMOB_INTERSTITIAL_GAME_OVER_IOS": "ca-app-pub-8017334395191649/9148659485",
+        "EXPO_PUBLIC_ADMOB_INTERSTITIAL_DAILY_IOS": "ca-app-pub-8017334395191649/6598967478",
+        "EXPO_PUBLIC_SENTRY_DSN": "https://b00fe9ff38784c1f8fd9bb7786f96484@o4511359474073600.ingest.de.sentry.io/4511359477874768"
+      }
     }
   },
   "submit": {
