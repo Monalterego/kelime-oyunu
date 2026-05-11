@@ -27,6 +27,12 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "b99eff5d-aaef-4979-b96f-28c12c72321e"
+      }
+    },
+    "owner": "monalterego"
   }
 }
