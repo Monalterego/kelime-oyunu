@@ -1,6 +1,5 @@
 import React, { useReducer, useEffect, useRef, useState, useCallback } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Animated, ScrollView, Share, Platform, Keyboard, ActivityIndicator, KeyboardAvoidingView, Alert, BackHandler } from "react-native";
-import { useFocusEffect } from "@react-navigation/native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Animated, ScrollView, Share, Platform, Keyboard, ActivityIndicator, KeyboardAvoidingView, Alert } from "react-native";
 import { X } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
 import { Question } from "../types";
@@ -13,10 +12,10 @@ import { useSafeAreaInsets, SafeAreaView } from "react-native-safe-area-context"
 import { C, T, S, R, SHADOW, getTileSize } from "../theme/tokens";
 import { saveGameRecord, markDailyPlayed, getStats, getDailyStatus } from "../utils/gameHistory";
 import { checkAchievements, Achievement } from "../utils/achievements";
-import { getLocalProfile, submitScore, submitFeedback, getLocalFeedbackVotes } from "../utils/supabase";
-import { getDailyNumber, generateGameQuestions } from "../utils/questionGenerator";
-import { getSeenWords, markWordsSeen } from "../utils/seenWords";
-import { Screen, Btn, BackBtn, Chip, Card, Tile, ProgressDots } from "../components/ui";
+import { getLocalProfile, submitScore } from "../utils/supabase";
+import { getDailyNumber } from "../utils/questionGenerator";
+import { generateGameQuestions } from "../utils/questionGenerator";
+import { Screen, Btn, Chip, Card, Tile, ProgressDots } from "../components/ui";
 import { ScreenProps } from "../types/navigation";
 
 export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
@@ -33,8 +32,6 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
   const [dailyAlreadyPlayed, setDailyAlreadyPlayed] = useState<{score: number; correct: number; total: number} | null>(null);
   const [scoreDelta, setScoreDelta] = useState<"up" | "down" | null>(null);
   const prevScoreRef = useRef(0);
-  const [feedbackVote, setFeedbackVote] = useState<1 | -1 | null>(null);
-  const [localVotes, setLocalVotes] = useState<Record<string, number>>({});
 
   useEffect(() => {
     if (mode !== "daily") return;
@@ -42,17 +39,6 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
       if (status && status.dailyNumber === getDailyNumber()) setDailyAlreadyPlayed(status);
     });
   }, [mode]);
-
-  // Local feedback oylarını yükle
-  useEffect(() => { getLocalFeedbackVotes().then(setLocalVotes); }, []);
-
-  // Her yeni soru result ekranına geçince feedback state'ini sıfırla
-  useEffect(() => {
-    if (state.status === "result") {
-      const word = state.questions[state.currentQuestionIndex]?.wordData.word;
-      setFeedbackVote(word && localVotes[word] ? localVotes[word] as 1 | -1 : null);
-    }
-  }, [state.status, state.currentQuestionIndex]);
 
   // Kategori modunda kullanıcı zaten seçim yaptı — idle ekranını atla
   useEffect(() => {
@@ -68,7 +54,7 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
     const dots = state.questions.map(q => q.correct ? "🟩" : q.skipped ? "⬜" : "🟥").join("");
     const correct = state.questions.filter(q => q.correct).length;
     const daily = mode === "daily" ? " #" + getDailyNumber() : "";
-    const text =   "HECE" + daily + " " + dots + "\n" + correct + "/" + state.questions.length + " · " + state.totalScore + " puan\nhece.app";
+    const text = "HECE" + daily + " " + dots + "\n" + correct + "/" + state.questions.length + " · " + state.totalScore + " puan\nheceoyun.com";
     try {
       if (Platform.OS === "web") {
         try {
@@ -90,10 +76,9 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
     }
   };
 
-  const startGame = async () => {
+  const startGame = () => {
     try {
-      const seen = mode === "daily" ? new Set<string>() : await getSeenWords();
-      const questions = generateGameQuestions(mode, category, seen);
+      const questions = generateGameQuestions(mode, category);
       if (questions.length > 0)
         dispatch({ type: "START_GAME", questions, totalTime: mode === "category" ? 90 : 150 });
     } catch (e) { console.error(e); }
@@ -144,21 +129,6 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
       ]
     );
   }, [state, mode, category, navigation]);
-
-  // Android donanım geri tuşunu yakala — oyun aktifken handleExit'e yönlendir
-  useFocusEffect(
-    useCallback(() => {
-      const onBackPress = () => {
-        if (state.status === "playing" || state.status === "answering" || state.status === "result") {
-          handleExit();
-          return true; // varsayılan geri navigasyonunu engelle
-        }
-        return false; // idle / gameover → normal davranış
-      };
-      const sub = BackHandler.addEventListener("hardwareBackPress", onBackPress);
-      return () => sub.remove();
-    }, [state.status, handleExit])
-  );
 
   // Hint: slides in from top after delay
   useEffect(() => {
@@ -240,12 +210,6 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
       markDailyPlayed(dailyNumber, totalScore, correct, totalQuestions);
     }
 
-    // Oynanan kelimeleri "görüldü" olarak kaydet (günlük mod hariç)
-    if (mode !== "daily") {
-      const playedWords = state.questions.map(q => q.wordData.word);
-      markWordsSeen(playedWords);
-    }
-
     saveGameRecord({
       mode,
       category,
@@ -272,10 +236,11 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
       })
     );
 
-    getLocalProfile().then(localProfile => {
+    (async () => {
+      const localProfile = await getLocalProfile();
       setProfile(localProfile);
       if (localProfile) {
-        submitScore({
+        await submitScore({
           profileId: localProfile.id,
           mode,
           category,
@@ -288,7 +253,7 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
           durationSeconds: (mode === "category" ? 90 : 150) - totalTimeLeft,
         });
       }
-    });
+    })();
   }, [state.status, state.questions, state.totalScore, state.totalTimeLeft, mode, category]);
 
   const cur = state.questions[state.currentQuestionIndex];
@@ -309,7 +274,7 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
             {"#" + getDailyNumber() + " · " + dailyAlreadyPlayed.correct + "/" + dailyAlreadyPlayed.total + " doğru · " + dailyAlreadyPlayed.score + " puan"}
           </Text>
           <Text style={[T.cap, { color: C.textFaint, marginTop: S.xs, marginBottom: S.xxxl }]}>Yarın yeni sorular gelecek.</Text>
-          <BackBtn onPress={() => navigation.goBack()} />
+          <Btn label="← Geri Dön" onPress={() => navigation.goBack()} variant="outline" />
         </Screen>
       );
     }
@@ -323,7 +288,7 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
     }
 
     const modeInfo = mode === "daily"
-      ? { title: "Günlük HECE", sub: "Bugünün 14 sorusu · 2:30", icon: "📅" }
+      ? { title: "Günlük Hece", sub: "Bugünün 14 sorusu · 2:30", icon: "📅" }
       : { title: "Klasik Mod", sub: "14 soru · 2:30 · kolaydan zora", icon: "🎯" };
     return (
       <Screen>
@@ -333,7 +298,7 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
         <Text style={[T.bodySm, { color: C.textFaint, marginTop: S.sm, marginBottom: S.xxxl }]}>{modeInfo.sub}</Text>
         <Btn label="BAŞLA" onPress={startGame} variant="cta" />
         <View style={{ marginTop: S.xl }}>
-          <BackBtn onPress={() => navigation.goBack()} />
+          <Btn label="← Geri Dön" onPress={() => navigation.goBack()} variant="ghost" />
         </View>
       </Screen>
     );
@@ -353,7 +318,7 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
           <Text style={[T.h2, { color: C.textSoft, marginTop: S.xxl, marginBottom: S.md, textAlign: "center" }]}>Oyun Bitti</Text>
 
           <View style={[gs.scoreRing, { borderColor: pos ? C.green + "60" : C.red + "60" }]}>
-            <Text style={[T.score, { color: pos ? C.gold : C.red, maxWidth: 140 }]} adjustsFontSizeToFit numberOfLines={1} minimumFontScale={0.5}>{state.totalScore}</Text>
+            <Text style={[T.score, { color: pos ? C.gold : C.red }]}>{state.totalScore}</Text>
             <Text style={[T.scoreLabel, { color: C.textFaint }]}>PUAN</Text>
           </View>
 
@@ -404,7 +369,7 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
                     <Text style={[gs.summaryIcon, { color: statusColor }]}>{statusIcon}</Text>
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={[T.h3, { color: C.text }]}>{(q.wordData.displayWord ?? q.wordData.word).toLocaleUpperCase("tr-TR")}</Text>
+                    <Text style={[T.h3, { color: C.text }]}>{q.wordData.word.toLocaleUpperCase("tr-TR")}</Text>
                     <Text style={[T.cap, { color: statusColor, marginTop: 2 }]}>{statusLabel} · {q.earnedPoints > 0 ? "+" : ""}{q.earnedPoints}P</Text>
                   </View>
                 </View>
@@ -418,26 +383,6 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
                 {q.skipped ? (
                   <Text style={[T.cap, { color: C.textFaint, marginTop: S.xs, fontStyle: "italic" }]}>Pas geçildi</Text>
                 ) : null}
-                {/* Geçici beta feedback */}
-                <View style={gs.summaryFeedbackRow}>
-                  <Text style={[T.cap, { color: C.textFaint }]}>Bu soru nasıldı?</Text>
-                  <View style={gs.feedbackBtns}>
-                    {([1, -1] as const).map(vote => (
-                      <TouchableOpacity
-                        key={vote}
-                        style={[gs.feedbackBtn, localVotes[q.wordData.word] === vote && gs.feedbackBtnActive]}
-                        activeOpacity={0.7}
-                        onPress={async () => {
-                          if (localVotes[q.wordData.word] !== undefined) return;
-                          setLocalVotes(v => ({ ...v, [q.wordData.word]: vote }));
-                          await submitFeedback(q.wordData.word, vote);
-                        }}
-                      >
-                        <Text style={{ fontSize: 16 }}>{vote === 1 ? "👍" : "👎"}</Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                </View>
               </View>
             );
           })}
@@ -515,42 +460,11 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
           <View style={gs.midContent}>
             <View style={[gs.resultBox, { backgroundColor: ok ? C.greenSoft : C.redSoft, borderColor: ok ? C.greenBorder : C.redBorder }]}>
               <Text style={{ fontSize: 44, marginBottom: S.md }}>{ok ? "✓" : skip ? "⊘" : "✗"}</Text>
-              <Text style={[T.h1, { color: C.text }]}>{(cur.wordData.displayWord ?? cur.wordData.word).toLocaleUpperCase("tr-TR")}</Text>
+              <Text style={[T.h1, { color: C.text }]}>{cur.wordData.word.toLocaleUpperCase("tr-TR")}</Text>
               <Text style={[T.bodySm, { color: C.textSoft, textAlign: "center", marginTop: S.sm }]}>{cur.wordData.definition}</Text>
               <Text style={[T.h2, { color: ok ? C.green : C.red, marginTop: S.lg }]}>
                 {cur.earnedPoints > 0 ? "+" : ""}{cur.earnedPoints}
               </Text>
-            </View>
-
-            {/* ── BETA FEEDBACK ── */}
-            <View style={gs.feedbackRow}>
-              <Text style={[T.cap, { color: C.textFaint }]}>Bu soru nasıldı?</Text>
-              <View style={gs.feedbackBtns}>
-                <TouchableOpacity
-                  style={[gs.feedbackBtn, feedbackVote === 1 && gs.feedbackBtnActive]}
-                  activeOpacity={0.7}
-                  onPress={async () => {
-                    if (feedbackVote !== null) return;
-                    setFeedbackVote(1);
-                    await submitFeedback(cur.wordData.word, 1);
-                    setLocalVotes(v => ({ ...v, [cur.wordData.word]: 1 }));
-                  }}
-                >
-                  <Text style={{ fontSize: 20 }}>👍</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[gs.feedbackBtn, feedbackVote === -1 && gs.feedbackBtnActive]}
-                  activeOpacity={0.7}
-                  onPress={async () => {
-                    if (feedbackVote !== null) return;
-                    setFeedbackVote(-1);
-                    await submitFeedback(cur.wordData.word, -1);
-                    setLocalVotes(v => ({ ...v, [cur.wordData.word]: -1 }));
-                  }}
-                >
-                  <Text style={{ fontSize: 20 }}>👎</Text>
-                </TouchableOpacity>
-              </View>
             </View>
           </View>
 
@@ -581,15 +495,13 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
   const skipCost = Math.round(getBasePoints(cur) * SKIP_PENALTY_RATIO);
   const canHint = cur.revealedLetters.length < cur.wordData.length - 1;
   const tileSize = getTileSize(cur.wordData.length);
-  const isAnswering = state.status === "answering";
-  const displayTileSize = isAnswering ? Math.min(tileSize, 32) : tileSize;
   const skippedArr = state.questions.slice(0, state.currentQuestionIndex).map(q => q.skipped);
 
   return (
     <SafeAreaView edges={["bottom"]} style={gs.safeBottom}>
     <KeyboardAvoidingView
       style={gs.game}
-      behavior="padding"
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
       keyboardVerticalOffset={0}
     >
       <View style={gs.gameInner}>
@@ -635,7 +547,7 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
         </View>
       </View>
 
-      {!isAnswering && <View style={gs.spacerTop} />}
+      {state.status !== "answering" && <View style={gs.spacerTop} />}
 
       {/* ── ORTA: meta + ipucu + tanım + kutucuklar, dikey ortada ── */}
       <View style={gs.midContent}>
@@ -648,12 +560,6 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
             <Text style={[gs.metaValue, { color: C.brand }]}>{cur.wordData.length}</Text>
             <Text style={gs.metaLabel}>harf</Text>
           </View>
-          {cur.wordData.displayWord?.includes(" ") && (
-            <View style={[gs.metaPill, { borderColor: C.gold + "80", backgroundColor: C.gold + "18" }]}>
-              <Text style={[gs.metaValue, { color: C.gold }]}>2</Text>
-              <Text style={gs.metaLabel}>kelime</Text>
-            </View>
-          )}
         </View>
 
         {showHint && state.currentFlashHint ? (
@@ -665,27 +571,22 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
           </Animated.View>
         ) : null}
 
-        <View style={gs.defBox}>
-          <Text
-            style={[T.h3, { color: C.text, textAlign: "center" }]}
-            numberOfLines={isAnswering ? 3 : 4}
-            adjustsFontSizeToFit
-            minimumFontScale={0.5}
-          >
-            {cur.wordData.definition}
-          </Text>
-        </View>
+        {state.status !== "answering" && (
+          <View style={gs.defBox}>
+            <Text style={[T.h3, { color: C.text, textAlign: "center", lineHeight: 26 }]}>{cur.wordData.definition}</Text>
+          </View>
+        )}
 
         <View style={gs.tiles}>
           {cur.wordData.word.split("").map((ch, i) => (
-            <Tile key={i} letter={ch} revealed={cur.revealedLetters.includes(i)} size={displayTileSize} />
+            <Tile key={i} letter={ch} revealed={cur.revealedLetters.includes(i)} size={tileSize} />
           ))}
         </View>
       </View>
 
-      {!isAnswering && <View style={gs.spacerBottom} />}
+      {state.status !== "answering" && <View style={gs.spacerBottom} />}
 
-      {/* ── BOTTOM ACTIONS: her zaman klavyenin üstünde sabit ── */}
+      {/* ── BOTTOM ACTIONS ── */}
       {state.status === "answering" ? (
         <View style={gs.answerZone}>
           <View style={gs.answerTimer}>
@@ -765,6 +666,7 @@ const gs = StyleSheet.create({
   },
   spacerTop: { flex: 1.4 },
   spacerBottom: { flex: 1 },
+  topSection: {},
   midContent: {},
   exitRow: {
     flexDirection: "row",
@@ -878,15 +780,12 @@ const gs = StyleSheet.create({
     marginBottom: S.md,
     borderWidth: 1,
     borderColor: C.brandBorder,
-    minHeight: 72,
-    justifyContent: "center" as const,
   },
 
   // Tiles — gap MUST match getTileSize() gap constant (both = 6)
   tiles: {
     flexDirection: "row",
     justifyContent: "center",
-    flexWrap: "wrap",
     gap: 6,
     marginBottom: S.sm,
     flexWrap: "wrap",
@@ -975,31 +874,6 @@ const gs = StyleSheet.create({
     marginTop: S.xl,
     borderWidth: 1,
   },
-  feedbackRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: S.lg,
-    marginTop: S.lg,
-  },
-  feedbackBtns: {
-    flexDirection: "row",
-    gap: S.sm,
-  },
-  feedbackBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: R.lg,
-    backgroundColor: C.surface,
-    borderWidth: 1,
-    borderColor: C.surfaceLight,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  feedbackBtnActive: {
-    borderColor: C.brand,
-    backgroundColor: C.surfaceLight,
-  },
 
   // Score
   scoreRing: {
@@ -1084,14 +958,5 @@ const gs = StyleSheet.create({
     alignItems: "center",
     marginTop: S.sm,
     flexWrap: "wrap",
-  },
-  summaryFeedbackRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginTop: S.md,
-    paddingTop: S.sm,
-    borderTopWidth: 1,
-    borderTopColor: C.surfaceLight,
   },
 });

@@ -4,10 +4,14 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL!;
 const SUPABASE_ANON = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!;
 
+if (!SUPABASE_URL || !SUPABASE_ANON) {
+  throw new Error("Supabase env değişkenleri eksik: EXPO_PUBLIC_SUPABASE_URL ve EXPO_PUBLIC_SUPABASE_ANON_KEY gerekli");
+}
+
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON);
 
-const PROFILE_KEY = "dagarcik_profile_id";
-const NICKNAME_KEY = "dagarcik_nickname";
+const PROFILE_KEY = "hece_profile_id";
+const NICKNAME_KEY = "hece_nickname";
 
 export async function getLocalProfile(): Promise<{ id: string; nickname: string } | null> {
   try {
@@ -71,98 +75,31 @@ export async function submitScore(record: {
   } catch { return false; }
 }
 
-// ── HESAP SİLME ───────────────────────────────────────────────────────────
-export async function deleteAccount(profileId: string): Promise<boolean> {
+export async function getLeaderboard(period: "daily" | "weekly" | "monthly" | "alltime", mode?: string, dailyNumber?: number): Promise<any[]> {
   try {
-    // Supabase'den skor ve profil sil
-    await supabase.from("scores").delete().eq("profile_id", profileId);
-    await supabase.from("question_feedback").delete().eq("profile_id", profileId);
-    const { error } = await supabase.from("profiles").delete().eq("id", profileId);
-    if (error) { console.error("Profil silme hatasi:", error); return false; }
+    let query = supabase
+      .from("scores")
+      .select("score, correct, total, created_at, profile_id, duration_seconds, profiles(nickname)")
+      .not("profile_id", "is", "null")
+      .order("score", { ascending: false })
+      .limit(500);
 
-    // Yerel verileri temizle
-    await AsyncStorage.multiRemove([
-      "dagarcik_profile_id",
-      "dagarcik_nickname",
-      "dagarcik_game_history",
-      "dagarcik_stats_total",
-      "dagarcik_daily_played",
-      "dagarcik_achievements",
-      "dagarcik_feedback_v2",
-      "dagarcik_seen_words_v1",
-      "dagarcik_onboarded",
-    ]);
-    return true;
-  } catch (e) {
-    console.error("Hesap silme hatasi:", e);
-    return false;
-  }
-}
+    if (mode) query = query.eq("mode", mode);
 
-// ── SORU GERİ BİLDİRİMİ (beta) ───────────────────────────────────────────
-const FEEDBACK_KEY = "dagarcik_feedback_v2"; // verilen oyların local kaydı
-
-export async function submitFeedback(word: string, vote: 1 | -1): Promise<boolean> {
-  try {
-    const { error } = await supabase.from("question_feedback").insert({ word, vote });
-    if (error) { console.error("Feedback hatasi:", error); return false; }
-    // Local'e kaydet — tekrar oy vermesin
-    const raw = await AsyncStorage.getItem(FEEDBACK_KEY);
-    const votes: Record<string, number> = raw ? JSON.parse(raw) : {};
-    votes[word] = vote;
-    await AsyncStorage.setItem(FEEDBACK_KEY, JSON.stringify(votes));
-    return true;
-  } catch { return false; }
-}
-
-export async function getLocalFeedbackVotes(): Promise<Record<string, number>> {
-  try {
-    const raw = await AsyncStorage.getItem(FEEDBACK_KEY);
-    return raw ? JSON.parse(raw) : {};
-  } catch { return {}; }
-}
-
-// Minimum oyun sayısı eşikleri — tek oyunla zirveye oturma önlemi
-const MIN_GAMES: Record<string, number> = {
-  weekly:  3,   // haftada en az 3 oyun
-  monthly: 5,   // ayda en az 5 oyun
-  alltime: 10,  // toplamda en az 10 oyun
-};
-
-export async function getLeaderboard(
-  period: "daily" | "weekly" | "monthly" | "alltime",
-  _mode?: string,
-  dailyNumber?: number,
-): Promise<any[]> {
-  try {
     if (period === "daily" && dailyNumber) {
-      const { data, error } = await supabase.rpc("get_leaderboard_daily", { daily_num: dailyNumber });
-      if (error) { console.error("Leaderboard hatasi:", error); return []; }
-      return (data || []).map((r: any) => ({
-        score: r.score,
-        correct: r.correct,
-        total: r.total,
-        duration_seconds: r.duration_secs,
-        profiles: { nickname: r.nickname },
-      }));
+      query = query.eq("daily_number", dailyNumber);
+    } else if (period === "weekly") {
+      const weekAgo = new Date();
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      query = query.gte("created_at", weekAgo.toISOString());
+    } else if (period === "monthly") {
+      const monthAgo = new Date();
+      monthAgo.setMonth(monthAgo.getMonth() - 1);
+      query = query.gte("created_at", monthAgo.toISOString());
     }
 
-    const startTs =
-      period === "weekly"  ? (() => { const d = new Date(); d.setDate(d.getDate() - 7);  return d.toISOString(); })()
-      : period === "monthly" ? (() => { const d = new Date(); d.setMonth(d.getMonth() - 1); return d.toISOString(); })()
-      : null;
-
-    const { data, error } = await supabase.rpc("get_leaderboard_period", {
-      start_ts:  startTs,
-      min_games: MIN_GAMES[period] ?? 1,
-    });
+    const { data, error } = await query;
     if (error) { console.error("Leaderboard hatasi:", error); return []; }
-    return (data || []).map((r: any) => ({
-      score: r.avg_score,
-      correct: r.total_correct,
-      total: r.total_total,
-      profiles: { nickname: r.nickname },
-      _games: r.games,
-    }));
+    return data || [];
   } catch { return []; }
 }

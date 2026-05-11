@@ -1,12 +1,8 @@
-import React, { useState, useRef } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Dimensions } from "react-native";
+import React, { useState } from "react";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Btn } from "../components/ui";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { C, T, S, R } from "../theme/tokens";
-import { ScreenProps } from "../types/navigation";
-
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
+import { C, T, S, R, SAFE_TOP } from "../theme/tokens";
 
 const SLIDES = [
   {
@@ -26,58 +22,35 @@ const SLIDES = [
   },
 ];
 
-export default function OnboardingScreen({ navigation }: ScreenProps<"Onboarding">) {
-  const insets = useSafeAreaInsets();
+export default function OnboardingScreen({ navigation }: any) {
   const [step, setStep] = useState(0);
-  const scrollRef = useRef<ScrollView>(null);
-
-  const goTo = (index: number) => {
-    scrollRef.current?.scrollTo({ x: index * SCREEN_WIDTH, animated: true });
-    setStep(index);
-  };
 
   const handleNext = async () => {
     if (step < SLIDES.length - 1) {
-      goTo(step + 1);
+      setStep(step + 1);
     } else {
-      await AsyncStorage.setItem("dagarcik_onboarded", "true");
+      await AsyncStorage.setItem("hece_onboarded", "true");
       navigation.replace("Home");
     }
   };
 
   const handleSkip = async () => {
-    await AsyncStorage.setItem("dagarcik_onboarded", "true");
+    await AsyncStorage.setItem("hece_onboarded", "true");
     navigation.replace("Home");
   };
 
-  const handleScroll = (e: any) => {
-    const newStep = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
-    if (newStep !== step) setStep(newStep);
-  };
+  const slide = SLIDES[step];
 
   return (
-    <View style={[s.container, { paddingTop: (insets.top || S.xxxl) + S.sm }]}>
+    <View style={s.container}>
       <TouchableOpacity style={s.skipBtn} onPress={handleSkip}>
         <Text style={[T.btnSm, { color: C.textFaint }]}>Atla</Text>
       </TouchableOpacity>
-
-      <ScrollView
-        ref={scrollRef}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        onMomentumScrollEnd={handleScroll}
-        style={{ flex: 1 }}
-      >
-        {SLIDES.map((slide, i) => (
-          <View key={i} style={[s.content, { width: SCREEN_WIDTH }]}>
-            <Text style={s.icon}>{slide.icon}</Text>
-            <Text style={[T.h1, { color: C.text, marginTop: S.xl, textAlign: "center" }]}>{slide.title}</Text>
-            <Text style={[T.body, { color: C.textSoft, marginTop: S.md, textAlign: "center", lineHeight: 26 }]}>{slide.desc}</Text>
-          </View>
-        ))}
-      </ScrollView>
-
+      <View style={s.content}>
+        <Text style={s.icon}>{slide.icon}</Text>
+        <Text style={[T.h1, { color: C.text, marginTop: S.xl, textAlign: "center" }]}>{slide.title}</Text>
+        <Text style={[T.body, { color: C.textSoft, marginTop: S.md, textAlign: "center", lineHeight: 26 }]}>{slide.desc}</Text>
+      </View>
       <View style={s.bottom}>
         <View style={s.dots}>
           {SLIDES.map((_, i) => (
@@ -95,7 +68,7 @@ export default function OnboardingScreen({ navigation }: ScreenProps<"Onboarding
 }
 
 const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.bg, paddingHorizontal: S.page, paddingBottom: 32 },
+  container: { flex: 1, backgroundColor: C.bg, paddingHorizontal: S.page, paddingTop: 56, paddingBottom: 32 },
   skipBtn: { alignSelf: "flex-end", paddingVertical: S.sm, paddingHorizontal: S.xs },
   content: { flex: 1, justifyContent: "center", alignItems: "center" },
   icon: { fontSize: 72 },

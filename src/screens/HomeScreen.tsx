@@ -1,21 +1,17 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
 import { C, T, S, R, SAFE_TOP } from "../theme/tokens";
 
 import { Btn } from "../components/ui";
 import { getStats, getDailyStatus } from "../utils/gameHistory";
 import { getDailyNumber } from "../utils/questionGenerator";
 import { getLocalProfile } from "../utils/supabase";
-import { ScreenProps } from "../types/navigation";
 
-export default function HomeScreen({ navigation }: ScreenProps<"Home">) {
-  const insets = useSafeAreaInsets();
+export default function HomeScreen({ navigation }: any) {
   const dailyNumber = getDailyNumber();
   const [dailyPlayed, setDailyPlayed] = useState<{score: number; correct: number; total: number} | null>(null);
   const [stats, setStats] = useState({ totalGames: 0, bestScore: 0, avgScore: 0, totalCorrect: 0, streak: 0 });
   const [profile, setProfile] = useState<{id: string; nickname: string} | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     loadData();
@@ -24,21 +20,18 @@ export default function HomeScreen({ navigation }: ScreenProps<"Home">) {
   }, [navigation]);
 
   const loadData = () => {
-    setIsLoading(true);
-    Promise.all([
-      getStats().then(setStats),
-      getDailyStatus().then(d => {
-        if (d && d.dailyNumber === dailyNumber) setDailyPlayed(d);
-        else setDailyPlayed(null);
-      }),
-      getLocalProfile().then(setProfile),
-    ]).finally(() => setIsLoading(false));
+    getStats().then(setStats);
+    getDailyStatus().then(d => {
+      if (d && d.dailyNumber === dailyNumber) setDailyPlayed(d);
+      else setDailyPlayed(null);
+    });
+    getLocalProfile().then(setProfile);
   };
 
   return (
     <View style={s.container}>
       {/* Header bar with avatar */}
-      <View style={[s.header, { paddingTop: (insets.top || S.xxxl) + S.sm }]}>
+      <View style={s.header}>
         <View style={{ width: 40 }} />
         <View style={{ flex: 1 }} />
         <TouchableOpacity
@@ -74,7 +67,7 @@ export default function HomeScreen({ navigation }: ScreenProps<"Home">) {
             <View style={s.dailyDone}>
               <Text style={{ fontSize: 20 }}>✅</Text>
               <View style={{ flex: 1 }}>
-                <Text style={[T.h3, { color: C.text }]}>{"Günlük HECE #" + dailyNumber}</Text>
+                <Text style={[T.h3, { color: C.text }]}>{"Günlük Hece #" + dailyNumber}</Text>
                 <Text style={[T.cap, { color: C.textSoft }]}>{dailyPlayed.correct + "/" + dailyPlayed.total + " doğru · " + dailyPlayed.score + " puan"}</Text>
               </View>
             </View>
@@ -86,7 +79,7 @@ export default function HomeScreen({ navigation }: ScreenProps<"Home">) {
             >
               <Text style={{ fontSize: 24 }}>📅</Text>
               <View style={{ flex: 1 }}>
-                <Text style={[T.h2, { color: C.white }]}>Günlük HECE</Text>
+                <Text style={[T.h2, { color: C.white }]}>Günlük Hece</Text>
                 <Text style={[T.cap, { color: "rgba(255,255,255,0.7)" }]}>{"#" + dailyNumber + " · 14 soru · 2:30"}</Text>
               </View>
               <Text style={[T.h3, { color: C.white }]}>›</Text>
@@ -121,11 +114,7 @@ export default function HomeScreen({ navigation }: ScreenProps<"Home">) {
         </TouchableOpacity>
 
         {/* Stats */}
-        {isLoading ? (
-          <View style={s.statsCard}>
-            <ActivityIndicator size="small" color={C.textFaint} />
-          </View>
-        ) : stats.totalGames > 0 && (
+        {stats.totalGames > 0 && (
           <View style={s.statsCard}>
             <View style={s.statItem}>
               <Text style={s.statValue}>{stats.totalGames}</Text>
@@ -161,7 +150,7 @@ export default function HomeScreen({ navigation }: ScreenProps<"Home">) {
         </View>
 
         <Text style={[T.cap, { color: C.textFaint, textAlign: "center", marginTop: S.xl, marginBottom: S.xxl }]}>
-          12.000+ kelime · her gün yeni sorular
+          7.000+ kelime ile sınırsız eğlence
         </Text>
       </ScrollView>
     </View>
@@ -177,6 +166,7 @@ const s = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: S.page,
+    paddingTop: 56,
     paddingBottom: S.sm,
   },
   avatarBtn: {

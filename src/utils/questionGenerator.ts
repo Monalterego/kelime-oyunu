@@ -13,6 +13,7 @@ interface QuestionDBEntry {
   flashHint?: string;
   themeCategory?: string;
   wordCount?: number;
+  skip?: boolean;
 }
 
 const CLASSIC_STRUCTURE = [
@@ -71,7 +72,7 @@ let filteredDB: QuestionDBEntry[] | null = null;
 function loadDB(): QuestionDBEntry[] {
   if (!filteredDB) {
     const raw = require("../data/questions-db.json") as QuestionDBEntry[];
-    filteredDB = raw.filter(isQualityEntry);
+    filteredDB = raw.filter(e => !e.skip && isQualityEntry(e));
   }
   return filteredDB;
 }
@@ -173,6 +174,15 @@ function buildDailyQuestions(pool: QuestionDBEntry[], structure: any[]): Questio
     }
   }
   return questions;
+}
+
+export function getPoolSizeByLength(): Record<number, number> {
+  const db = loadDB();
+  const sizes: Record<number, number> = {};
+  for (const e of db) {
+    sizes[e.length] = (sizes[e.length] || 0) + 1;
+  }
+  return sizes;
 }
 
 export function generateGameQuestions(

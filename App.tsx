@@ -22,7 +22,7 @@ export default function App() {
   const [onboarded, setOnboarded] = useState(true);
 
   useEffect(() => {
-    AsyncStorage.getItem("dagarcik_onboarded").then(val => {
+    AsyncStorage.getItem("hece_onboarded").then(val => {
       setOnboarded(val === "true");
       setReady(true);
     });

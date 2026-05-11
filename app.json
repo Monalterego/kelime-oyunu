@@ -1,26 +1,23 @@
 {
   "expo": {
-    "name": "HECE",
-    "slug": "hece",
+    "name": "HECE: Türkçe Kelime Oyunu",
+    "slug": "dagarcik",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
-    "owner": "monalterego",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#F7F6F2"
     },
     "ios": {
-      "supportsTablet": false,
       "bundleIdentifier": "com.monalterego.hece",
-      "buildNumber": "1"
+      "supportsTablet": true
     },
     "android": {
       "package": "com.monalterego.hece",
-      "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#F7F6F2"
@@ -30,11 +27,6 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    },
-    "extra": {
-      "eas": {
-        "projectId": "b99eff5d-aaef-4979-b96f-28c12c72321e"
-      }
     }
   }
 }
