@@ -1,8 +1,8 @@
-{
+﻿{
   "expo": {
-    "name": "HECE: Türkçe Kelime Oyunu",
+    "name": "HECE: TÃ¼rkÃ§e Kelime Oyunu",
     "slug": "dagarcik",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
