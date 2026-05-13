@@ -51,7 +51,7 @@ export default function HomeScreen({ navigation }: any) {
         {/* Logo */}
         <View style={s.logoSection}>
           <Text style={s.brandText}>HECE</Text>
-          <Text style={[T.bodySm, { color: C.textFaint, letterSpacing: 2 }]}>KELİME BULMACASI</Text>
+          <Text style={[T.bodySm, { color: C.textFaint, letterSpacing: 2 }]}>TÜRKÇE KELİME OYUNU</Text>
         </View>
 
         {/* Streak */}
