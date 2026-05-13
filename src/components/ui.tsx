@@ -1,6 +1,5 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ViewStyle } from "react-native";
-import { ArrowLeft } from "lucide-react-native";
 import { C, T, S, R, SHADOW, TILE_SIZE, getTileSize } from "../theme/tokens";
 
 // ─── SCREEN ────────────────────────────────────────────────
@@ -51,16 +50,6 @@ const BTN_MAP: Record<BtnVariant, { bg: string; border: string; borderW: number;
   outline: { bg: C.surface, border: C.tileBorder, borderW: 1.5, text: C.text, sub: C.textSoft },
   ghost: { bg: "transparent", border: "transparent", borderW: 0, text: C.textSoft, sub: C.textFaint },
 };
-
-// ─── BACK BUTTON ───────────────────────────────────────────
-export function BackBtn({ onPress }: { onPress: () => void }) {
-  return (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.65} style={s.backBtn} accessibilityRole="button" accessibilityLabel="Geri Dön">
-      <ArrowLeft size={15} color={C.textSoft} strokeWidth={2.5} />
-      <Text style={s.backBtnLabel}>Geri Dön</Text>
-    </TouchableOpacity>
-  );
-}
 
 // ─── CHIP / BADGE ──────────────────────────────────────────
 // Small info nuggets. Points, status, hints.
@@ -189,21 +178,5 @@ const s = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 999,
-  },
-  backBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-    backgroundColor: C.surfaceLight,
-    borderRadius: R.pill,
-    paddingVertical: 8,
-    paddingHorizontal: S.lg,
-    alignSelf: "center" as const,
-  },
-  backBtnLabel: {
-    fontSize: 14,
-    fontWeight: "600" as const,
-    color: C.textSoft,
-    letterSpacing: 0.2,
   },
 });

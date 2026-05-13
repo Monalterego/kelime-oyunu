@@ -1,10 +1,7 @@
 import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
-import { Home, ScrollText, FlaskConical, HardHat, Palette, Leaf, Dumbbell, UtensilsCrossed, ChevronRight } from "lucide-react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { C, T, S, R } from "../theme/tokens";
-import { BackBtn } from "../components/ui";
-import { ScreenProps } from "../types/navigation";
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
+import { Home, ScrollText, FlaskConical, HardHat, Palette, Leaf, Dumbbell, UtensilsCrossed, ChevronRight, ArrowLeft } from "lucide-react-native";
+import { C, T, S, R, SAFE_TOP } from "../theme/tokens";
 
 
 const CATEGORIES = [
@@ -18,11 +15,27 @@ const CATEGORIES = [
   { id: "Yemek ve Mutfak", label: "Yemek ve Mutfak", Icon: UtensilsCrossed, accent: "#866D3A" },
 ];
 
+const DIFFICULTY_COLORS: Record<string, string> = {
+  Kolay: C.green,
+  Orta: C.gold,
+  Zor: C.red,
+};
 
-export default function CategoryScreen({ navigation }: ScreenProps<"Category">) {
-  const insets = useSafeAreaInsets();
+function normalizeSearch(value: string) {
+  return value
+    .toLocaleLowerCase("tr-TR")
+    .replace(/ı/g, "i")
+    .replace(/ğ/g, "g")
+    .replace(/ü/g, "u")
+    .replace(/ş/g, "s")
+    .replace(/ö/g, "o")
+    .replace(/ç/g, "c")
+    .trim();
+}
+
+export default function CategoryScreen({ navigation }: any) {
   return (
-    <View style={[s.container, { paddingTop: insets.top || S.xxxl }]}>
+    <View style={s.container}>
       <View style={s.header}>
         <Text style={[T.h1, { color: C.text }]}>Kategori Seç</Text>
         <Text style={[T.bodySm, { color: C.textFaint, marginTop: S.xs }]}>
@@ -30,7 +43,11 @@ export default function CategoryScreen({ navigation }: ScreenProps<"Category">) 
         </Text>
       </View>
 
-      <View style={s.grid}>
+      <ScrollView
+        style={s.scroll}
+        contentContainerStyle={s.grid}
+        showsVerticalScrollIndicator={false}
+      >
         {CATEGORIES.map((cat) => (
           <TouchableOpacity
             key={cat.id}
@@ -39,15 +56,18 @@ export default function CategoryScreen({ navigation }: ScreenProps<"Category">) 
             onPress={() => navigation.navigate("Game", { mode: "category", category: cat.id })}
           >
             <View style={[s.iconBadge, { backgroundColor: `${cat.accent}14` }]}>
-              <cat.Icon size={20} color={cat.accent} strokeWidth={2} />
+              <cat.Icon size={22} color={cat.accent} strokeWidth={2} />
             </View>
             <Text style={[T.h3, { color: C.text, flex: 1 }]}>{cat.label}</Text>
-            <ChevronRight size={16} color={C.textFaint} strokeWidth={2} />
+            <ChevronRight size={18} color={C.textFaint} strokeWidth={2} />
           </TouchableOpacity>
         ))}
-      </View>
+      </ScrollView>
 
-      <BackBtn onPress={() => navigation.goBack()} />
+      <TouchableOpacity style={s.back} onPress={() => navigation.goBack()} activeOpacity={0.6}>
+        <ArrowLeft size={16} color={C.textSoft} strokeWidth={2} />
+        <Text style={[T.btnSm, { color: C.textSoft, marginLeft: 6 }]}>Geri Dön</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -57,20 +77,25 @@ const s = StyleSheet.create({
     flex: 1,
     backgroundColor: C.bg,
     paddingHorizontal: S.page,
+    paddingTop: SAFE_TOP,
     paddingBottom: S.lg,
   },
   header: {
-    marginBottom: S.md,
+    marginBottom: S.xl,
   },
+  resultsText: {
+    color: C.textFaint,
+    marginBottom: S.sm,
+  },
+  scroll: { flex: 1 },
   grid: {
-    flex: 1,
     gap: S.sm,
-    justifyContent: "center",
+    paddingBottom: S.lg,
   },
   card: {
     backgroundColor: C.surface,
     borderRadius: R.lg,
-    paddingVertical: 11,
+    paddingVertical: 18,
     paddingHorizontal: S.lg,
     flexDirection: "row",
     alignItems: "center",
@@ -80,9 +105,15 @@ const s = StyleSheet.create({
     borderColor: C.surfaceLight,
   },
   iconBadge: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  back: {
+    paddingVertical: S.md,
+    flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
   },

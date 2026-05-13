@@ -26,7 +26,7 @@ const STEPS = [
 
 const MODES = [
   {
-    title: "Günlük Hece",
+    title: "Günlük Dağarcık",
     desc: "Her gün aynı 14 soru, herkes için aynı. Günde bir kez oyna, arkadaşlarınla yarış!",
   },
   {
@@ -45,7 +45,7 @@ export default function HowToPlayScreen({ navigation }: any) {
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
         <Text style={[T.h1, { color: C.text, marginBottom: S.sm }]}>Nasıl Oynanır?</Text>
         <Text style={[T.bodySm, { color: C.textFaint, marginBottom: S.xl }]}>
-          Hece, kelime hazinenizi sınayan bir bilgi oyunudur.
+          Dağarcık, kelime hazinenizi sınayan bir bilgi oyunudur.
         </Text>
 
         {STEPS.map((step) => (

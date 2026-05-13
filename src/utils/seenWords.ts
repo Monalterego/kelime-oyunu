@@ -1,6 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const SEEN_KEY = "dagarcik_seen_words_v1";
+const SEEN_KEY = "hece_seen_words_v1";
 
 // Per-length pool sizes (matches questions-db active pool counts)
 // When 80% of a length bucket is seen, that bucket resets
