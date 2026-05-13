@@ -46,8 +46,18 @@ serve.log
 scripts/.improve-progress.json
 scripts/.compound-progress.json
 scripts/.expand-progress.json
+scripts/.deyimler-raw.json
+scripts/.generate-candidates.json
+scripts/.new-word-candidates.json
 src/data/questions-db-backup.json
 src/data/questions-db-improved.json
+
+# Geçici export & araç dosyaları
+questions-export.csv
+questions-export2.csv
+resize-ipad.mjs
+resize-screenshots.mjs
+scripts/hint-audit.csv
 
 # Claude local config
 .claude/
