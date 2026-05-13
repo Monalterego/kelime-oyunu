@@ -596,8 +596,8 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
           }}
           style={gs.tilesOuter}
         >
-          {cur.wordData.word.split(" ").map((group, gi) => {
-            const offset = cur.wordData.word.split(" ").slice(0, gi).reduce((s, w) => s + w.length + 1, 0);
+          {(cur.wordData.displayWord || cur.wordData.word).split(" ").map((group, gi) => {
+            const offset = (cur.wordData.displayWord || cur.wordData.word).split(" ").slice(0, gi).reduce((s, w) => s + w.length, 0);
             return (
               <React.Fragment key={gi}>
                 {gi > 0 && <View style={{ width: tileSize * 0.5 }} />}

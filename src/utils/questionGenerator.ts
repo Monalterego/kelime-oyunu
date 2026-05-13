@@ -92,13 +92,14 @@ function buildQuestions(pool: QuestionDBEntry[], structure: any[], seen: Set<str
       questions.push({
         wordData: {
           word: entry.word,
+          displayWord: entry.displayWord,
           length: entry.length,
           definition: entry.gameDefinition || entry.definition,
           origin: entry.origin,
           category: entry.category,
           example: entry.example,
           flashHint: entry.flashHint || "",
-          wordCount: entry.word.split(" ").length,
+          wordCount: (entry.displayWord || entry.word).split(" ").length,
         },
         points: entry.length * 100,
         revealedLetters: [],
@@ -122,13 +123,14 @@ function buildDailyQuestions(pool: QuestionDBEntry[], structure: any[]): Questio
       questions.push({
         wordData: {
           word: entry.word,
+          displayWord: entry.displayWord,
           length: entry.length,
           definition: entry.gameDefinition || entry.definition,
           origin: entry.origin,
           category: entry.category,
           example: entry.example,
           flashHint: entry.flashHint || "",
-          wordCount: entry.word.split(" ").length,
+          wordCount: (entry.displayWord || entry.word).split(" ").length,
         },
         points: entry.length * 100,
         revealedLetters: [],
