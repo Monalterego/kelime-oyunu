@@ -71,23 +71,29 @@ export async function submitScore(record: {
   } catch { return false; }
 }
 
-const PENDING_SCORE_KEY = "hece_pending_score";
+// Günlük mod ayrı slot — klasik/kategori oynarsa ezilmez
+const PENDING_DAILY_KEY = "hece_pending_score_daily";
+const PENDING_OTHER_KEY = "hece_pending_score";
 
 type ScoreRecord = Parameters<typeof submitScore>[0];
 
 export async function savePendingScore(record: ScoreRecord): Promise<void> {
   try {
-    await AsyncStorage.setItem(PENDING_SCORE_KEY, JSON.stringify(record));
+    const key = record.mode === "daily" ? PENDING_DAILY_KEY : PENDING_OTHER_KEY;
+    await AsyncStorage.setItem(key, JSON.stringify(record));
   } catch {}
 }
 
 export async function flushPendingScore(profileId: string): Promise<void> {
   try {
-    const raw = await AsyncStorage.getItem(PENDING_SCORE_KEY);
-    if (!raw) return;
-    const record: ScoreRecord = JSON.parse(raw);
-    const ok = await submitScore({ ...record, profileId });
-    if (ok) await AsyncStorage.removeItem(PENDING_SCORE_KEY);
+    // Her iki slotu da gönder
+    for (const key of [PENDING_DAILY_KEY, PENDING_OTHER_KEY]) {
+      const raw = await AsyncStorage.getItem(key);
+      if (!raw) continue;
+      const record: ScoreRecord = JSON.parse(raw);
+      const ok = await submitScore({ ...record, profileId });
+      if (ok) await AsyncStorage.removeItem(key);
+    }
   } catch {}
 }
 
