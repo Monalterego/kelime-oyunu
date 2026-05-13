@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert } from "react-native";
 import { C, T, S, R, SAFE_TOP } from "../theme/tokens";
 
-import { getLocalProfile, createProfile, deleteAccount } from "../utils/supabase";
+import { getLocalProfile, createProfile, deleteAccount, flushPendingScore } from "../utils/supabase";
 import { validateNickname } from "../utils/nicknameFilter";
 import { getStats, getGameHistory, GameRecord } from "../utils/gameHistory";
 import { getAchievements } from "../utils/achievements";
@@ -60,7 +60,12 @@ export default function ProfileScreen({ navigation }: any) {
     if (validationError) { setError(validationError); return; }
     setError("");
     const result = await createProfile(nickname.trim());
-    if (result) { setProfile(result); } else { setError("Bu isim alınmış, başka bir isim dene"); }
+    if (result) {
+      await flushPendingScore(result.id); // varsa bekleyen skoru gönder
+      setProfile(result);
+    } else {
+      setError("Bu isim alınmış, başka bir isim dene");
+    }
   };
 
   if (loading) return null;

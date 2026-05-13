@@ -71,6 +71,26 @@ export async function submitScore(record: {
   } catch { return false; }
 }
 
+const PENDING_SCORE_KEY = "hece_pending_score";
+
+type ScoreRecord = Parameters<typeof submitScore>[0];
+
+export async function savePendingScore(record: ScoreRecord): Promise<void> {
+  try {
+    await AsyncStorage.setItem(PENDING_SCORE_KEY, JSON.stringify(record));
+  } catch {}
+}
+
+export async function flushPendingScore(profileId: string): Promise<void> {
+  try {
+    const raw = await AsyncStorage.getItem(PENDING_SCORE_KEY);
+    if (!raw) return;
+    const record: ScoreRecord = JSON.parse(raw);
+    const ok = await submitScore({ ...record, profileId });
+    if (ok) await AsyncStorage.removeItem(PENDING_SCORE_KEY);
+  } catch {}
+}
+
 export async function getLeaderboard(period: "daily" | "weekly" | "monthly" | "alltime", mode?: string, dailyNumber?: number): Promise<any[]> {
   try {
     let query = supabase

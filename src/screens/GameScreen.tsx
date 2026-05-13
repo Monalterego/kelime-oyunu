@@ -12,7 +12,7 @@ import { useSafeAreaInsets, SafeAreaView } from "react-native-safe-area-context"
 import { C, T, S, R, SHADOW, getTileSize } from "../theme/tokens";
 import { saveGameRecord, markDailyPlayed, getStats, getDailyStatus } from "../utils/gameHistory";
 import { checkAchievements, Achievement } from "../utils/achievements";
-import { getLocalProfile, submitScore } from "../utils/supabase";
+import { getLocalProfile, submitScore, savePendingScore, flushPendingScore } from "../utils/supabase";
 import { getDailyNumber } from "../utils/questionGenerator";
 import { generateGameQuestions } from "../utils/questionGenerator";
 import { getSeenWords, markWordsSeen } from "../utils/seenWords";
@@ -241,21 +241,28 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
     );
 
     (async () => {
+      const scoreData = {
+        profileId: "",          // profil yokken boş, flush'ta doldurulur
+        mode,
+        category,
+        score: totalScore,
+        correct,
+        wrong,
+        skipped,
+        total: totalQuestions,
+        dailyNumber: mode === "daily" ? dailyNumber : undefined,
+        durationSeconds: (mode === "category" ? 90 : 150) - totalTimeLeft,
+      };
+
       const localProfile = await getLocalProfile();
       setProfile(localProfile);
+
       if (localProfile) {
-        await submitScore({
-          profileId: localProfile.id,
-          mode,
-          category,
-          score: totalScore,
-          correct,
-          wrong,
-          skipped,
-          total: totalQuestions,
-          dailyNumber: mode === "daily" ? dailyNumber : undefined,
-          durationSeconds: (mode === "category" ? 90 : 150) - totalTimeLeft,
-        });
+        // Profil var → direkt gönder
+        await submitScore({ ...scoreData, profileId: localProfile.id });
+      } else {
+        // Profil yok → bekleyen olarak kaydet, profil oluşturunca gönderilecek
+        await savePendingScore(scoreData);
       }
     })();
   }, [state.status, state.questions, state.totalScore, state.totalTimeLeft, mode, category]);
