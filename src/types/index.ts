@@ -1,11 +1,13 @@
 export interface WordData {
   word: string;
+  displayWord?: string;
   length: number;
   definition: string;
   origin: string;
   category: string;
   example: string;
   flashHint: string;
+  wordCount?: number;
 }
 
 export interface Question {

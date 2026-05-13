@@ -21,7 +21,8 @@ export default function LeaderboardScreen({ navigation }: any) {
 
   useEffect(() => {
     setLoading(true);
-    getLeaderboard(period, undefined, period === "daily" ? dailyNumber : undefined).then(data => {
+    const modeFilter = period === "daily" ? "daily" : undefined;
+    getLeaderboard(period, modeFilter, period === "daily" ? dailyNumber : undefined).then(data => {
       if (period === "daily") {
         const best: Record<string, any> = {};
         (data || []).forEach(item => {
@@ -34,6 +35,7 @@ export default function LeaderboardScreen({ navigation }: any) {
         });
         setScores(sorted);
       } else {
+        const MIN_GAMES = 3;
         const agg: Record<string, any> = {};
         (data || []).forEach(item => {
           const nick = item.profiles?.nickname || "Anonim";
@@ -45,6 +47,7 @@ export default function LeaderboardScreen({ navigation }: any) {
           if (item.duration_seconds && item.duration_seconds < agg[nick].minDuration) agg[nick].minDuration = item.duration_seconds;
         });
         const sorted = Object.values(agg)
+          .filter((a: any) => a.games >= MIN_GAMES)
           .map((a: any) => ({ ...a, avgScore: Math.round(a.totalScore / a.games) }))
           .sort((a: any, b: any) => {
             if (b.avgScore !== a.avgScore) return b.avgScore - a.avgScore;

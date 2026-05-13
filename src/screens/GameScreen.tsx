@@ -54,7 +54,7 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
     const dots = state.questions.map(q => q.correct ? "🟩" : q.skipped ? "⬜" : "🟥").join("");
     const correct = state.questions.filter(q => q.correct).length;
     const daily = mode === "daily" ? " #" + getDailyNumber() : "";
-    const text = "Dağarcık" + daily + " " + dots + "\n" + correct + "/" + state.questions.length + " · " + state.totalScore + " puan\ndagarcik.app";
+    const text = "HECE" + daily + " " + dots + "\n" + correct + "/" + state.questions.length + " · " + state.totalScore + " puan\nheceoyun.com";
     try {
       if (Platform.OS === "web") {
         try {
@@ -236,10 +236,11 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
       })
     );
 
-    getLocalProfile().then(localProfile => {
+    (async () => {
+      const localProfile = await getLocalProfile();
       setProfile(localProfile);
       if (localProfile) {
-        submitScore({
+        await submitScore({
           profileId: localProfile.id,
           mode,
           category,
@@ -252,7 +253,7 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
           durationSeconds: (mode === "category" ? 90 : 150) - totalTimeLeft,
         });
       }
-    });
+    })();
   }, [state.status, state.questions, state.totalScore, state.totalTimeLeft, mode, category]);
 
   const cur = state.questions[state.currentQuestionIndex];
@@ -267,7 +268,7 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
       return (
         <Screen>
           <Text style={{ fontSize: 48, marginBottom: S.lg }}>✅</Text>
-          <Text style={[T.display, { color: C.text }]}>Dağarcık</Text>
+          <Text style={[T.display, { color: C.text }]}>HECE</Text>
           <Text style={[T.h2, { color: C.textSoft, marginTop: S.md }]}>Bugün oynadın!</Text>
           <Text style={[T.bodySm, { color: C.textFaint, marginTop: S.sm }]}>
             {"#" + getDailyNumber() + " · " + dailyAlreadyPlayed.correct + "/" + dailyAlreadyPlayed.total + " doğru · " + dailyAlreadyPlayed.score + " puan"}
@@ -287,12 +288,12 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
     }
 
     const modeInfo = mode === "daily"
-      ? { title: "Günlük Dağarcık", sub: "Bugünün 14 sorusu · 2:30", icon: "📅" }
+      ? { title: "Günlük Hece", sub: "Bugünün 14 sorusu · 2:30", icon: "📅" }
       : { title: "Klasik Mod", sub: "14 soru · 2:30 · kolaydan zora", icon: "🎯" };
     return (
       <Screen>
         <Text style={{ fontSize: 48, marginBottom: S.lg }}>{modeInfo.icon}</Text>
-        <Text style={[T.display, { color: C.text }]}>Dağarcık</Text>
+        <Text style={[T.display, { color: C.text }]}>HECE</Text>
         <Text style={[T.h2, { color: C.textSoft, marginTop: S.md }]}>{modeInfo.title}</Text>
         <Text style={[T.bodySm, { color: C.textFaint, marginTop: S.sm, marginBottom: S.xxxl }]}>{modeInfo.sub}</Text>
         <Btn label="BAŞLA" onPress={startGame} variant="cta" />
@@ -546,7 +547,7 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
         </View>
       </View>
 
-      <View style={gs.spacerTop} />
+      {state.status !== "answering" && <View style={gs.spacerTop} />}
 
       {/* ── ORTA: meta + ipucu + tanım + kutucuklar, dikey ortada ── */}
       <View style={gs.midContent}>
@@ -570,9 +571,11 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
           </Animated.View>
         ) : null}
 
-        <View style={gs.defBox}>
-          <Text style={[T.h3, { color: C.text, textAlign: "center", lineHeight: 26 }]}>{cur.wordData.definition}</Text>
-        </View>
+        {state.status !== "answering" && (
+          <View style={gs.defBox}>
+            <Text style={[T.h3, { color: C.text, textAlign: "center", lineHeight: 26 }]}>{cur.wordData.definition}</Text>
+          </View>
+        )}
 
         <View style={gs.tiles}>
           {cur.wordData.word.split("").map((ch, i) => (
@@ -581,7 +584,7 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
         </View>
       </View>
 
-      <View style={gs.spacerBottom} />
+      {state.status !== "answering" && <View style={gs.spacerBottom} />}
 
       {/* ── BOTTOM ACTIONS ── */}
       {state.status === "answering" ? (
