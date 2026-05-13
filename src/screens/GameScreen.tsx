@@ -581,11 +581,16 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
           </Animated.View>
         ) : null}
 
-        {state.status !== "answering" && (
-          <View style={gs.defBox}>
-            <Text style={[T.h3, { color: C.text, textAlign: "center", lineHeight: 26 }]}>{cur.wordData.definition}</Text>
-          </View>
-        )}
+        <View style={gs.defBox}>
+          <Text
+            style={[T.h3, { color: C.text, textAlign: "center" }]}
+            numberOfLines={state.status === "answering" ? 3 : 4}
+            adjustsFontSizeToFit
+            minimumFontScale={0.5}
+          >
+            {cur.wordData.definition}
+          </Text>
+        </View>
 
         <TouchableOpacity
           activeOpacity={state.status === "playing" ? 0.7 : 1}
