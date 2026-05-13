@@ -35,7 +35,7 @@ export default function LeaderboardScreen({ navigation }: any) {
         });
         setScores(sorted);
       } else {
-        const MIN_GAMES = 3;
+        const MIN_GAMES = period === "weekly" ? 3 : period === "monthly" ? 5 : 10;
         const agg: Record<string, any> = {};
         (data || []).forEach(item => {
           const nick = item.profiles?.nickname || "Anonim";
@@ -90,7 +90,13 @@ export default function LeaderboardScreen({ navigation }: any) {
       </ScrollView>
 
       <Text style={[T.cap, { color: C.textFaint, marginBottom: S.md }]}>
-        {period === "daily" ? "En yüksek skor · eşitlikte en hızlı" : "Ortalama skor · oyun başına puan"}
+        {period === "daily"
+          ? "En yüksek skor · eşitlikte en hızlı"
+          : period === "weekly"
+          ? "Ortalama skor · en az 3 oyun şartı"
+          : period === "monthly"
+          ? "Ortalama skor · en az 5 oyun şartı"
+          : "Ortalama skor · en az 10 oyun şartı"}
       </Text>
 
       <ScrollView style={s.list} showsVerticalScrollIndicator={false}>
