@@ -373,7 +373,7 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
                     <Text style={[gs.summaryIcon, { color: statusColor }]}>{statusIcon}</Text>
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={[T.h3, { color: C.text }]}>{q.wordData.word.toLocaleUpperCase("tr-TR")}</Text>
+                    <Text style={[T.h3, { color: C.text }]}>{(q.wordData.displayWord ?? q.wordData.word).toLocaleUpperCase("tr-TR")}</Text>
                     <Text style={[T.cap, { color: statusColor, marginTop: 2 }]}>{statusLabel} · {q.earnedPoints > 0 ? "+" : ""}{q.earnedPoints}P</Text>
                   </View>
                 </View>
@@ -464,7 +464,7 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
           <View style={gs.midContent}>
             <View style={[gs.resultBox, { backgroundColor: ok ? C.greenSoft : C.redSoft, borderColor: ok ? C.greenBorder : C.redBorder }]}>
               <Text style={{ fontSize: 44, marginBottom: S.md }}>{ok ? "✓" : skip ? "⊘" : "✗"}</Text>
-              <Text style={[T.h1, { color: C.text }]}>{cur.wordData.word.toLocaleUpperCase("tr-TR")}</Text>
+              <Text style={[T.h1, { color: C.text }]}>{(cur.wordData.displayWord ?? cur.wordData.word).toLocaleUpperCase("tr-TR")}</Text>
               <Text style={[T.bodySm, { color: C.textSoft, textAlign: "center", marginTop: S.sm }]}>{cur.wordData.definition}</Text>
               <Text style={[T.h2, { color: ok ? C.green : C.red, marginTop: S.lg }]}>
                 {cur.earnedPoints > 0 ? "+" : ""}{cur.earnedPoints}
