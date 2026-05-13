@@ -37,7 +37,8 @@ let questionsDB: QuestionDBEntry[] | null = null;
 
 function loadDB(): QuestionDBEntry[] {
   if (!questionsDB) {
-    questionsDB = require("../data/questions-db.json") as QuestionDBEntry[];
+    const raw = require("../data/questions-db.json") as (QuestionDBEntry & { skip?: boolean })[];
+    questionsDB = raw.filter((q) => !q.skip);
   }
   return questionsDB;
 }
