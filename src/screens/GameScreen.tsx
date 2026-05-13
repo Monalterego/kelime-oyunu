@@ -610,12 +610,18 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
 
       {state.status !== "answering" && <View style={gs.spacerBottom} />}
 
-      {/* ── BOTTOM ACTIONS ── */}
-      {state.status === "answering" ? (
-        <View style={gs.answerZone}>
+      {/* ── SÜRE DAİRESİ: tile ile input arasında ortalı ── */}
+      {state.status === "answering" && (
+        <View style={{ alignItems: "center", paddingVertical: S.md }}>
           <View style={gs.answerTimer}>
             <Text style={gs.timerNum}>{state.answerTimeLeft}</Text>
           </View>
+        </View>
+      )}
+
+      {/* ── BOTTOM ACTIONS ── */}
+      {state.status === "answering" ? (
+        <View style={gs.answerZone}>
           <TextInput
             style={gs.input}
             value={answer}
