@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert } from "react-native";
 import { C, T, S, R, SAFE_TOP } from "../theme/tokens";
 
-import { getLocalProfile, createProfile } from "../utils/supabase";
+import { getLocalProfile, createProfile, deleteAccount } from "../utils/supabase";
+import { validateNickname } from "../utils/nicknameFilter";
 import { getStats, getGameHistory, GameRecord } from "../utils/gameHistory";
 import { getAchievements } from "../utils/achievements";
 import { Btn } from "../components/ui";
@@ -12,6 +13,7 @@ export default function ProfileScreen({ navigation }: any) {
   const [profile, setProfile] = useState<{ id: string; nickname: string } | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState(false);
   const [stats, setStats] = useState({ totalGames: 0, bestScore: 0, avgScore: 0, totalCorrect: 0, streak: 0 });
   const [achCount, setAchCount] = useState({ total: 0, unlocked: 0 });
   const [recentGames, setRecentGames] = useState<GameRecord[]>([]);
@@ -28,9 +30,34 @@ export default function ProfileScreen({ navigation }: any) {
     getGameHistory().then(h => setRecentGames(h.slice(0, 5)));
   }, []);
 
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      "Hesabı Sil",
+      "Profil, skorlar ve tüm veriler kalıcı olarak silinecek. Bu işlem geri alınamaz.",
+      [
+        { text: "Vazgeç", style: "cancel" },
+        {
+          text: "Sil",
+          style: "destructive",
+          onPress: async () => {
+            if (!profile) return;
+            setDeleting(true);
+            const success = await deleteAccount(profile.id);
+            setDeleting(false);
+            if (success) {
+              navigation.popToTop();
+            } else {
+              Alert.alert("Hata", "Hesap silinemedi. Lütfen tekrar dene.");
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const handleCreate = async () => {
-    if (nickname.trim().length < 3) { setError("En az 3 karakter olmalı"); return; }
-    if (nickname.trim().length > 15) { setError("En fazla 15 karakter olabilir"); return; }
+    const validationError = validateNickname(nickname);
+    if (validationError) { setError(validationError); return; }
     setError("");
     const result = await createProfile(nickname.trim());
     if (result) { setProfile(result); } else { setError("Bu isim alınmış, başka bir isim dene"); }
@@ -97,6 +124,9 @@ export default function ProfileScreen({ navigation }: any) {
             <Btn label="Liderlik Tablosu" onPress={() => navigation.navigate("Leaderboard")} variant="cta" />
             <Btn label="Geri Dön" onPress={() => navigation.goBack()} variant="ghost" />
           </View>
+          <TouchableOpacity onPress={handleDeleteAccount} disabled={deleting} style={s.deleteBtn}>
+            <Text style={s.deleteBtnText}>{deleting ? "Siliniyor..." : "Hesabı Sil"}</Text>
+          </TouchableOpacity>
         </ScrollView>
       </View>
     );
@@ -140,6 +170,8 @@ const s = StyleSheet.create({
   statLabel: { fontSize: 11, fontWeight: "600", color: C.textFaint, marginTop: 4 },
   achCard: { flexDirection: "row", alignItems: "center", backgroundColor: C.surface, borderRadius: R.lg, padding: S.lg, gap: S.md, borderWidth: 1, borderColor: C.goldBorder },
   gameRow: { flexDirection: "row", alignItems: "center", backgroundColor: C.surface, borderRadius: R.lg, padding: S.lg, marginBottom: S.sm, borderWidth: 1, borderColor: C.surfaceLight },
+  deleteBtn: { alignItems: "center", paddingVertical: S.sm, marginTop: S.lg, marginBottom: S.sm },
+  deleteBtnText: { fontSize: 13, color: C.textFaint, textDecorationLine: "underline" },
   createContent: { flex: 1, justifyContent: "center", alignItems: "center", paddingHorizontal: S.page },
   createActions: { gap: S.md, paddingHorizontal: S.page, paddingBottom: 40 },
   input: { width: "100%", backgroundColor: C.surface, borderWidth: 2, borderColor: C.surfaceLight, borderRadius: R.lg, padding: S.lg, marginTop: S.xl, fontSize: 18, fontWeight: "600", color: C.text, textAlign: "center" },

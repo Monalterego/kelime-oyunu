@@ -14,7 +14,10 @@
     },
     "ios": {
       "bundleIdentifier": "com.monalterego.hece",
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.monalterego.hece",
@@ -28,6 +31,15 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
+    "plugins": [
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-8017334395191649~8645262458",
+          "iosAppId": "ca-app-pub-8017334395191649~5041893519"
+        }
+      ]
+    ],
     "extra": {
       "eas": {
         "projectId": "b99eff5d-aaef-4979-b96f-28c12c72321e"
