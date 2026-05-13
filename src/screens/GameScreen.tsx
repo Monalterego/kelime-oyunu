@@ -16,13 +16,22 @@ import { getLocalProfile, submitScore, savePendingScore, flushPendingScore } fro
 import { getDailyNumber } from "../utils/questionGenerator";
 import { generateGameQuestions } from "../utils/questionGenerator";
 import { getSeenWords, markWordsSeen } from "../utils/seenWords";
+import { useInterstitialAd } from "../hooks/useInterstitialAd";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Screen, Btn, Chip, Card, Tile, ProgressDots } from "../components/ui";
 import { ScreenProps } from "../types/navigation";
+
+const AD_GAME_OVER_IOS = process.env.EXPO_PUBLIC_ADMOB_INTERSTITIAL_GAME_OVER_IOS ?? "";
+const AD_GAME_OVER_ANDROID = process.env.EXPO_PUBLIC_ADMOB_INTERSTITIAL_GAME_OVER_ANDROID ?? "";
+const AD_UNIT_ID = Platform.OS === "ios" ? AD_GAME_OVER_IOS : AD_GAME_OVER_ANDROID;
+const AD_EVERY_N_GAMES = 2;
+const AD_GAME_COUNT_KEY = "hece_ad_game_count";
 
 export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
   const mode = route.params?.mode ?? "classic";
   const category = route.params?.category;
   const insets = useSafeAreaInsets();
+  const { showAd } = useInterstitialAd(AD_UNIT_ID);
 
   const [state, dispatch] = useReducer(gameReducer, initialGameState);
   const [answer, setAnswer] = useState("");
@@ -239,6 +248,18 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
         if (newAch.length > 0) setNewAchievements(newAch);
       })
     );
+
+    // 2 oyunda bir reklam göster (günlük modda gösterme)
+    if (mode !== "daily") {
+      (async () => {
+        try {
+          const raw = await AsyncStorage.getItem(AD_GAME_COUNT_KEY);
+          const count = (parseInt(raw ?? "0") || 0) + 1;
+          await AsyncStorage.setItem(AD_GAME_COUNT_KEY, String(count));
+          if (count % AD_EVERY_N_GAMES === 0) showAd();
+        } catch {}
+      })();
+    }
 
     (async () => {
       const scoreData = {
