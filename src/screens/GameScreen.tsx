@@ -174,7 +174,7 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
       } else {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       }
-      const d = q?.correct ? 1500 : 2500;
+      const d = 2000;
       const t = setTimeout(() => dispatch({ type: "NEXT_QUESTION" }), d);
       return () => clearTimeout(t);
     }
