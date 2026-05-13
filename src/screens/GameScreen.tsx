@@ -289,7 +289,7 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
 
     const modeInfo = mode === "daily"
       ? { title: "Günlük Hece", sub: "Bugünün 14 sorusu · 2:30", icon: "📅" }
-      : { title: "Klasik Mod", sub: "14 soru · 2:30 · kolaydan zora", icon: "🎯" };
+      : { title: "Klasik Mod", sub: "14 soru · 2:30", icon: "🎯" };
     return (
       <Screen>
         <Text style={{ fontSize: 48, marginBottom: S.lg }}>{modeInfo.icon}</Text>
