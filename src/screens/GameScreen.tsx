@@ -499,13 +499,15 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
   const skipCost = Math.round(getBasePoints(cur) * SKIP_PENALTY_RATIO);
   const canHint = cur.revealedLetters.length < cur.wordData.length - 1;
   const tileSize = getTileSize(cur.wordData.length);
+  const isAnswering = state.status === "answering";
+  const displayTileSize = isAnswering ? Math.min(tileSize, 32) : tileSize;
   const skippedArr = state.questions.slice(0, state.currentQuestionIndex).map(q => q.skipped);
 
   return (
     <SafeAreaView edges={["bottom"]} style={gs.safeBottom}>
     <KeyboardAvoidingView
       style={gs.game}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      behavior="padding"
       keyboardVerticalOffset={0}
     >
       <View style={gs.gameInner}>
@@ -551,7 +553,7 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
         </View>
       </View>
 
-      {state.status !== "answering" && <View style={gs.spacerTop} />}
+      {!isAnswering && <View style={gs.spacerTop} />}
 
       {/* ── ORTA: meta + ipucu + tanım + kutucuklar, dikey ortada ── */}
       <View style={gs.midContent}>
@@ -603,25 +605,19 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
           style={gs.tiles}
         >
           {cur.wordData.word.split("").map((ch, i) => (
-            <Tile key={i} letter={ch} revealed={cur.revealedLetters.includes(i)} size={tileSize} />
+            <Tile key={i} letter={ch} revealed={cur.revealedLetters.includes(i)} size={displayTileSize} />
           ))}
         </TouchableOpacity>
       </View>
 
-      {state.status !== "answering" && <View style={gs.spacerBottom} />}
+      {!isAnswering && <View style={gs.spacerBottom} />}
 
-      {/* ── SÜRE DAİRESİ: tile ile input arasında ortalı ── */}
-      {state.status === "answering" && (
-        <View style={{ alignItems: "center", paddingVertical: S.md }}>
+      {/* ── BOTTOM ACTIONS ── */}
+      {isAnswering ? (
+        <View style={gs.answerZone}>
           <View style={gs.answerTimer}>
             <Text style={gs.timerNum}>{state.answerTimeLeft}</Text>
           </View>
-        </View>
-      )}
-
-      {/* ── BOTTOM ACTIONS ── */}
-      {state.status === "answering" ? (
-        <View style={gs.answerZone}>
           <TextInput
             style={gs.input}
             value={answer}
@@ -810,8 +806,6 @@ const gs = StyleSheet.create({
     marginBottom: S.md,
     borderWidth: 1,
     borderColor: C.brandBorder,
-    height: 90,
-    justifyContent: "center",
   },
 
   // Tiles
