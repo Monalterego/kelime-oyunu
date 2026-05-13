@@ -564,6 +564,12 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
             <Text style={[gs.metaValue, { color: C.brand }]}>{cur.wordData.length}</Text>
             <Text style={gs.metaLabel}>harf</Text>
           </View>
+          {cur.wordData.displayWord?.includes(" ") && (
+            <View style={[gs.metaPill, { borderColor: C.gold + "80", backgroundColor: C.gold + "18" }]}>
+              <Text style={[gs.metaValue, { color: C.gold }]}>2</Text>
+              <Text style={gs.metaLabel}>kelime</Text>
+            </View>
+          )}
         </View>
 
         {showHint && state.currentFlashHint ? (
@@ -581,11 +587,6 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
           </View>
         )}
 
-        {cur.wordData.wordCount && cur.wordData.wordCount > 1 && (
-          <Text style={[T.cap, { color: C.textFaint, textAlign: "center", marginBottom: S.xs }]}>
-            {cur.wordData.wordCount} kelime
-          </Text>
-        )}
         <TouchableOpacity
           activeOpacity={state.status === "playing" ? 0.7 : 1}
           onPress={() => {
