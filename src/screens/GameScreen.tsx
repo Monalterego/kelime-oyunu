@@ -577,11 +577,35 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
           </View>
         )}
 
-        <View style={gs.tiles}>
-          {cur.wordData.word.split("").map((ch, i) => (
-            <Tile key={i} letter={ch} revealed={cur.revealedLetters.includes(i)} size={tileSize} />
-          ))}
-        </View>
+        {cur.wordData.wordCount && cur.wordData.wordCount > 1 && (
+          <Text style={[T.cap, { color: C.textFaint, textAlign: "center", marginBottom: S.xs }]}>
+            {cur.wordData.wordCount} kelime
+          </Text>
+        )}
+        <TouchableOpacity
+          activeOpacity={state.status === "playing" ? 0.7 : 1}
+          onPress={() => {
+            if (state.status === "playing") {
+              setAnswer("");
+              dispatch({ type: "PRESS_BUTTON" });
+            }
+          }}
+          style={gs.tilesOuter}
+        >
+          {cur.wordData.word.split(" ").map((group, gi) => {
+            const offset = cur.wordData.word.split(" ").slice(0, gi).reduce((s, w) => s + w.length + 1, 0);
+            return (
+              <React.Fragment key={gi}>
+                {gi > 0 && <View style={{ width: tileSize * 0.5 }} />}
+                <View style={gs.tiles}>
+                  {group.split("").map((ch, ci) => (
+                    <Tile key={ci} letter={ch} revealed={cur.revealedLetters.includes(offset + ci)} size={tileSize} />
+                  ))}
+                </View>
+              </React.Fragment>
+            );
+          })}
+        </TouchableOpacity>
       </View>
 
       {state.status !== "answering" && <View style={gs.spacerBottom} />}
@@ -782,12 +806,17 @@ const gs = StyleSheet.create({
     borderColor: C.brandBorder,
   },
 
-  // Tiles — gap MUST match getTileSize() gap constant (both = 6)
+  // Tiles
+  tilesOuter: {
+    flexDirection: "row",
+    justifyContent: "center",
+    flexWrap: "wrap",
+    marginBottom: S.sm,
+  },
   tiles: {
     flexDirection: "row",
     justifyContent: "center",
     gap: 6,
-    marginBottom: S.sm,
     flexWrap: "wrap",
   },
 
