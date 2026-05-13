@@ -584,9 +584,9 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
         <View style={gs.defBox}>
           <Text
             style={[T.h3, { color: C.text, textAlign: "center" }]}
-            numberOfLines={state.status === "answering" ? 3 : 4}
+            numberOfLines={3}
             adjustsFontSizeToFit
-            minimumFontScale={0.5}
+            minimumFontScale={0.4}
           >
             {cur.wordData.definition}
           </Text>
@@ -810,6 +810,8 @@ const gs = StyleSheet.create({
     marginBottom: S.md,
     borderWidth: 1,
     borderColor: C.brandBorder,
+    height: 90,
+    justifyContent: "center",
   },
 
   // Tiles
