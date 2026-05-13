@@ -568,7 +568,7 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
           </View>
           {cur.wordData.displayWord?.includes(" ") && (
             <View style={[gs.metaPill, { borderColor: C.gold + "80", backgroundColor: C.gold + "18" }]}>
-              <Text style={[gs.metaValue, { color: C.gold }]}>2</Text>
+              <Text style={[gs.metaValue, { color: C.gold }]}>{cur.wordData.displayWord.split(" ").length}</Text>
               <Text style={gs.metaLabel}>kelime</Text>
             </View>
           )}
