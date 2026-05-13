@@ -14,13 +14,13 @@ interface QuestionDBEntry {
 }
 
 const CLASSIC_STRUCTURE = [
-  { length: 4, count: 2, preferDifficulty: "easy" },
-  { length: 5, count: 2, preferDifficulty: "easy" },
-  { length: 6, count: 2, preferDifficulty: "medium" },
-  { length: 7, count: 2, preferDifficulty: "medium" },
-  { length: 8, count: 2, preferDifficulty: "medium" },
-  { length: 9, count: 2, preferDifficulty: "hard" },
-  { length: 10, count: 2, preferDifficulty: "hard" },
+  { length: 4, count: 2 },
+  { length: 5, count: 2 },
+  { length: 6, count: 2 },
+  { length: 7, count: 2 },
+  { length: 8, count: 2 },
+  { length: 9, count: 2 },
+  { length: 10, count: 2 },
 ];
 
 const CATEGORY_STRUCTURE = [
@@ -77,11 +77,9 @@ export function getDailyNumber(): number {
 
 function buildQuestions(pool: QuestionDBEntry[], structure: any[]): Question[] {
   const questions: Question[] = [];
-  for (const { length, count, preferDifficulty } of structure) {
+  for (const { length, count } of structure) {
     const byLength = pool.filter((q) => q.length === length);
-    const preferred = byLength.filter((q) => q.difficulty === preferDifficulty);
-    const source = preferred.length >= count ? preferred : byLength;
-    const selected = pickRandom(source, count);
+    const selected = pickRandom(byLength, count);
 
     for (const entry of selected) {
       questions.push({
@@ -110,11 +108,9 @@ function buildQuestions(pool: QuestionDBEntry[], structure: any[]): Question[] {
 function buildDailyQuestions(pool: QuestionDBEntry[], structure: any[]): Question[] {
   const rand = seededRandom(getDailySeed());
   const questions: Question[] = [];
-  for (const { length, count, preferDifficulty } of structure) {
+  for (const { length, count } of structure) {
     const byLength = pool.filter((q) => q.length === length);
-    const preferred = byLength.filter((q) => q.difficulty === preferDifficulty);
-    const source = preferred.length >= count ? preferred : byLength;
-    const selected = pickSeeded(source, count, rand);
+    const selected = pickSeeded(byLength, count, rand);
     for (const entry of selected) {
       questions.push({
         wordData: {
