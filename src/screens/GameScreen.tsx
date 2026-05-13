@@ -594,21 +594,11 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
               dispatch({ type: "PRESS_BUTTON" });
             }
           }}
-          style={gs.tilesOuter}
+          style={gs.tiles}
         >
-          {(cur.wordData.displayWord || cur.wordData.word).split(" ").map((group, gi) => {
-            const offset = (cur.wordData.displayWord || cur.wordData.word).split(" ").slice(0, gi).reduce((s, w) => s + w.length, 0);
-            return (
-              <React.Fragment key={gi}>
-                {gi > 0 && <View style={{ width: tileSize * 0.5 }} />}
-                <View style={gs.tiles}>
-                  {group.split("").map((ch, ci) => (
-                    <Tile key={ci} letter={ch} revealed={cur.revealedLetters.includes(offset + ci)} size={tileSize} />
-                  ))}
-                </View>
-              </React.Fragment>
-            );
-          })}
+          {cur.wordData.word.split("").map((ch, i) => (
+            <Tile key={i} letter={ch} revealed={cur.revealedLetters.includes(i)} size={tileSize} />
+          ))}
         </TouchableOpacity>
       </View>
 
