@@ -15,6 +15,7 @@ import { checkAchievements, Achievement } from "../utils/achievements";
 import { getLocalProfile, submitScore } from "../utils/supabase";
 import { getDailyNumber } from "../utils/questionGenerator";
 import { generateGameQuestions } from "../utils/questionGenerator";
+import { getSeenWords, markWordsSeen } from "../utils/seenWords";
 import { Screen, Btn, Chip, Card, Tile, ProgressDots } from "../components/ui";
 import { ScreenProps } from "../types/navigation";
 
@@ -76,9 +77,10 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
     }
   };
 
-  const startGame = () => {
+  const startGame = async () => {
     try {
-      const questions = generateGameQuestions(mode, category);
+      const seen = mode === "daily" ? new Set<string>() : await getSeenWords();
+      const questions = generateGameQuestions(mode, category, seen);
       if (questions.length > 0)
         dispatch({ type: "START_GAME", questions, totalTime: mode === "category" ? 90 : 150 });
     } catch (e) { console.error(e); }
@@ -208,6 +210,8 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
 
     if (mode === "daily") {
       markDailyPlayed(dailyNumber, totalScore, correct, totalQuestions);
+    } else {
+      markWordsSeen(state.questions.map(q => q.wordData.word));
     }
 
     saveGameRecord({

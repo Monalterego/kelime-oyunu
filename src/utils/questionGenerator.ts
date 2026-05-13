@@ -48,6 +48,13 @@ function pickRandom<T>(arr: T[], count: number): T[] {
   return shuffled.slice(0, count);
 }
 
+// Görülmemiş kelimeleri öncelikle seç; yetmezse tüm havuzu kullan
+function pickExcludingSeen(arr: QuestionDBEntry[], count: number, seen: Set<string>): QuestionDBEntry[] {
+  const unseen = arr.filter(e => !seen.has(e.word));
+  const pool = unseen.length >= count ? unseen : arr;
+  return pickRandom(pool, count);
+}
+
 // Seeded random for daily mode - same date = same questions for everyone
 function seededRandom(seed: number): () => number {
   let s = seed;
@@ -75,11 +82,11 @@ export function getDailyNumber(): number {
   return Math.floor((today.getTime() - start.getTime()) / 86400000) + 1;
 }
 
-function buildQuestions(pool: QuestionDBEntry[], structure: any[]): Question[] {
+function buildQuestions(pool: QuestionDBEntry[], structure: any[], seen: Set<string> = new Set()): Question[] {
   const questions: Question[] = [];
   for (const { length, count } of structure) {
     const byLength = pool.filter((q) => q.length === length);
-    const selected = pickRandom(byLength, count);
+    const selected = pickExcludingSeen(byLength, count, seen);
 
     for (const entry of selected) {
       questions.push({
@@ -135,14 +142,18 @@ function buildDailyQuestions(pool: QuestionDBEntry[], structure: any[]): Questio
   return questions;
 }
 
-export function generateGameQuestions(mode: "classic" | "category" | "daily" = "classic", themeCategory?: string): Question[] {
+export function generateGameQuestions(
+  mode: "classic" | "category" | "daily" = "classic",
+  themeCategory?: string,
+  seenWords: Set<string> = new Set(),
+): Question[] {
   const db = loadDB();
   if (mode === "daily") {
     return buildDailyQuestions(db, CLASSIC_STRUCTURE);
   }
   if (mode === "category" && themeCategory) {
     const pool = db.filter((q) => q.themeCategory === themeCategory);
-    return buildQuestions(pool, CATEGORY_STRUCTURE);
+    return buildQuestions(pool, CATEGORY_STRUCTURE, seenWords);
   }
-  return buildQuestions(db, CLASSIC_STRUCTURE);
+  return buildQuestions(db, CLASSIC_STRUCTURE, seenWords);
 }
