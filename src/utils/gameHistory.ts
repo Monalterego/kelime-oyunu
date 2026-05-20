@@ -1,7 +1,8 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const HISTORY_KEY = "hece_game_history";
-const MAX_HISTORY = 20;
+const STATS_KEY = "hece_game_stats";
+const MAX_HISTORY = 20; // Son 20 oyun gösterim için tutulur, istatistikler ayrı sayaçta
 
 export interface GameRecord {
   id: string;
@@ -15,8 +16,41 @@ export interface GameRecord {
   total: number;
 }
 
+interface StatsCounter {
+  totalGames: number;
+  bestScore: number;
+  totalCorrect: number;
+  totalScore: number; // avgScore hesabı için
+}
+
+async function getStatsCounter(): Promise<StatsCounter> {
+  try {
+    const data = await AsyncStorage.getItem(STATS_KEY);
+    return data ? JSON.parse(data) : { totalGames: 0, bestScore: 0, totalCorrect: 0, totalScore: 0 };
+  } catch {
+    return { totalGames: 0, bestScore: 0, totalCorrect: 0, totalScore: 0 };
+  }
+}
+
+async function updateStatsCounter(record: Omit<GameRecord, "id" | "date">): Promise<void> {
+  try {
+    const counter = await getStatsCounter();
+    counter.totalGames += 1;
+    counter.bestScore = Math.max(counter.bestScore, record.score);
+    counter.totalCorrect += record.correct;
+    counter.totalScore += record.score;
+    await AsyncStorage.setItem(STATS_KEY, JSON.stringify(counter));
+  } catch (e) {
+    console.error("Stats sayaci guncellenemedi:", e);
+  }
+}
+
 export async function saveGameRecord(record: Omit<GameRecord, "id" | "date">): Promise<void> {
   try {
+    // Sayaçları güncelle (limit yok)
+    await updateStatsCounter(record);
+
+    // Son 20 oyun geçmişini güncelle (gösterim için)
     const history = await getGameHistory();
     const newRecord: GameRecord = {
       ...record,
@@ -48,17 +82,14 @@ export async function getStats(): Promise<{
   totalCorrect: number;
   streak: number;
 }> {
-  const history = await getGameHistory();
-  if (history.length === 0) {
-    return { totalGames: 0, bestScore: 0, avgScore: 0, totalCorrect: 0, streak: 0 };
-  }
+  const [counter, history] = await Promise.all([getStatsCounter(), getGameHistory()]);
 
-  const totalGames = history.length;
-  const bestScore = Math.max(...history.map(h => h.score));
-  const avgScore = Math.round(history.reduce((sum, h) => sum + h.score, 0) / totalGames);
-  const totalCorrect = history.reduce((sum, h) => sum + h.correct, 0);
+  const totalGames = counter.totalGames;
+  const bestScore = counter.bestScore;
+  const totalCorrect = counter.totalCorrect;
+  const avgScore = totalGames > 0 ? Math.round(counter.totalScore / totalGames) : 0;
 
-  // Streak: ardisik gun sayisi
+  // Streak: history'den hesaplanır (son 20 oyun yeterli — günlük kontrol)
   let streak = 0;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
