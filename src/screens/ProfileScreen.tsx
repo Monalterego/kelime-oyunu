@@ -29,7 +29,7 @@ export default function ProfileScreen({ navigation }: any) {
     getAchievements().then(achs => {
       setAchCount({ total: achs.length, unlocked: achs.filter(a => a.unlocked).length });
     });
-    getGameHistory().then(h => setRecentGames(h.slice(0, 3)));
+    getGameHistory().then(h => setRecentGames(h.slice(0, 5)));
   }, []);
 
   const handleDeleteAccount = () => {
