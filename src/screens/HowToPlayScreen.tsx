@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
 import { C, T, S, R, SAFE_TOP } from "../theme/tokens";
+import { ANSWER_TIME } from "../utils/gameReducer";
 
 
 const STEPS = [
@@ -13,7 +14,7 @@ const STEPS = [
   {
     number: "2",
     title: "Cevabını Yaz",
-    description: "CEVAPLA butonuna bas ve kelimeyi yaz. 12 saniye süren var. Emin değilsen HARF AL ile ipucu alabilirsin.",
+    description: `CEVAPLA butonuna bas ve kelimeyi yaz. ${ANSWER_TIME} saniye süren var. Emin değilsen HARF AL ile ipucu alabilirsin.`,
     tip: "Her açılan harf 100 puan düşürür. Son harf açılamaz.",
   },
   {
@@ -31,7 +32,7 @@ const MODES = [
   },
   {
     title: "Klasik Mod",
-    desc: "14 soru, 2.5 dakika. 4 ile 10 harfli karışık kelimeler. Kolaydan zora gider.",
+    desc: "14 soru, 2.5 dakika. 4 ile 10 harfli karışık kelimeler.",
   },
   {
     title: "Kategori Modu",
