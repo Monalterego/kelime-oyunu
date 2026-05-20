@@ -3,7 +3,6 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert,
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { C, T, S, R } from "../theme/tokens";
 
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getLocalProfile, createProfile, deleteAccount, flushPendingScore } from "../utils/supabase";
 import { validateNickname } from "../utils/nicknameFilter";
 import { BackBtn } from "../components/ui";
@@ -139,17 +138,6 @@ export default function ProfileScreen({ navigation }: any) {
             <Text style={s.deleteBtnText}>{deleting ? "Siliniyor..." : "Hesabı Sil"}</Text>
           </TouchableOpacity>
 
-          {__DEV__ && (
-            <TouchableOpacity
-              style={s.devBtn}
-              onPress={async () => {
-                await AsyncStorage.removeItem("hece_onboarded");
-                Alert.alert("Dev", "Onboarding sıfırlandı. Uygulamayı yeniden başlat.");
-              }}
-            >
-              <Text style={s.devBtnText}>🛠 Onboarding'i Sıfırla</Text>
-            </TouchableOpacity>
-          )}
         </ScrollView>
       </View>
     );
@@ -180,17 +168,6 @@ export default function ProfileScreen({ navigation }: any) {
       <View style={s.createActions}>
         <Btn label="Kaydet" onPress={handleCreate} variant="cta" />
         <BackBtn onPress={() => navigation.goBack()} label="Şimdilik Geç" />
-        {__DEV__ && (
-          <TouchableOpacity
-            style={s.devBtn}
-            onPress={async () => {
-              await AsyncStorage.removeItem("hece_onboarded");
-              Alert.alert("Dev", "Onboarding sıfırlandı. Uygulamayı yeniden başlat.");
-            }}
-          >
-            <Text style={s.devBtnText}>🛠 Onboarding'i Sıfırla</Text>
-          </TouchableOpacity>
-        )}
       </View>
     </KeyboardAvoidingView>
   );
@@ -213,6 +190,4 @@ const s = StyleSheet.create({
   createContent: { flex: 1, justifyContent: "center", alignItems: "center", paddingHorizontal: S.page },
   createActions: { gap: S.md, paddingHorizontal: S.page, paddingBottom: 40 },
   input: { width: "100%", backgroundColor: C.surface, borderWidth: 2, borderColor: C.surfaceLight, borderRadius: R.lg, padding: S.lg, marginTop: S.xl, fontSize: 18, fontWeight: "600", color: C.text, textAlign: "center" },
-  devBtn: { alignItems: "center", paddingVertical: S.sm, marginTop: S.sm },
-  devBtnText: { fontSize: 12, color: C.orange, fontWeight: "600" },
 });
