@@ -4,6 +4,7 @@ import { C, T, S, R, SAFE_TOP } from "../theme/tokens";
 
 import { getLocalProfile, createProfile, deleteAccount, flushPendingScore } from "../utils/supabase";
 import { validateNickname } from "../utils/nicknameFilter";
+import { BackBtn } from "../components/ui";
 import { getStats, getGameHistory, GameRecord } from "../utils/gameHistory";
 import { getAchievements } from "../utils/achievements";
 import { Btn } from "../components/ui";
@@ -127,7 +128,7 @@ export default function ProfileScreen({ navigation }: any) {
 
           <View style={{ marginTop: S.xxl, gap: S.md }}>
             <Btn label="Liderlik Tablosu" onPress={() => navigation.navigate("Leaderboard")} variant="cta" />
-            <Btn label="Geri Dön" onPress={() => navigation.goBack()} variant="ghost" />
+            <BackBtn onPress={() => navigation.goBack()} />
           </View>
           <TouchableOpacity onPress={handleDeleteAccount} disabled={deleting} style={s.deleteBtn}>
             <Text style={s.deleteBtnText}>{deleting ? "Siliniyor..." : "Hesabı Sil"}</Text>
@@ -157,7 +158,7 @@ export default function ProfileScreen({ navigation }: any) {
       </View>
       <View style={s.createActions}>
         <Btn label="Kaydet" onPress={handleCreate} variant="cta" />
-        <Btn label="Şimdilik Geç" onPress={() => navigation.goBack()} variant="ghost" />
+        <BackBtn onPress={() => navigation.goBack()} label="Şimdilik Geç" />
       </View>
     </View>
   );

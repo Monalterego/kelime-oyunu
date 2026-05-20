@@ -1,7 +1,8 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
-import { Home, ScrollText, FlaskConical, HardHat, Palette, Leaf, Dumbbell, UtensilsCrossed, ChevronRight, ArrowLeft } from "lucide-react-native";
+import { Home, ScrollText, FlaskConical, HardHat, Palette, Leaf, Dumbbell, UtensilsCrossed, ChevronRight } from "lucide-react-native";
 import { C, T, S, R, SAFE_TOP } from "../theme/tokens";
+import { BackBtn } from "../components/ui";
 
 
 const CATEGORIES = [
@@ -64,10 +65,7 @@ export default function CategoryScreen({ navigation }: any) {
         ))}
       </ScrollView>
 
-      <TouchableOpacity style={s.back} onPress={() => navigation.goBack()} activeOpacity={0.6}>
-        <ArrowLeft size={16} color={C.textSoft} strokeWidth={2} />
-        <Text style={[T.btnSm, { color: C.textSoft, marginLeft: 6 }]}>Geri Dön</Text>
-      </TouchableOpacity>
+      <BackBtn onPress={() => navigation.goBack()} />
     </View>
   );
 }
@@ -108,12 +106,6 @@ const s = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 21,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  back: {
-    paddingVertical: S.md,
-    flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
   },

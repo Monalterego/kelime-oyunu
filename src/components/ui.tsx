@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ViewStyle } from "react-native";
+import { ArrowLeft } from "lucide-react-native";
 import { C, T, S, R, SHADOW, TILE_SIZE, getTileSize } from "../theme/tokens";
 
 // ─── SCREEN ────────────────────────────────────────────────
@@ -99,6 +100,16 @@ export function Tile({ letter, revealed, size }: { letter: string; revealed: boo
   );
 }
 
+// ─── BACK BUTTON ───────────────────────────────────────────
+export function BackBtn({ onPress, label = "Geri Dön" }: { onPress: () => void; label?: string }) {
+  return (
+    <TouchableOpacity style={s.backBtn} onPress={onPress} activeOpacity={0.6}>
+      <ArrowLeft size={16} color={C.textSoft} strokeWidth={2} />
+      <Text style={[T.btnSm, { color: C.textSoft, marginLeft: 6 }]}>{label}</Text>
+    </TouchableOpacity>
+  );
+}
+
 // ─── PROGRESS DOTS ─────────────────────────────────────────
 // Shows question progress like ●●●○○○○ — satisfying to fill up
 export function ProgressDots({
@@ -178,5 +189,11 @@ const s = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 999,
+  },
+  backBtn: {
+    paddingVertical: S.md,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

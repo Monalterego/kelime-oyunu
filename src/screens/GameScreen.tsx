@@ -18,7 +18,7 @@ import { generateGameQuestions } from "../utils/questionGenerator";
 import { getSeenWords, markWordsSeen } from "../utils/seenWords";
 import { useInterstitialAd } from "../hooks/useInterstitialAd";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Screen, Btn, Chip, Card, Tile, ProgressDots } from "../components/ui";
+import { Screen, Btn, Chip, Card, Tile, ProgressDots, BackBtn } from "../components/ui";
 import { ScreenProps } from "../types/navigation";
 
 const AD_GAME_OVER_IOS = process.env.EXPO_PUBLIC_ADMOB_INTERSTITIAL_GAME_OVER_IOS ?? "";
@@ -306,7 +306,7 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
             {"#" + getDailyNumber() + " · " + dailyAlreadyPlayed.correct + "/" + dailyAlreadyPlayed.total + " doğru · " + dailyAlreadyPlayed.score + " puan"}
           </Text>
           <Text style={[T.cap, { color: C.textFaint, marginTop: S.xs, marginBottom: S.xxxl }]}>Yarın yeni sorular gelecek.</Text>
-          <Btn label="← Geri Dön" onPress={() => navigation.goBack()} variant="outline" />
+          <BackBtn onPress={() => navigation.goBack()} />
         </Screen>
       );
     }
@@ -330,7 +330,7 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
         <Text style={[T.bodySm, { color: C.textFaint, marginTop: S.sm, marginBottom: S.xxxl }]}>{modeInfo.sub}</Text>
         <Btn label="BAŞLA" onPress={startGame} variant="cta" />
         <View style={{ marginTop: S.xl }}>
-          <Btn label="← Geri Dön" onPress={() => navigation.goBack()} variant="ghost" />
+          <BackBtn onPress={() => navigation.goBack()} />
         </View>
       </Screen>
     );

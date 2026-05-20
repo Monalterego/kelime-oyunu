@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
-import { ArrowLeft } from "lucide-react-native";
+import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { C, T, S, R, SAFE_TOP } from "../theme/tokens";
 
 import { getAchievements, Achievement } from "../utils/achievements";
+import { BackBtn } from "../components/ui";
 
 export default function AchievementsScreen({ navigation }: any) {
   const [achievements, setAchievements] = useState<Achievement[]>([]);
@@ -55,10 +55,7 @@ export default function AchievementsScreen({ navigation }: any) {
         )}
       </ScrollView>
 
-      <TouchableOpacity style={s.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.6}>
-        <ArrowLeft size={16} color={C.textSoft} strokeWidth={2} />
-        <Text style={[T.btnSm, { color: C.textSoft, marginLeft: 6 }]}>Geri Dön</Text>
-      </TouchableOpacity>
+      <BackBtn onPress={() => navigation.goBack()} />
     </View>
   );
 }
@@ -94,12 +91,5 @@ const s = StyleSheet.create({
     height: 1,
     backgroundColor: C.surfaceLight,
     marginVertical: S.xl,
-  },
-  backBtn: {
-    paddingVertical: S.md,
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: S.lg,
   },
 });
