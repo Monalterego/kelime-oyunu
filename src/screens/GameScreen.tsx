@@ -580,17 +580,30 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
   const displayTileSize = isAnswering ? Math.min(tileSize, 32) : tileSize;
   const skippedArr = state.questions.slice(0, state.currentQuestionIndex).map(q => q.skipped);
 
-  // Kullanıcı yazarken harfleri gizli tile pozisyonlarına dağıt
+  // Kullanıcı yazarken harfleri tile'lara dağıt:
+  // Revealed pozisyona gelen eşleşen harf yutulur (cursor ilerler, tile değişmez),
+  // boş pozisyona gelen harf o tile'ı doldurur.
   const typedTiles: (string | null)[] = (() => {
     if (!isAnswering || !cur) return [];
     const result: (string | null)[] = new Array(cur.wordData.word.length).fill(null);
-    const unrevealedPositions = cur.wordData.word
-      .split("")
-      .map((_, i) => i)
-      .filter(i => !cur.revealedLetters.includes(i));
-    answer.split("").forEach((ch, idx) => {
-      if (idx < unrevealedPositions.length) result[unrevealedPositions[idx]] = ch;
-    });
+    const word = cur.wordData.word;
+    const revealedSet = new Set(cur.revealedLetters);
+    const norm = (s: string) => s.toLocaleLowerCase("tr-TR");
+    let wordCursor = 0;
+    for (const ch of answer) {
+      if (wordCursor >= word.length) break;
+      if (revealedSet.has(wordCursor) && norm(ch) === norm(word[wordCursor])) {
+        // Revealed harfle eşleşti → yut, cursor ilerle, tile'a dokunma
+        wordCursor++;
+      } else {
+        // Boş pozisyona yaz (revealed'ları atlayarak ilk boşa yerleş)
+        while (wordCursor < word.length && revealedSet.has(wordCursor)) wordCursor++;
+        if (wordCursor < word.length) {
+          result[wordCursor] = ch;
+          wordCursor++;
+        }
+      }
+    }
     return result;
   })();
 
@@ -728,6 +741,8 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
             onChangeText={setAnswer}
             autoFocus
             autoCapitalize="none"
+            autoCorrect={false}
+            spellCheck={false}
             placeholder="Cevabınızı yazın..."
             placeholderTextColor={C.textFaint}
             onSubmitEditing={() => { if (answer.trim()) handleSubmitAnswer(); }}
