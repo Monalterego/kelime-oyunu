@@ -949,7 +949,7 @@ const gs = StyleSheet.create({
   },
 
   // Answer
-  answerZone: { alignItems: "center", gap: S.sm },
+  answerZone: { alignItems: "center", gap: S.sm, width: "100%" },
   answerTimer: {
     width: 44,
     height: 44,
@@ -959,6 +959,7 @@ const gs = StyleSheet.create({
     borderColor: C.redBorder,
     justifyContent: "center",
     alignItems: "center",
+    alignSelf: "center",
   },
   timerNum: {
     fontSize: 18,
