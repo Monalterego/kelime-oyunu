@@ -66,7 +66,27 @@ export async function submitScore(record: {
       daily_number: record.dailyNumber || null,
       duration_seconds: record.durationSeconds || null,
     });
-    if (error) { console.error("Skor kayit hatasi:", error); return false; }
+    if (error) {
+      // FK hatası: profil DB'de yok ama AsyncStorage'da var → stale kaydı temizle
+      if (error.code === "23503") {
+        await AsyncStorage.multiRemove([PROFILE_KEY, NICKNAME_KEY]);
+      }
+      console.error("Skor kayit hatasi:", error);
+      return false;
+    }
+    return true;
+  } catch { return false; }
+}
+
+export async function deleteAccount(profileId: string): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from("profiles")
+      .delete()
+      .eq("id", profileId);
+    if (error) { console.error("Hesap silme hatasi:", error); return false; }
+    // Lokal verileri temizle
+    await AsyncStorage.multiRemove([PROFILE_KEY, NICKNAME_KEY]);
     return true;
   } catch { return false; }
 }
