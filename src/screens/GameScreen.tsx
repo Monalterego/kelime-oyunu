@@ -954,7 +954,7 @@ const gs = StyleSheet.create({
   },
 
   // Answer
-  answerZone: { alignItems: "center", gap: S.sm, width: "100%" },
+  answerZone: { alignItems: "center", gap: S.sm, width: "100%", marginTop: S.xl },
   answerTimer: {
     width: 44,
     height: 44,
