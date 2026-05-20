@@ -974,18 +974,17 @@ const gs = StyleSheet.create({
   },
   input: {
     width: "100%",
+    height: 52,
     backgroundColor: C.surface,
     borderWidth: 2,
     borderColor: C.orange,
     borderRadius: R.lg,
     paddingHorizontal: S.lg,
-    paddingTop: S.md + 2,
-    paddingBottom: S.lg + 2,   // extra room for descenders (p, y, g, ş, ç)
     fontSize: 18,
     fontWeight: "500" as const,
-    // lineHeight intentionally omitted — causes vertical misalignment in iOS TextInput
     color: C.text,
     textAlign: "center",
+    textAlignVertical: "center",
   },
 
   // Play
@@ -1016,7 +1015,7 @@ const gs = StyleSheet.create({
   ctaBtn: {
     backgroundColor: C.orange,
     borderRadius: R.lg,
-    paddingVertical: 14,
+    height: 52,
     alignItems: "center",
     justifyContent: "center",
     ...SHADOW.soft,
