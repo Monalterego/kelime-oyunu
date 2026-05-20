@@ -481,22 +481,15 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
             );
           })}
 
-          {!profile && (
-            <TouchableOpacity
-              style={gs.profilePrompt}
-              onPress={() => navigation.navigate("Profile")}
-              activeOpacity={0.7}
-            >
-              <Text style={{ fontSize: 32, marginBottom: 8 }}>🏆</Text>
-              <Text style={[T.h2, { color: C.text }]}>Skorunu Kaydet!</Text>
-              <Text style={[T.bodySm, { color: C.textSoft, textAlign: "center", marginTop: 4 }]}>Profil oluştur, liderlik tablosunda yerini al</Text>
-              <View style={{ backgroundColor: C.orange, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 32, marginTop: 12 }}>
-                <Text style={[T.btn, { color: C.white }]}>Profil Oluştur</Text>
-              </View>
-            </TouchableOpacity>
-          )}
-
           <View style={[gs.endBtns, { marginTop: S.xl }]}>
+            {!profile && (
+              <>
+                <Text style={[T.cap, { color: C.textFaint, textAlign: "center" }]}>
+                  Skorunu kaydet, liderlik tablosunda yerini al
+                </Text>
+                <Btn label="Profil Oluştur" onPress={() => navigation.navigate("Profile")} variant="cta" />
+              </>
+            )}
             {mode !== "daily" && <Btn label="Tekrar Oyna" onPress={startGame} variant="outline" />}
             <Btn label="Ana Sayfa" onPress={() => navigation.popToTop()} variant="ghost" />
           </View>
@@ -566,18 +559,6 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
               <Text style={[T.cap, { color: C.textFaint }]}>Bu soru nasıldı?</Text>
               <View style={gs.feedbackBtns}>
                 <TouchableOpacity
-                  style={[gs.feedbackBtn, feedbackVote === 1 && gs.feedbackBtnActive]}
-                  activeOpacity={0.7}
-                  onPress={async () => {
-                    if (feedbackVote !== null) return;
-                    setFeedbackVote(1);
-                    await submitFeedback(cur.wordData.word, 1);
-                    setLocalVotes(v => ({ ...v, [cur.wordData.word]: 1 }));
-                  }}
-                >
-                  <Text style={{ fontSize: 20 }}>👍</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
                   style={[gs.feedbackBtn, feedbackVote === -1 && gs.feedbackBtnActive]}
                   activeOpacity={0.7}
                   onPress={async () => {
@@ -588,6 +569,18 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
                   }}
                 >
                   <Text style={{ fontSize: 20 }}>👎</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[gs.feedbackBtn, feedbackVote === 1 && gs.feedbackBtnActive]}
+                  activeOpacity={0.7}
+                  onPress={async () => {
+                    if (feedbackVote !== null) return;
+                    setFeedbackVote(1);
+                    await submitFeedback(cur.wordData.word, 1);
+                    setLocalVotes(v => ({ ...v, [cur.wordData.word]: 1 }));
+                  }}
+                >
+                  <Text style={{ fontSize: 20 }}>👍</Text>
                 </TouchableOpacity>
               </View>
             </View>
