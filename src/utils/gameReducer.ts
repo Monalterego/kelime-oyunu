@@ -70,8 +70,22 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     case "SUBMIT_ANSWER": {
       const q = state.questions[state.currentQuestionIndex];
       if (!q) return state;
-      const normalizeAnswer = (s: string) => s.toLocaleLowerCase("tr-TR").trim().replace(/\s+/g, "");
-      const isCorrect = normalizeAnswer(action.answer) === normalizeAnswer(q.wordData.word);
+
+      const norm = (s: string) => s.toLocaleLowerCase("tr-TR").trim().replace(/\s+/g, "");
+      const word = q.wordData.word;
+
+      // 1) Tam kelime karşılaştırması (mevcut davranış)
+      const directMatch = norm(action.answer) === norm(word);
+
+      // 2) Kısmi karşılaştırma: harf alındıysa oyuncu sadece boş kutucukları yazabilir
+      const unrevealedPos = word.split("").map((_, i) => i).filter(i => !q.revealedLetters.includes(i));
+      const typedChars = norm(action.answer).split("");
+      const partialMatch =
+        q.revealedLetters.length > 0 &&
+        typedChars.length === unrevealedPos.length &&
+        typedChars.every((ch, idx) => ch === norm(word[unrevealedPos[idx]]));
+
+      const isCorrect = directMatch || partialMatch;
       const basePoints = getBasePoints(q);
       const letterPenalty = getLetterPenalty(q);
       const earnedPoints = isCorrect ? Math.max(0, basePoints - letterPenalty) : -basePoints;
