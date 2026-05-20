@@ -1,5 +1,5 @@
 import React, { useReducer, useEffect, useRef, useState, useCallback } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Animated, ScrollView, Share, Platform, Keyboard, ActivityIndicator, KeyboardAvoidingView, Alert } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Animated, ScrollView, Share, Platform, Keyboard, ActivityIndicator, KeyboardAvoidingView, Alert, AppState, AppStateStatus } from "react-native";
 import { X } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
 import { Question } from "../types";
@@ -10,7 +10,7 @@ import {
 } from "../utils/gameReducer";
 import { useSafeAreaInsets, SafeAreaView } from "react-native-safe-area-context";
 import { C, T, S, R, SHADOW, getTileSize } from "../theme/tokens";
-import { saveGameRecord, markDailyPlayed, getStats, getDailyStatus } from "../utils/gameHistory";
+import { saveGameRecord, markDailyPlayed, markDailyStarted, getStats, getDailyStatus } from "../utils/gameHistory";
 import { checkAchievements, Achievement } from "../utils/achievements";
 import { getLocalProfile, submitScore, savePendingScore, flushPendingScore } from "../utils/supabase";
 import { getDailyNumber } from "../utils/questionGenerator";
@@ -27,6 +27,21 @@ const AD_UNIT_ID = Platform.OS === "ios" ? AD_GAME_OVER_IOS : AD_GAME_OVER_ANDRO
 const AD_EVERY_N_GAMES = 2;
 const AD_GAME_COUNT_KEY = "hece_ad_game_count";
 
+/** Kelimeyi tile index gruplarına böler. Tek kelimede [[0,1,2,...]], çok kelimede [[0..5],[6..10]] */
+function buildTileGroups(word: string, displayWord?: string): number[][] {
+  if (!displayWord || !displayWord.includes(" ")) {
+    return [word.split("").map((_, i) => i)];
+  }
+  const groups: number[][] = [];
+  let pos = 0;
+  for (const part of displayWord.trim().split(/\s+/)) {
+    const len = part.length;
+    groups.push(Array.from({ length: len }, (_, j) => pos + j));
+    pos += len;
+  }
+  return groups;
+}
+
 export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
   const mode = route.params?.mode ?? "classic";
   const category = route.params?.category;
@@ -39,14 +54,14 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
   const [showSummary, setShowSummary] = useState(false);
   const [newAchievements, setNewAchievements] = useState<Achievement[]>([]);
   const [showHint, setShowHint] = useState(false);
-  const [dailyAlreadyPlayed, setDailyAlreadyPlayed] = useState<{score: number; correct: number; total: number} | null>(null);
+  const [dailyAlreadyPlayed, setDailyAlreadyPlayed] = useState<{score: number; correct: number; total: number; completed: boolean} | null>(null);
   const [scoreDelta, setScoreDelta] = useState<"up" | "down" | null>(null);
   const prevScoreRef = useRef(0);
 
   useEffect(() => {
     if (mode !== "daily") return;
     getDailyStatus().then(status => {
-      if (status && status.dailyNumber === getDailyNumber()) setDailyAlreadyPlayed(status);
+      if (status) setDailyAlreadyPlayed(status);
     });
   }, [mode]);
 
@@ -59,6 +74,27 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
   const totalTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const answerTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const hintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const appStateRef = useRef<AppStateStatus>(AppState.currentState);
+  const gameStatusRef = useRef(state.status);
+
+  // gameStatusRef'i güncel tut
+  useEffect(() => { gameStatusRef.current = state.status; }, [state.status]);
+
+  // Uygulama arka plana geçince mevcut soruyu otomatik pas geç
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (nextState: AppStateStatus) => {
+      const wasActive = appStateRef.current === "active";
+      const goingToBackground = nextState === "background" || nextState === "inactive";
+      if (wasActive && goingToBackground) {
+        const s = gameStatusRef.current;
+        if (s === "playing" || s === "answering") {
+          dispatch({ type: "SKIP_QUESTION" });
+        }
+      }
+      appStateRef.current = nextState;
+    });
+    return () => subscription.remove();
+  }, []);
 
   const shareResult = async () => {
     const dots = state.questions.map(q => q.correct ? "🟩" : q.skipped ? "⬜" : "🟥").join("");
@@ -90,8 +126,10 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
     try {
       const seen = mode === "daily" ? new Set<string>() : await getSeenWords();
       const questions = generateGameQuestions(mode, category, seen);
-      if (questions.length > 0)
+      if (questions.length > 0) {
+        if (mode === "daily") await markDailyStarted(getDailyNumber());
         dispatch({ type: "START_GAME", questions, totalTime: mode === "category" ? 90 : 150 });
+      }
     } catch (e) { console.error(e); }
   };
 
@@ -297,15 +335,26 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
   // ── IDLE ─────────────────────────────────────────────
   if (state.status === "idle") {
     if (mode === "daily" && dailyAlreadyPlayed) {
+      const completed = dailyAlreadyPlayed.completed;
       return (
         <Screen>
-          <Text style={{ fontSize: 48, marginBottom: S.lg }}>✅</Text>
+          <Text style={{ fontSize: 48, marginBottom: S.lg }}>{completed ? "✅" : "⚠️"}</Text>
           <Text style={[T.display, { color: C.text }]}>HECE</Text>
-          <Text style={[T.h2, { color: C.textSoft, marginTop: S.md }]}>Bugün oynadın!</Text>
-          <Text style={[T.bodySm, { color: C.textFaint, marginTop: S.sm }]}>
-            {"#" + getDailyNumber() + " · " + dailyAlreadyPlayed.correct + "/" + dailyAlreadyPlayed.total + " doğru · " + dailyAlreadyPlayed.score + " puan"}
+          <Text style={[T.h2, { color: C.textSoft, marginTop: S.md }]}>
+            {completed ? "Bugün oynadın!" : "Günlük hakkın kullanıldı"}
           </Text>
-          <Text style={[T.cap, { color: C.textFaint, marginTop: S.xs, marginBottom: S.xxxl }]}>Yarın yeni sorular gelecek.</Text>
+          {completed ? (
+            <>
+              <Text style={[T.bodySm, { color: C.textFaint, marginTop: S.sm }]}>
+                {"#" + getDailyNumber() + " · " + dailyAlreadyPlayed.correct + "/" + dailyAlreadyPlayed.total + " doğru · " + dailyAlreadyPlayed.score + " puan"}
+              </Text>
+              <Text style={[T.cap, { color: C.textFaint, marginTop: S.xs, marginBottom: S.xxxl }]}>Yarın yeni sorular gelecek.</Text>
+            </>
+          ) : (
+            <Text style={[T.bodySm, { color: C.textFaint, marginTop: S.sm, textAlign: "center", marginBottom: S.xxxl }]}>
+              Bugün oyunu yarıda bıraktın.{"\n"}Yarın yeni sorular gelecek.
+            </Text>
+          )}
           <BackBtn onPress={() => navigation.goBack()} />
         </Screen>
       );
@@ -531,6 +580,20 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
   const displayTileSize = isAnswering ? Math.min(tileSize, 32) : tileSize;
   const skippedArr = state.questions.slice(0, state.currentQuestionIndex).map(q => q.skipped);
 
+  // Kullanıcı yazarken harfleri gizli tile pozisyonlarına dağıt
+  const typedTiles: (string | null)[] = (() => {
+    if (!isAnswering || !cur) return [];
+    const result: (string | null)[] = new Array(cur.wordData.word.length).fill(null);
+    const unrevealedPositions = cur.wordData.word
+      .split("")
+      .map((_, i) => i)
+      .filter(i => !cur.revealedLetters.includes(i));
+    answer.split("").forEach((ch, idx) => {
+      if (idx < unrevealedPositions.length) result[unrevealedPositions[idx]] = ch;
+    });
+    return result;
+  })();
+
   return (
     <SafeAreaView edges={["bottom"]} style={gs.safeBottom}>
     <KeyboardAvoidingView
@@ -632,8 +695,21 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
           }}
           style={gs.tiles}
         >
-          {cur.wordData.word.split("").map((ch, i) => (
-            <Tile key={i} letter={ch} revealed={cur.revealedLetters.includes(i)} size={displayTileSize} />
+          {buildTileGroups(cur.wordData.word, cur.wordData.displayWord).map((group, gi, all) => (
+            <React.Fragment key={gi}>
+              {group.map((i) => (
+                <Tile
+                  key={i}
+                  letter={cur.wordData.word[i]}
+                  revealed={cur.revealedLetters.includes(i)}
+                  size={displayTileSize}
+                  typedLetter={isAnswering ? (typedTiles[i] ?? undefined) : undefined}
+                />
+              ))}
+              {gi < all.length - 1 && (
+                <View style={[gs.wordSpacer, { height: displayTileSize * 1.15 }]} />
+              )}
+            </React.Fragment>
           ))}
         </TouchableOpacity>
       </View>
@@ -848,6 +924,13 @@ const gs = StyleSheet.create({
     justifyContent: "center",
     gap: 6,
     flexWrap: "wrap",
+  },
+  wordSpacer: {
+    width: 2,
+    borderRadius: 2,
+    backgroundColor: C.surfaceLight,
+    marginHorizontal: 5,
+    alignSelf: "center",
   },
 
   // Answer

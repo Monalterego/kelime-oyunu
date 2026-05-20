@@ -1,4 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getDailyNumber } from "./questionGenerator";
 
 const HISTORY_KEY = "hece_game_history";
 const STATS_KEY = "hece_game_stats";
@@ -110,6 +111,13 @@ export async function getStats(): Promise<{
 
 
 const DAILY_KEY = "hece_daily_played";
+const DAILY_STARTED_KEY = "hece_daily_started";
+
+export async function markDailyStarted(dailyNumber: number): Promise<void> {
+  try {
+    await AsyncStorage.setItem(DAILY_STARTED_KEY, JSON.stringify({ dailyNumber }));
+  } catch {}
+}
 
 export async function markDailyPlayed(dailyNumber: number, score: number, correct: number, total: number): Promise<void> {
   try {
@@ -119,12 +127,36 @@ export async function markDailyPlayed(dailyNumber: number, score: number, correc
   }
 }
 
-export async function getDailyStatus(): Promise<{ played: boolean; dailyNumber: number; score: number; correct: number; total: number } | null> {
+export async function getDailyStatus(): Promise<{
+  dailyNumber: number;
+  score: number;
+  correct: number;
+  total: number;
+  completed: boolean;
+} | null> {
   try {
-    const data = await AsyncStorage.getItem(DAILY_KEY);
-    if (!data) return null;
-    return JSON.parse(data);
-  } catch (e) {
+    const today = getDailyNumber();
+    const [playedRaw, startedRaw] = await Promise.all([
+      AsyncStorage.getItem(DAILY_KEY),
+      AsyncStorage.getItem(DAILY_STARTED_KEY),
+    ]);
+
+    if (playedRaw) {
+      const played = JSON.parse(playedRaw);
+      if (played.dailyNumber === today) {
+        return { ...played, completed: true };
+      }
+    }
+
+    if (startedRaw) {
+      const started = JSON.parse(startedRaw);
+      if (started.dailyNumber === today) {
+        return { dailyNumber: today, score: 0, correct: 0, total: 0, completed: false };
+      }
+    }
+
+    return null;
+  } catch {
     return null;
   }
 }

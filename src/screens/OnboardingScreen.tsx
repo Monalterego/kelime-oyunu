@@ -30,7 +30,7 @@ export default function OnboardingScreen({ navigation }: any) {
       setStep(step + 1);
     } else {
       await AsyncStorage.setItem("hece_onboarded", "true");
-      navigation.replace("Home");
+      navigation.replace("Profile");
     }
   };
 

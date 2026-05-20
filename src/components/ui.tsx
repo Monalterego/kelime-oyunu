@@ -81,8 +81,14 @@ export function Card({ children, style }: { children: React.ReactNode; style?: V
 
 // ─── LETTER TILE ───────────────────────────────────────────
 // The star of the show. Each tile is a mini-reward when revealed.
-export function Tile({ letter, revealed, size }: { letter: string; revealed: boolean; size?: number }) {
+export function Tile({ letter, revealed, size, typedLetter }: {
+  letter: string;
+  revealed: boolean;
+  size?: number;
+  typedLetter?: string;
+}) {
   const sz = size ?? TILE_SIZE;
+  const isTyped = !revealed && !!typedLetter;
   return (
     <View
       style={[
@@ -90,11 +96,28 @@ export function Tile({ letter, revealed, size }: { letter: string; revealed: boo
         { width: sz, height: sz * 1.15 },
         revealed && s.tileRevealed,
         revealed && SHADOW.glow(C.brand),
+        isTyped && s.tileTyped,
       ]}
-      accessibilityLabel={revealed ? letter.toLocaleUpperCase("tr-TR") : "gizli harf"}
+      accessibilityLabel={
+        revealed
+          ? letter.toLocaleUpperCase("tr-TR")
+          : isTyped
+          ? typedLetter!.toLocaleUpperCase("tr-TR")
+          : "gizli harf"
+      }
     >
-      <Text style={[T.tile, { fontSize: Math.max(14, sz * 0.38), color: revealed ? C.tileLetter : "transparent" }]}>
-        {revealed ? letter.toLocaleUpperCase("tr-TR") : " "}
+      <Text style={[
+        T.tile,
+        {
+          fontSize: Math.max(14, sz * 0.38),
+          color: revealed ? C.tileLetter : isTyped ? C.orange : "transparent",
+        },
+      ]}>
+        {revealed
+          ? letter.toLocaleUpperCase("tr-TR")
+          : isTyped
+          ? typedLetter!.toLocaleUpperCase("tr-TR")
+          : " "}
       </Text>
     </View>
   );
@@ -179,6 +202,10 @@ const s = StyleSheet.create({
   tileRevealed: {
     backgroundColor: C.tileActive,
     borderColor: C.tileActiveBorder,
+  },
+  tileTyped: {
+    borderColor: C.orange,
+    backgroundColor: C.surface,
   },
   dots: {
     flexDirection: "row",

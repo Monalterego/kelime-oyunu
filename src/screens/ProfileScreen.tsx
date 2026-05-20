@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, KeyboardAvoidingView, Platform } from "react-native";
 import { C, T, S, R, SAFE_TOP } from "../theme/tokens";
 
 import { getLocalProfile, createProfile, deleteAccount, flushPendingScore } from "../utils/supabase";
@@ -139,7 +139,11 @@ export default function ProfileScreen({ navigation }: any) {
   }
 
   return (
-    <View style={s.container}>
+    <KeyboardAvoidingView
+      style={s.container}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 24}
+    >
       <View style={s.createContent}>
         <Text style={[T.h1, { color: C.text }]}>Profil Oluştur</Text>
         <Text style={[T.bodySm, { color: C.textSoft, marginTop: S.sm, textAlign: "center" }]}>
@@ -160,7 +164,7 @@ export default function ProfileScreen({ navigation }: any) {
         <Btn label="Kaydet" onPress={handleCreate} variant="cta" />
         <BackBtn onPress={() => navigation.goBack()} label="Şimdilik Geç" />
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
