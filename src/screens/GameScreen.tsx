@@ -678,6 +678,12 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
               <Text style={gs.metaLabel}>kelime</Text>
             </View>
           )}
+          {isAnswering && (
+            <View style={[gs.metaPill, { borderColor: C.red + "60", backgroundColor: C.redSoft, minWidth: 52 }]}>
+              <Text style={[gs.metaValue, { color: C.red }]}>{state.answerTimeLeft}</Text>
+              <Text style={[gs.metaLabel, { color: C.red }]}>sn</Text>
+            </View>
+          )}
         </View>
 
         {showHint && state.currentFlashHint ? (
@@ -734,9 +740,6 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
       {/* ── BOTTOM ACTIONS ── */}
       {isAnswering ? (
         <View style={gs.answerZone}>
-          <View style={gs.answerTimer}>
-            <Text style={gs.timerNum}>{state.answerTimeLeft}</Text>
-          </View>
           <TextInput
             style={gs.input}
             value={answer}
