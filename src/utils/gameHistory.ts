@@ -3,7 +3,7 @@ import { getDailyNumber } from "./questionGenerator";
 
 const HISTORY_KEY = "hece_game_history";
 const STATS_KEY = "hece_game_stats";
-const MAX_HISTORY = 20; // Son 20 oyun gösterim için tutulur, istatistikler ayrı sayaçta
+const MAX_HISTORY = 35; // 30 günlük seri başarımı için en az 30 gün geriye bakabilmeli
 
 export interface GameRecord {
   id: string;

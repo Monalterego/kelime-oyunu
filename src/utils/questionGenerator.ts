@@ -155,6 +155,7 @@ export function generateGameQuestions(
   }
   if (mode === "category" && themeCategory) {
     const pool = db.filter((q) => q.themeCategory === themeCategory);
+    if (pool.length < 5) return buildQuestions(db, CATEGORY_STRUCTURE, seenWords); // fallback: genel havuz
     return buildQuestions(pool, CATEGORY_STRUCTURE, seenWords);
   }
   return buildQuestions(db, CLASSIC_STRUCTURE, seenWords);
