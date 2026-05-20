@@ -575,7 +575,8 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
   const tColor = critTime ? C.red : lowTime ? C.gold : C.brand;
   const skipCost = Math.round(getBasePoints(cur) * SKIP_PENALTY_RATIO);
   const canHint = cur.revealedLetters.length < cur.wordData.length - 1;
-  const tileSize = getTileSize(cur.wordData.length);
+  const tileGroups = buildTileGroups(cur.wordData.word, cur.wordData.displayWord);
+  const tileSize = getTileSize(cur.wordData.word.length, tileGroups.length);
   const isAnswering = state.status === "answering";
   const displayTileSize = isAnswering ? Math.min(tileSize, 32) : tileSize;
   const skippedArr = state.questions.slice(0, state.currentQuestionIndex).map(q => q.skipped);
@@ -592,6 +593,7 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
     let wordCursor = 0;
     for (const ch of answer) {
       if (wordCursor >= word.length) break;
+      if (ch === ' ') continue; // boşluk tuşu → atla, tile'a yazma
       if (revealedSet.has(wordCursor) && norm(ch) === norm(word[wordCursor])) {
         // Revealed harfle eşleşti → yut, cursor ilerle, tile'a dokunma
         wordCursor++;
@@ -708,7 +710,7 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
           }}
           style={gs.tiles}
         >
-          {buildTileGroups(cur.wordData.word, cur.wordData.displayWord).map((group, gi, all) => (
+          {tileGroups.map((group, gi, all) => (
             <React.Fragment key={gi}>
               {group.map((i) => (
                 <Tile

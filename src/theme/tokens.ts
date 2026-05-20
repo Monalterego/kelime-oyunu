@@ -120,8 +120,10 @@ export const SAFE_TOP = 56;
 
 export const TILE_SIZE = Math.min(52, (SCREEN_W - S.page * 2 - 10 * 7) / 10);
 
-export function getTileSize(wordLength: number): number {
+export function getTileSize(wordLength: number, numWordGroups: number = 1): number {
   const gap = 6;
-  const available = SCREEN_W - S.page * 2 - gap * (wordLength - 1);
-  return Math.max(28, Math.min(52, Math.floor(available / wordLength)));
+  // Her ayraç: gap(6) + marginH(5) + width(2) + marginH(5) + gap(6) = 24px
+  const spacerTotalW = Math.max(0, numWordGroups - 1) * 24;
+  const available = SCREEN_W - S.page * 2 - gap * (wordLength - 1) - spacerTotalW;
+  return Math.max(20, Math.min(52, Math.floor(available / wordLength)));
 }
