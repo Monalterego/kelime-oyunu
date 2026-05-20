@@ -284,6 +284,8 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
       total: totalQuestions,
     });
 
+    const hintsUsed = state.questions.reduce((sum, q) => sum + q.revealedLetters.length, 0);
+
     getStats().then(stats =>
       checkAchievements({
         mode,
@@ -292,6 +294,7 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
         correct,
         total: totalQuestions,
         skipped,
+        hintsUsed,
         streak: stats.streak,
         totalCorrect: stats.totalCorrect,
         totalGames: stats.totalGames,
