@@ -28,7 +28,7 @@ export default function ProfileScreen({ navigation }: any) {
     getAchievements().then(achs => {
       setAchCount({ total: achs.length, unlocked: achs.filter(a => a.unlocked).length });
     });
-    getGameHistory().then(h => setRecentGames(h.slice(0, 5)));
+    getGameHistory().then(h => setRecentGames(h.slice(0, 3)));
   }, []);
 
   const handleDeleteAccount = () => {
@@ -80,7 +80,7 @@ export default function ProfileScreen({ navigation }: any) {
             <View style={s.avatar}>
               <Text style={s.avatarText}>{profile.nickname.charAt(0).toLocaleUpperCase("tr-TR")}</Text>
             </View>
-            <Text style={[T.h1, { color: C.text, marginTop: S.lg }]}>{profile.nickname}</Text>
+            <Text style={[T.h2, { color: C.text, marginTop: S.sm }]}>{profile.nickname}</Text>
           </View>
 
           <View style={s.statsGrid}>
@@ -113,7 +113,7 @@ export default function ProfileScreen({ navigation }: any) {
 
           {recentGames.length > 0 && (
             <>
-              <Text style={[T.h3, { color: C.text, marginTop: S.xl, marginBottom: S.md }]}>Son Oyunlar</Text>
+              <Text style={[T.h3, { color: C.text, marginTop: S.md, marginBottom: S.sm }]}>Son Oyunlar</Text>
               {recentGames.map((g, i) => (
                 <View key={g.id} style={s.gameRow}>
                   <View style={{ flex: 1 }}>
@@ -126,7 +126,7 @@ export default function ProfileScreen({ navigation }: any) {
             </>
           )}
 
-          <View style={{ marginTop: S.xxl, gap: S.md }}>
+          <View style={{ marginTop: S.md, gap: S.sm }}>
             <Btn label="Liderlik Tablosu" onPress={() => navigation.navigate("Leaderboard")} variant="cta" />
             <BackBtn onPress={() => navigation.goBack()} />
           </View>
@@ -166,16 +166,16 @@ export default function ProfileScreen({ navigation }: any) {
 
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bg },
-  scroll: { paddingHorizontal: S.page, paddingTop: SAFE_TOP, paddingBottom: 40 },
-  avatarSection: { alignItems: "center", marginBottom: S.xxl },
-  avatar: { width: 80, height: 80, borderRadius: 40, backgroundColor: C.orange, justifyContent: "center", alignItems: "center" },
-  avatarText: { fontSize: 36, fontWeight: "900", color: C.white },
-  statsGrid: { flexDirection: "row", flexWrap: "wrap", gap: S.sm, marginBottom: S.lg },
-  statBox: { flex: 1, minWidth: "45%", backgroundColor: C.surface, borderRadius: R.lg, padding: S.lg, alignItems: "center", borderWidth: 1, borderColor: C.surfaceLight },
-  statNum: { fontSize: 24, fontWeight: "800", color: C.text },
-  statLabel: { fontSize: 11, fontWeight: "600", color: C.textFaint, marginTop: 4 },
-  achCard: { flexDirection: "row", alignItems: "center", backgroundColor: C.surface, borderRadius: R.lg, padding: S.lg, gap: S.md, borderWidth: 1, borderColor: C.goldBorder },
-  gameRow: { flexDirection: "row", alignItems: "center", backgroundColor: C.surface, borderRadius: R.lg, padding: S.lg, marginBottom: S.sm, borderWidth: 1, borderColor: C.surfaceLight },
+  scroll: { paddingHorizontal: S.page, paddingTop: S.lg, paddingBottom: 24 },
+  avatarSection: { alignItems: "center", marginBottom: S.md },
+  avatar: { width: 56, height: 56, borderRadius: 28, backgroundColor: C.orange, justifyContent: "center", alignItems: "center" },
+  avatarText: { fontSize: 24, fontWeight: "900", color: C.white },
+  statsGrid: { flexDirection: "row", flexWrap: "wrap", gap: S.xs, marginBottom: S.sm },
+  statBox: { flex: 1, minWidth: "45%", backgroundColor: C.surface, borderRadius: R.lg, paddingVertical: S.sm, paddingHorizontal: S.md, alignItems: "center", borderWidth: 1, borderColor: C.surfaceLight },
+  statNum: { fontSize: 20, fontWeight: "800", color: C.text },
+  statLabel: { fontSize: 10, fontWeight: "600", color: C.textFaint, marginTop: 2 },
+  achCard: { flexDirection: "row", alignItems: "center", backgroundColor: C.surface, borderRadius: R.lg, paddingVertical: S.sm, paddingHorizontal: S.md, gap: S.sm, borderWidth: 1, borderColor: C.goldBorder },
+  gameRow: { flexDirection: "row", alignItems: "center", backgroundColor: C.surface, borderRadius: R.lg, paddingVertical: S.sm, paddingHorizontal: S.md, marginBottom: S.xs, borderWidth: 1, borderColor: C.surfaceLight },
   deleteBtn: { alignItems: "center", paddingVertical: S.sm, marginTop: S.lg, marginBottom: S.sm },
   deleteBtnText: { fontSize: 13, color: C.textFaint, textDecorationLine: "underline" },
   createContent: { flex: 1, justifyContent: "center", alignItems: "center", paddingHorizontal: S.page },
