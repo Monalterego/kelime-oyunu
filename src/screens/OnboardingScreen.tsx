@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import React, { useState, useRef } from "react";
+import { View, Text, TouchableOpacity, StyleSheet, PanResponder } from "react-native";
 import { Btn } from "../components/ui";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { C, T, S, R, SAFE_TOP } from "../theme/tokens";
@@ -24,10 +24,13 @@ const SLIDES = [
 
 export default function OnboardingScreen({ navigation }: any) {
   const [step, setStep] = useState(0);
+  const stepRef = useRef(0);
 
   const handleNext = async () => {
-    if (step < SLIDES.length - 1) {
-      setStep(step + 1);
+    const current = stepRef.current;
+    if (current < SLIDES.length - 1) {
+      stepRef.current = current + 1;
+      setStep(current + 1);
     } else {
       await AsyncStorage.setItem("hece_onboarded", "true");
       navigation.replace("Profile");
@@ -41,8 +44,18 @@ export default function OnboardingScreen({ navigation }: any) {
 
   const slide = SLIDES[step];
 
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, g) =>
+        Math.abs(g.dx) > 10 && Math.abs(g.dx) > Math.abs(g.dy),
+      onPanResponderRelease: (_, g) => {
+        if (g.dx < -40) handleNext();   // sola swipe → ileri
+      },
+    })
+  ).current;
+
   return (
-    <View style={s.container}>
+    <View style={s.container} {...panResponder.panHandlers}>
       <TouchableOpacity style={s.skipBtn} onPress={handleSkip}>
         <Text style={[T.btnSm, { color: C.textFaint }]}>Atla</Text>
       </TouchableOpacity>
