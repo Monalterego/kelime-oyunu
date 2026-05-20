@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, KeyboardAvoidingView, Platform } from "react-native";
-import { C, T, S, R, SAFE_TOP } from "../theme/tokens";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { C, T, S, R } from "../theme/tokens";
 
 import { getLocalProfile, createProfile, deleteAccount, flushPendingScore } from "../utils/supabase";
 import { validateNickname } from "../utils/nicknameFilter";
@@ -69,13 +70,16 @@ export default function ProfileScreen({ navigation }: any) {
     }
   };
 
+  const insets = useSafeAreaInsets();
+  const safeTop = (insets.top || 44) + S.sm;
+
   if (loading) return null;
 
   if (profile) {
     const modeLabel = (m: string) => m === "daily" ? "Günlük" : m === "category" ? "Kategori" : "Klasik";
     return (
       <View style={s.container}>
-        <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
+        <ScrollView contentContainerStyle={[s.scroll, { paddingTop: safeTop }]} showsVerticalScrollIndicator={false}>
           <View style={s.avatarSection}>
             <View style={s.avatar}>
               <Text style={s.avatarText}>{profile.nickname.charAt(0).toLocaleUpperCase("tr-TR")}</Text>
@@ -140,7 +144,7 @@ export default function ProfileScreen({ navigation }: any) {
 
   return (
     <KeyboardAvoidingView
-      style={s.container}
+      style={[s.container, { paddingTop: safeTop }]}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 24}
     >
@@ -170,7 +174,7 @@ export default function ProfileScreen({ navigation }: any) {
 
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bg },
-  scroll: { paddingHorizontal: S.page, paddingTop: S.lg, paddingBottom: 24 },
+  scroll: { paddingHorizontal: S.page, paddingBottom: 24 },
   avatarSection: { alignItems: "center", marginBottom: S.md },
   avatar: { width: 56, height: 56, borderRadius: 28, backgroundColor: C.orange, justifyContent: "center", alignItems: "center" },
   avatarText: { fontSize: 24, fontWeight: "900", color: C.white },

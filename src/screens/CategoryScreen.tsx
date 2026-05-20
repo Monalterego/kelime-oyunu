@@ -1,7 +1,8 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
 import { Home, ScrollText, FlaskConical, HardHat, Palette, Leaf, Dumbbell, UtensilsCrossed, ChevronRight } from "lucide-react-native";
-import { C, T, S, R, SAFE_TOP } from "../theme/tokens";
+import { C, T, S, R } from "../theme/tokens";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BackBtn } from "../components/ui";
 
 
@@ -35,8 +36,9 @@ function normalizeSearch(value: string) {
 }
 
 export default function CategoryScreen({ navigation }: any) {
+  const insets = useSafeAreaInsets();
   return (
-    <View style={s.container}>
+    <View style={[s.container, { paddingTop: (insets.top || 44) + S.sm }]}>
       <View style={s.header}>
         <Text style={[T.h1, { color: C.text }]}>Kategori Seç</Text>
         <Text style={[T.bodySm, { color: C.textFaint, marginTop: S.xs }]}>
@@ -75,7 +77,6 @@ const s = StyleSheet.create({
     flex: 1,
     backgroundColor: C.bg,
     paddingHorizontal: S.page,
-    paddingTop: S.lg,
     paddingBottom: S.sm,
   },
   header: {
