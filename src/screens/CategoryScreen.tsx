@@ -57,7 +57,7 @@ export default function CategoryScreen({ navigation }: any) {
             onPress={() => navigation.navigate("Game", { mode: "category", category: cat.id })}
           >
             <View style={[s.iconBadge, { backgroundColor: `${cat.accent}14` }]}>
-              <cat.Icon size={22} color={cat.accent} strokeWidth={2} />
+              <cat.Icon size={18} color={cat.accent} strokeWidth={2} />
             </View>
             <Text style={[T.h3, { color: C.text, flex: 1 }]}>{cat.label}</Text>
             <ChevronRight size={18} color={C.textFaint} strokeWidth={2} />
@@ -75,11 +75,11 @@ const s = StyleSheet.create({
     flex: 1,
     backgroundColor: C.bg,
     paddingHorizontal: S.page,
-    paddingTop: SAFE_TOP,
-    paddingBottom: S.lg,
+    paddingTop: S.lg,
+    paddingBottom: S.sm,
   },
   header: {
-    marginBottom: S.xl,
+    marginBottom: S.md,
   },
   resultsText: {
     color: C.textFaint,
@@ -87,25 +87,25 @@ const s = StyleSheet.create({
   },
   scroll: { flex: 1 },
   grid: {
-    gap: S.sm,
-    paddingBottom: S.lg,
+    gap: S.xs,
+    paddingBottom: S.sm,
   },
   card: {
     backgroundColor: C.surface,
     borderRadius: R.lg,
-    paddingVertical: 18,
-    paddingHorizontal: S.lg,
+    paddingVertical: 12,
+    paddingHorizontal: S.md,
     flexDirection: "row",
     alignItems: "center",
-    gap: S.md,
+    gap: S.sm,
     borderLeftWidth: 4,
     borderWidth: 1,
     borderColor: C.surfaceLight,
   },
   iconBadge: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     justifyContent: "center",
     alignItems: "center",
   },
