@@ -1,7 +1,7 @@
-import { GameState, GameAction, Question } from "../types";
+﻿import { GameState, GameAction, Question } from "../types";
 
 export const TOTAL_TIME = 180;
-export const ANSWER_TIME = 12;
+export const ANSWER_TIME = 15;
 export const LETTER_PENALTY = 100;
 export const HINT_DELAY = 5000;
 export const HINT_DISPLAY = 4000;
