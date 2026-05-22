@@ -480,6 +480,33 @@ export default function GameScreen({ navigation, route }: ScreenProps<"Game">) {
                 {q.skipped ? (
                   <Text style={[T.cap, { color: C.textFaint, marginTop: S.xs, fontStyle: "italic" }]}>Pas geçildi</Text>
                 ) : null}
+                <View style={gs.summaryFeedbackRow}>
+                  <Text style={[T.cap, { color: C.textFaint }]}>Bu soru nasıldı?</Text>
+                  <View style={gs.feedbackBtns}>
+                    <TouchableOpacity
+                      style={[gs.feedbackBtn, localVotes[q.wordData.word] === -1 && gs.feedbackBtnActive]}
+                      activeOpacity={0.7}
+                      onPress={async () => {
+                        if (localVotes[q.wordData.word] != null) return;
+                        setLocalVotes(v => ({ ...v, [q.wordData.word]: -1 }));
+                        await submitFeedback(q.wordData.word, -1);
+                      }}
+                    >
+                      <Text style={{ fontSize: 16 }}>👎</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[gs.feedbackBtn, localVotes[q.wordData.word] === 1 && gs.feedbackBtnActive]}
+                      activeOpacity={0.7}
+                      onPress={async () => {
+                        if (localVotes[q.wordData.word] != null) return;
+                        setLocalVotes(v => ({ ...v, [q.wordData.word]: 1 }));
+                        await submitFeedback(q.wordData.word, 1);
+                      }}
+                    >
+                      <Text style={{ fontSize: 16 }}>👍</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
               </View>
             );
           })}
@@ -862,6 +889,15 @@ const gs = StyleSheet.create({
     justifyContent: "center",
     gap: S.lg,
     marginTop: S.lg,
+  },
+  summaryFeedbackRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: S.md,
+    paddingTop: S.sm,
+    borderTopWidth: 1,
+    borderTopColor: C.surfaceLight,
   },
   feedbackBtns: {
     flexDirection: "row",
