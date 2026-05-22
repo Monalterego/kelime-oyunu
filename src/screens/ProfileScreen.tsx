@@ -64,7 +64,7 @@ export default function ProfileScreen({ navigation }: any) {
     const result = await createProfile(nickname.trim());
     if (result) {
       await flushPendingScore(result.id); // varsa bekleyen skoru gönder
-      setProfile(result);
+      navigation.replace("Home");
     } else {
       setError("Bu isim alınmış, başka bir isim dene");
     }
